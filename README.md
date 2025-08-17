@@ -26,3 +26,4 @@ Dowload this repo and put it in your workspace folder
 
 I think it should just pop up ill test it later but then click the hammer button 🔨🔨🔨 and then use hex2bin to convert the hex file into a binary to ~~flash~~ emulate... I SWEAR U CAN __**NOT**__ FLASH A CASIO CALC (100% trust me fr)
 
+
