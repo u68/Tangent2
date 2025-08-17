@@ -1,0 +1,162 @@
+RLU8 Object Linker, Ver.1.60.3 Linkage Information
+[Mon Aug 18 01:03:50 2025]
+
+
+                         ------------------
+                          Control Synopsis
+                         ------------------
+
+I/O controls:    D  SD NS NA
+Other controls: CC ABW 
+                COMB( $$content_of_init $$end_of_init )
+                COMB( $$init_info $$init_info_end )
+
+
+
+                        ------------------------
+                         Object Module Synopsis
+                        ------------------------
+                                                                Creator
+Module Name           File Name                                 CCU8     RASU8
+-----------           ---------                                 -----    -----
+io                    .\src\io.obj                              3.66     1.80
+main                  .\src\main.obj                            3.66     1.80
+vm                    .\src\vm.obj                              3.66     1.80
+startup               .\startup.obj                             -.--     1.80
+abs                   C:/lapis/LEXIDE/BuildTools/Ver.20241126/Lib/U16\LU8100LW.LIB -.--     1.04
+
+
+Number of Modules: 5
+
+Number of Symbols:
+ +---------------------------------------------------------------------------+
+ |          | CODE | DATA | BIT  |NVDATA|NVBIT |TABLE |NUMBER| TBIT || total |
+ |----------+------+------+------+------+------+------+------+------++-------|
+ | SEGMENT  |    19|     2|     0|     0|     0|     7|      |      ||     28|
+ |----------+------+------+------+------+------+------+------+------++-------|
+ | COMMUNAL |     0|     0|     0|     0|     0|     0|      |      ||      0|
+ |----------+------+------+------+------+------+------+------+------++-------|
+ | PUBLIC   |    18|     1|     0|     0|     0|     6|     0|     0||     25|
+ +---------------------------------------------------------------------------+
+
+Target:  ML620909 
+Model:   LARGE
+
+
+Memory Map - Program memory space #0:
+      Type     Start      Stop
+     -----------------------------
+      ROM      00:0000    00:FFFF
+
+Memory Map - Data memory space #0:
+      Type     Start      Stop
+     -----------------------------
+      RAM      00:9000    00:FFFF
+
+Memory Map - Memory space above #1:
+      Type     Start      Stop
+     -----------------------------
+      ROM      01:0000    05:DFFF
+      ROM      07:0000    07:1FFF
+      ROM      08:0000    0D:DFFF
+      ROM      0F:0000    0F:1FFF
+      ROM      17:0000    17:1FFF
+      ROM      1F:0000    1F:1FFF
+
+                         ------------------
+                          Segment Synopsis
+                         ------------------
+
+Link Map - Program memory space #0 ( ROMWINDOW: 0000 - 8FFF )
+
+      Type     Start      Stop       Size              Name
+     -------------------------------------------------------
+      S CODE   00:0000    00:01D3    01D4(468)         (absolute)
+*OVL* S CODE   00:0002    00:0003    0002(2)           (absolute)
+      S CODE   00:01D4    00:01D5    0002(2)           $$custom_break$main
+      S CODE   00:01D6    00:01D7    0002(2)           $$main$main
+      S TABLE  00:01D8    00:01D9    0002(2)           $$NINITTAB
+
+
+Link Map - Data memory space #0
+
+      Type     Start      Stop       Size              Name
+     -------------------------------------------------------
+      Q ROMWIN 00:0000    00:8FFF    9000(36864)       (ROMWIN)
+>GAP<          00:9000.0  00:EBFD.7  5BFE.0(23550.0)   (RAM)
+      S DATA   00:EBFE    00:EFFD    0400(1024)        $STACK
+      S DATA   00:EFFE    00:EFFF    0002(2)           $$NINITVAR
+      Q SFR    00:F000    00:FFFF    1000(4096)        (SFR)
+
+
+Not Linked segments:
+
+      Module Name         Type       Size              Segment Name 
+     --------------------------------------------------------------
+      io
+                          TABLE      0040(64)          $$TABbutton_to_char_alt$io
+                          TABLE      0040(64)          $$TABbutton_to_char_abc$io
+                          CODE       00C4(196)         $$drawbitmap$io
+                          CODE       0032(50)          $$charprint1$io
+                          CODE       0032(50)          $$charprint2$io
+                          CODE       00F2(242)         $$set_pixel$io
+                          CODE       003E(62)          $$CheckButtons$io
+                          TABLE      1000(4096)        $$TABimage_raw$io
+                          TABLE      0040(64)          $$TABbutton_to_char$io
+                          CODE       0094(148)         $$plot_line$io
+                          CODE       006E(110)         $$print$io
+                          CODE       0062(98)          $$render$io
+                          CODE       0062(98)          $$draw_byte1$io
+                          CODE       006C(108)         $$draw_byte2$io
+     --------------------------------------------------------------
+      vm
+                          CODE       0032(50)          $$invalid_instruction$vm
+                          CODE       002C(44)          $$load_from_rom$vm
+                          TABLE      000D(13)          $$TABmsg$vm
+                          TABLE      0015(21)          $$TABerror$vm
+                          CODE       0002(2)           $$init_prog$vm
+                          CODE       0030(48)          $$memcpy$vm
+     --------------------------------------------------------------
+      abs
+                          CODE       0016(22)          $$XFCODabs
+     --------------------------------------------------------------
+
+
+Total size (CODE  ) = 001DA   (474)
+Total size (DATA  ) = 00402   (1026)
+Total size (BIT   ) = 00000.0 (0.0)
+Total size (NVDATA) = 00000   (0)
+Total size (NVBIT ) = 00000.0 (0.0)
+Total size (TABLE ) = 00002   (2)
+
+          -----------------------
+           Symbol Table Synopsis
+          -----------------------
+
+Module         Value     Type         Symbol
+------         -----     ----------   ------
+io
+
+Module         Value     Type         Symbol
+------         -----     ----------   ------
+main
+
+Module         Value     Type         Symbol
+------         -----     ----------   ------
+vm
+
+Module         Value     Type         Symbol
+------         -----     ----------   ------
+abs
+
+
+Total ROM usage = 001DC   (476)
+Total RAM usage = 00402   (1026)
+
+End of mapfile.
+
+Warning W025: Cannot find segment '$$content_of_init'
+Warning W025: Cannot find segment '$$end_of_init'
+Warning W025: Cannot find segment '$$init_info'
+Warning W025: Cannot find segment '$$init_info_end'
+Warning W011: CODE/TABLE segments overlap
