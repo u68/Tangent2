@@ -52,7 +52,7 @@ Tangent2.map: Tangent2.abs $(OBJS)
 
 # Other Targets
 clean:
-	-$(RM) "./Tangent2.sc" "./src/io.prn" "./src/main.prn" "./src/vm.prn" "./startup.prn" "./Tangent2.abs" "./Tangent2RB.hex" "./Tangent2RA.hex" "./Tangent2RA.log" "./src/io.asm" "./src/main.asm" "./src/vm.asm" "./Tangent2.HEX" "./src/io.obj" "./src/main.obj" "./src/vm.obj" "./startup.obj" "./src/io.i" "./src/main.i" "./src/vm.i" "./Tangent2.map" 
+	-$(RM) "./Tangent2.sc" "./src/io.prn" "./src/legacy_vm.prn" "./src/main.prn" "./src/vm.prn" "./startup.prn" "./Tangent2.abs" "./Tangent2RB.hex" "./Tangent2RA.hex" "./Tangent2RA.log" "./src/io.asm" "./src/legacy_vm.asm" "./src/main.asm" "./src/vm.asm" "./Tangent2.HEX" "./src/io.obj" "./src/legacy_vm.obj" "./src/main.obj" "./src/vm.obj" "./startup.obj" "./src/io.i" "./src/legacy_vm.i" "./src/main.i" "./src/vm.i" "./Tangent2.map" 
 	-@echo ' '
 
 .PHONY: all clean dependents

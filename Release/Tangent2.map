@@ -1,5 +1,5 @@
 RLU8 Object Linker, Ver.1.60.3 Linkage Information
-[Mon Aug 18 01:03:50 2025]
+[Tue Aug 19 23:52:52 2025]
 
 
                          ------------------
@@ -20,23 +20,27 @@ Other controls: CC ABW
 Module Name           File Name                                 CCU8     RASU8
 -----------           ---------                                 -----    -----
 io                    .\src\io.obj                              3.66     1.80
+legacy_vm             .\src\legacy_vm.obj                       3.66     1.80
 main                  .\src\main.obj                            3.66     1.80
 vm                    .\src\vm.obj                              3.66     1.80
 startup               .\startup.obj                             -.--     1.80
+UIDIVLW               C:/lapis/LEXIDE/BuildTools/Ver.20241126/Lib/U16\longu8.lib -.--     1.04
+CIDIMOLW              C:/lapis/LEXIDE/BuildTools/Ver.20241126/Lib/U16\longu8.lib -.--     1.04
+IMULLW                C:/lapis/LEXIDE/BuildTools/Ver.20241126/Lib/U16\longu8.lib -.--     1.04
 abs                   C:/lapis/LEXIDE/BuildTools/Ver.20241126/Lib/U16\LU8100LW.LIB -.--     1.04
 
 
-Number of Modules: 5
+Number of Modules: 9
 
 Number of Symbols:
  +---------------------------------------------------------------------------+
  |          | CODE | DATA | BIT  |NVDATA|NVBIT |TABLE |NUMBER| TBIT || total |
  |----------+------+------+------+------+------+------+------+------++-------|
- | SEGMENT  |    19|     2|     0|     0|     0|     7|      |      ||     28|
+ | SEGMENT  |    38|     2|     0|     0|     0|     9|      |      ||     49|
  |----------+------+------+------+------+------+------+------+------++-------|
  | COMMUNAL |     0|     0|     0|     0|     0|     0|      |      ||      0|
  |----------+------+------+------+------+------+------+------+------++-------|
- | PUBLIC   |    18|     1|     0|     0|     0|     6|     0|     0||     25|
+ | PUBLIC   |    37|     1|     0|     0|     0|     6|     0|     0||     44|
  +---------------------------------------------------------------------------+
 
 Target:  ML620909 
@@ -73,9 +77,17 @@ Link Map - Program memory space #0 ( ROMWINDOW: 0000 - 8FFF )
      -------------------------------------------------------
       S CODE   00:0000    00:01D3    01D4(468)         (absolute)
 *OVL* S CODE   00:0002    00:0003    0002(2)           (absolute)
-      S CODE   00:01D4    00:01D5    0002(2)           $$custom_break$main
-      S CODE   00:01D6    00:01D7    0002(2)           $$main$main
-      S TABLE  00:01D8    00:01D9    0002(2)           $$NINITTAB
+      S TABLE  00:01D4    00:01E0    000D(13)          $$TABmsg$vm
+>GAP<          00:01E1    00:01E1    0001(1)           (ROM)
+      S TABLE  00:01E2    00:11E1    1000(4096)        $$TABimage_raw$io
+      S TABLE  00:11E2    00:11F6    0015(21)          $$TABerror$vm
+>GAP<          00:11F7    00:11F7    0001(1)           (ROM)
+      S CODE   00:11F8    00:11F9    0002(2)           $$custom_break$main
+      S CODE   00:11FA    00:122B    0032(50)          $$invalid_instruction$vm
+      S CODE   00:122C    00:12EF    00C4(196)         $$drawbitmap$io
+      S CODE   00:12F0    00:12F9    000A(10)          $$main$main
+      S CODE   00:12FA    00:1367    006E(110)         $$print$io
+      S TABLE  00:1368    00:1369    0002(2)           $$NINITTAB
 
 
 Link Map - Data memory space #0
@@ -96,38 +108,61 @@ Not Linked segments:
       io
                           TABLE      0040(64)          $$TABbutton_to_char_alt$io
                           TABLE      0040(64)          $$TABbutton_to_char_abc$io
-                          CODE       00C4(196)         $$drawbitmap$io
                           CODE       0032(50)          $$charprint1$io
                           CODE       0032(50)          $$charprint2$io
                           CODE       00F2(242)         $$set_pixel$io
                           CODE       003E(62)          $$CheckButtons$io
-                          TABLE      1000(4096)        $$TABimage_raw$io
                           TABLE      0040(64)          $$TABbutton_to_char$io
                           CODE       0094(148)         $$plot_line$io
-                          CODE       006E(110)         $$print$io
                           CODE       0062(98)          $$render$io
                           CODE       0062(98)          $$draw_byte1$io
                           CODE       006C(108)         $$draw_byte2$io
      --------------------------------------------------------------
+      legacy_vm
+                          CODE       0068(104)         $$lload_from_rom$legacy_vm
+                          CODE       0030(48)          $$lmemcpy$legacy_vm
+                          CODE       0028(40)          $$lwrite_byte$legacy_vm
+                          CODE       0034(52)          $$lkill$legacy_vm
+                          CODE       0020(32)          $$lread_byte$legacy_vm
+                          CODE       0042(66)          $$lcmp_flags_byte$legacy_vm
+                          TABLE      0200(512)         $$NTABlexc_instruction$legacy_vm
+                          CODE       0020(32)          $$lread_word$legacy_vm
+                          CODE       0058(88)          $$lcmp_flags_word$legacy_vm
+                          TABLE      0000(0)           $$NTABlegacy_vm
+                          CODE       0A5E(2654)        $$lexc_instruction$legacy_vm
+                          CODE       0028(40)          $$lwrite_word$legacy_vm
+                          CODE       006C(108)         $$linit_prog$legacy_vm
+     --------------------------------------------------------------
       vm
-                          CODE       0032(50)          $$invalid_instruction$vm
-                          CODE       002C(44)          $$load_from_rom$vm
-                          TABLE      000D(13)          $$TABmsg$vm
-                          TABLE      0015(21)          $$TABerror$vm
+                          CODE       0044(68)          $$del_index$vm
+                          CODE       0022(34)          $$kill$vm
+                          CODE       0034(52)          $$load_from_rom$vm
+                          CODE       0018(24)          $$read_byte$vm
                           CODE       0002(2)           $$init_prog$vm
+                          CODE       006E(110)         $$bubble_sortw$vm
+                          CODE       0046(70)          $$get_program_start$vm
                           CODE       0030(48)          $$memcpy$vm
+     --------------------------------------------------------------
+      UIDIVLW
+                          CODE       000C(12)          $$uidivu8lw
+     --------------------------------------------------------------
+      CIDIMOLW
+                          CODE       0040(64)          $$cidimou8lw
+     --------------------------------------------------------------
+      IMULLW
+                          CODE       002A(42)          $$imulu8lw
      --------------------------------------------------------------
       abs
                           CODE       0016(22)          $$XFCODabs
      --------------------------------------------------------------
 
 
-Total size (CODE  ) = 001DA   (474)
+Total size (CODE  ) = 00346   (838)
 Total size (DATA  ) = 00402   (1026)
 Total size (BIT   ) = 00000.0 (0.0)
 Total size (NVDATA) = 00000   (0)
 Total size (NVBIT ) = 00000.0 (0.0)
-Total size (TABLE ) = 00002   (2)
+Total size (TABLE ) = 01024   (4132)
 
           -----------------------
            Symbol Table Synopsis
@@ -136,6 +171,10 @@ Total size (TABLE ) = 00002   (2)
 Module         Value     Type         Symbol
 ------         -----     ----------   ------
 io
+
+Module         Value     Type         Symbol
+------         -----     ----------   ------
+legacy_vm
 
 Module         Value     Type         Symbol
 ------         -----     ----------   ------
@@ -150,7 +189,7 @@ Module         Value     Type         Symbol
 abs
 
 
-Total ROM usage = 001DC   (476)
+Total ROM usage = 0136A   (4970)
 Total RAM usage = 00402   (1026)
 
 End of mapfile.

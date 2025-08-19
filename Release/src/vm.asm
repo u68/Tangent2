@@ -6,15 +6,25 @@
 	model large, near
 	$$TABerror$vm segment table 2h #0h
 	$$TABmsg$vm segment table 2h #0h
+	$$bubble_sortw$vm segment code 2h any
+	$$del_index$vm segment code 2h any
+	$$get_program_start$vm segment code 2h any
 	$$init_prog$vm segment code 2h any
 	$$invalid_instruction$vm segment code 2h any
+	$$kill$vm segment code 2h any
 	$$load_from_rom$vm segment code 2h any
 	$$memcpy$vm segment code 2h any
+	$$read_byte$vm segment code 2h any
 CVERSION 3.66.2
+CGLOBAL 01H 02H 0000H "read_byte" 08H 02H 05H 00H 80H 04H 00H 00H 00H
+CGLOBAL 01H 03H 0000H "bubble_sortw" 08H 02H 17H 00H 80H 08H 00H 00H 07H
+CGLOBAL 01H 03H 0000H "del_index" 08H 02H 18H 00H 80H 06H 00H 00H 07H
+CGLOBAL 01H 03H 0000H "kill" 08H 02H 03H 00H 81H 06H 00H 00H 07H
 CGLOBAL 01H 03H 0000H "invalid_instruction" 08H 02H 01H 00H 81H 08H 00H 00H 07H
 CGLOBAL 01H 03H 0000H "memcpy" 08H 02H 00H 00H 82H 08H 00H 00H 07H
 CGLOBAL 01H 03H 0000H "init_prog" 08H 02H 02H 00H 80H 00H 00H 00H 07H
-CGLOBAL 01H 03H 0000H "load_from_rom" 08H 02H 04H 00H 80H 04H 00H 00H 07H
+CGLOBAL 01H 03H 0000H "load_from_rom" 08H 02H 04H 00H 81H 08H 00H 00H 07H
+CGLOBAL 01H 02H 0000H "get_program_start" 08H 02H 19H 00H 81H 08H 00H 00H 08H
 CENUMTAG 0000H 0000H 0001H 0017H "SPECIAL_CHARS"
 CENUMMEM 0000000AH "SP_EXE"
 CENUMMEM 00000009H "SP_TAB"
@@ -86,7 +96,7 @@ CFILE 0001H 00000070H "..\\src\\base.h"
 CFILE 0002H 00000014H "..\\src\\vm.h"
 CFILE 0003H 00000072H "..\\src\\io.h"
 CFILE 0004H 00000008H "..\\src\\vm_config.h"
-CFILE 0000H 0000002CH "..\\src\\vm.c"
+CFILE 0000H 00000061H "..\\src\\vm.c"
 
 	rseg $$invalid_instruction$vm
 CFUNCTION 1
@@ -196,78 +206,459 @@ CBLOCKEND 0 1 24
 CFUNCTIONEND 0
 
 
+	rseg $$bubble_sortw$vm
+CFUNCTION 23
+
+_bubble_sortw	:
+CBLOCK 23 1 27
+
+;;{
+CLINEA 0000H 0001H 001BH 0001H 0001H
+	push	xr8
+	push	xr4
+	mov	er8,	er0
+	mov	r10,	r2
+CBLOCK 23 2 27
+CARGUMENT 46H 0002H 0028H "arr" 04H 03H 00H 00H 01H
+CARGUMENT 46H 0001H 001EH "size" 02H 00H 00H
+CLOCAL 46H 0001H 0019H 0002H "i" 02H 00H 00H
+CLOCAL 46H 0001H 0018H 0002H "j" 02H 00H 00H
+CLOCAL 46H 0001H 001AH 0002H "temp" 02H 00H 00H
+
+;;    for(i = 0; i < size - 1; i++)
+CLINEA 0000H 0001H 001EH 0005H 0021H
+	mov	r5,	#00h
+	bal	_$L16
+_$L13 :
+CBLOCK 23 3 31
+
+;;        for(j = 0; j < size - i - 1; j++)
+CLINEA 0000H 0001H 0020H 000DH 0012H
+	mov	r4,	#00h
+
+;;        for(j = 0; j < size - i - 1; j++)
+CLINEA 0000H 0000H 0020H 0014H 0024H
+	bal	_$L22
+
+;;        for(j = 0; j < size - i - 1; j++)
+CLINEA 0000H 0000H 0020H 0026H 0028H
+_$L19 :
+CBLOCK 23 4 33
+
+;;            if(arr[j] > arr[j + 1])
+CLINEA 0000H 0001H 0022H 000DH 0023H
+	mov	r0,	r4
+	mov	r1,	#00h
+	add	er0,	er0
+	add	er0,	er8
+	l	er2,	[er0]
+	l	er0,	02h[er0]
+	cmp	er2,	er0
+	ble	_$L23
+CBLOCK 23 5 35
+
+;;                temp = arr[j];
+CLINEA 0000H 0001H 0024H 0011H 001EH
+	mov	r0,	r4
+	mov	r1,	#00h
+	add	er0,	er0
+	add	er0,	er8
+	l	r6,	[er0]
+
+;;                arr[j] = arr[j + 1];
+CLINEA 0000H 0001H 0025H 0011H 0024H
+	mov	er2,	er0
+	l	er0,	02h[er0]
+	st	er0,	[er2]
+
+;;                arr[j + 1] = temp;
+CLINEA 0000H 0001H 0026H 0011H 0022H
+	mov	r0,	r4
+	mov	r1,	#00h
+	add	er0,	er0
+	add	er0,	er8
+	mov	r2,	r6
+	mov	r3,	#00h
+	st	er2,	02h[er0]
+CBLOCKEND 23 5 39
+
+;;            }
+CLINEA 0000H 0000H 0027H 000DH 000DH
+_$L23 :
+CBLOCKEND 23 4 40
+
+;;        for(j = 0; j < size - i - 1; j++)
+CLINEA 0000H 0000H 0020H 0026H 0028H
+	add	r4,	#01h
+
+;;        for(j = 0; j < size - i - 1; j++)
+CLINEA 0000H 0000H 0020H 0014H 0024H
+_$L22 :
+	mov	r0,	r10
+	mov	r1,	#00h
+	mov	r3,	#00h
+	sub	r0,	r5
+	subc	r1,	r3
+	add	er0,	#-1
+	mov	r2,	r4
+	cmp	er2,	er0
+	blts	_$L19
+CBLOCKEND 23 3 41
+
+;;    for(i = 0; i < size - 1; i++)
+CLINEA 0000H 0000H 001EH 0005H 0021H
+	add	r5,	#01h
+_$L16 :
+
+;;    for(i = 0; i < size - 1; i++)
+CLINEA 0000H 0000H 001EH 0014H 0024H
+	mov	r0,	r10
+	mov	r1,	#00h
+	add	er0,	#-1
+	mov	r2,	r5
+	mov	r3,	#00h
+	cmp	er2,	er0
+	blts	_$L13
+CBLOCKEND 23 2 42
+
+;;}
+CLINEA 0000H 0001H 002AH 0001H 0001H
+	pop	xr4
+	pop	xr8
+	rt
+CBLOCKEND 23 1 42
+CFUNCTIONEND 23
+
+
+	rseg $$del_index$vm
+CFUNCTION 24
+
+_del_index	:
+CBLOCK 24 1 45
+
+;;{
+CLINEA 0000H 0001H 002DH 0001H 0001H
+	push	xr8
+	push	er4
+	mov	r10,	r2
+	mov	er8,	er0
+CBLOCK 24 2 45
+CARGUMENT 46H 0002H 0028H "arr" 04H 03H 00H 00H 01H
+CARGUMENT 46H 0001H 001EH "size" 02H 00H 00H
+CARGUMENT 46H 0001H 0017H "index" 02H 00H 00H
+CLOCAL 46H 0001H 0018H 0002H "i" 02H 00H 00H
+
+;;    if(index >= size) return;
+CLINEA 0000H 0001H 002FH 0005H 001DH
+	cmp	r3,	r2
+	bge	_$L25
+
+;;    for(i = index; i < size - 1; i++)
+CLINEA 0000H 0001H 0030H 0009H 0012H
+	mov	r4,	r3
+
+;;    for(i = index; i < size - 1; i++)
+CLINEA 0000H 0000H 0030H 0014H 0020H
+	bal	_$L33
+
+;;    for(i = index; i < size - 1; i++)
+CLINEA 0000H 0000H 0030H 0022H 0024H
+_$L30 :
+CBLOCK 24 3 49
+
+;;        arr[i] = arr[i + 1];
+CLINEA 0000H 0001H 0032H 0009H 001CH
+	mov	r0,	r4
+	mov	r1,	#00h
+	add	er0,	er0
+	add	er0,	er8
+	mov	er2,	er0
+	l	er0,	02h[er0]
+	st	er0,	[er2]
+CBLOCKEND 24 3 51
+
+;;    for(i = index; i < size - 1; i++)
+CLINEA 0000H 0000H 0030H 0022H 0024H
+	add	r4,	#01h
+
+;;    for(i = index; i < size - 1; i++)
+CLINEA 0000H 0000H 0030H 0014H 0020H
+_$L33 :
+	mov	r0,	r10
+	mov	r1,	#00h
+	add	er0,	#-1
+	mov	r2,	r4
+	mov	r3,	#00h
+	cmp	er2,	er0
+	blts	_$L30
+
+;;    arr[size - 1] = 0; 
+CLINEA 0000H 0001H 0034H 0005H 0017H
+	mov	r0,	r10
+	mov	r1,	#00h
+	add	er0,	er0
+	add	er0,	er8
+	mov	er2,	#0 
+	st	er2,	0fffeh[er0]
+CBLOCKEND 24 2 53
+
+;;}
+CLINEA 0000H 0001H 0035H 0001H 0001H
+_$L25 :
+	pop	er4
+	pop	xr8
+	rt
+CBLOCKEND 24 1 53
+CFUNCTIONEND 24
+
+
+	rseg $$get_program_start$vm
+CFUNCTION 25
+
+_get_program_start	:
+CBLOCK 25 1 56
+
+;;{
+CLINEA 0000H 0001H 0038H 0001H 0001H
+	push	lr
+	push	er8
+	push	er4
+	mov	er8,	er0
+CBLOCK 25 2 56
+CRET 0004H
+CARGUMENT 46H 0002H 0028H "PID" 02H 00H 01H
+CLOCAL 4AH 0002H 0000H 0002H "program_start_array" 04H 03H 00H 00H 08H
+CLOCAL 46H 0001H 0018H 0002H "i" 02H 00H 00H
+
+;;    byte i = 0;
+CLINEA 0000H 0001H 003AH 0005H 000FH
+	mov	r4,	#00h
+
+;;    bubble_sortw(program_start_array, MAXIMUS_PROGRAMUS);
+CLINEA 0000H 0001H 003BH 0005H 0039H
+	mov	r2,	#043h
+	mov	r0,	#086h
+	mov	r1,	#09ch
+	bl	_bubble_sortw
+
+;;    while(program_start_array[i])
+CLINEA 0000H 0001H 003CH 0005H 0021H
+	bal	_$L35
+_$L37 :
+CBLOCK 25 3 61
+
+;;        if(program_start_array[i] == PID) return program_start_array[i];
+CLINEA 0000H 0001H 003EH 0009H 0048H
+	mov	r0,	r4
+	mov	r1,	#00h
+	add	er0,	er0
+	l	er0,	09c86h[er0]
+	cmp	er0,	er8
+	bne	_$L39
+	mov	r0,	r4
+	mov	r1,	#00h
+	add	er0,	er0
+	l	er0,	09c86h[er0]
+CBLOCKEND 25 2 66
+
+;;}
+CLINEA 0000H 0001H 0042H 0001H 0001H
+_$L34 :
+	pop	er4
+	pop	er8
+	pop	pc
+
+;;        if(program_start_array[i] == PID) return program_start_array[i];
+CLINEA 0000H 0000H 003EH 0009H 0048H
+_$L39 :
+
+;;        i++;
+CLINEA 0000H 0000H 003FH 0009H 000CH
+	add	r4,	#01h
+CBLOCKEND 25 3 64
+
+;;    }
+CLINEA 0000H 0000H 0040H 0005H 0005H
+_$L35 :
+
+;;    while(program_start_array[i])
+CLINEA 0000H 0000H 003CH 0014H 0020H
+	mov	r0,	r4
+	mov	r1,	#00h
+	add	er0,	er0
+	l	er0,	09c86h[er0]
+	bne	_$L37
+
+;;    return 0; //not found
+CLINEA 0000H 0001H 0041H 0005H 0019H
+	mov	er0,	#0 
+	bal	_$L34
+CBLOCKEND 25 1 66
+CFUNCTIONEND 25
+
+
 	rseg $$init_prog$vm
 CFUNCTION 2
 
 _init_prog	:
-CBLOCK 2 1 27
+CBLOCK 2 1 69
 
 ;;}
-CLINEA 0000H 0001H 001DH 0001H 0001H
+CLINEA 0000H 0001H 0047H 0001H 0001H
 	rt
-CBLOCKEND 2 1 29
+CBLOCKEND 2 1 71
 CFUNCTIONEND 2
+
+
+	rseg $$kill$vm
+CFUNCTION 3
+
+_kill	:
+CBLOCK 3 1 73
+
+;;{
+CLINEA 0000H 0001H 0049H 0001H 0001H
+	push	lr
+	push	er8
+	mov	er8,	er0
+CBLOCK 3 2 73
+CRET 0002H
+CARGUMENT 46H 0002H 0028H "PID" 02H 00H 01H
+
+;;    del_index((word *)MAXIMUS_PROGRAMUS_START, MAXIMUS_PROGRAMUS, PID);
+CLINEA 0000H 0001H 004AH 0005H 0047H
+	mov	r3,	r0
+	mov	r2,	#043h
+	mov	r0,	#00h
+	mov	r1,	#09ch
+	bl	_del_index
+
+;;    del_index((word *)PROGRAMUS_START_START, MAXIMUS_PROGRAMUS, PID);
+CLINEA 0000H 0001H 004BH 0005H 0045H
+	mov	r3,	r8
+	mov	r2,	#043h
+	mov	r0,	#086h
+	mov	r1,	#09ch
+	bl	_del_index
+CBLOCKEND 3 2 76
+
+;;}
+CLINEA 0000H 0001H 004CH 0001H 0001H
+	pop	er8
+	pop	pc
+CBLOCKEND 3 1 76
+CFUNCTIONEND 3
 
 
 	rseg $$load_from_rom$vm
 CFUNCTION 4
 
 _load_from_rom	:
-CBLOCK 4 1 32
+CBLOCK 4 1 78
 
 ;;{
-CLINEA 0000H 0001H 0020H 0001H 0001H
+CLINEA 0000H 0001H 004EH 0001H 0001H
+	push	lr
 	push	er8
 	push	er4
 	mov	er8,	er0
-CBLOCK 4 2 32
+CBLOCK 4 2 78
+CRET 0004H
 CARGUMENT 46H 0002H 0028H "adr" 02H 00H 01H
-CLOCAL 46H 0001H 0016H 0002H "i" 02H 00H 00H
-CLOCAL 46H 0002H 0026H 0002H "dadr" 02H 00H 08H
+CLOCAL 4AH 0002H 0000H 0002H "program_array" 04H 03H 00H 00H 08H
+CLOCAL 46H 0001H 0018H 0002H "i" 02H 00H 00H
+CLOCAL 4AH 0002H 0000H 0002H "dadr" 02H 00H 08H
 
 ;;    byte i = 0;
-CLINEA 0000H 0001H 0023H 0005H 000FH
-	mov	r2,	#00h
+CLINEA 0000H 0001H 0052H 0005H 000FH
+	mov	r0,	#00h
+	mov	r4,	#00h
 
-;;    word dadr = derefw(adr);
-CLINEA 0000H 0001H 0024H 0005H 001CH
-	l	er0,	[er8]
-	mov	er4,	er0
+;;    bubble_sortw(program_array, MAXIMUS_PROGRAMUS);
+CLINEA 0000H 0001H 0054H 0005H 0033H
+	mov	r2,	#043h
+	mov	r1,	#09ch
+	bl	_bubble_sortw
 
-;;    while(derefw(MAXIMUS_PROGRAMUS_START + (i * 2))) (i++);
-CLINEA 0000H 0001H 0025H 0005H 003BH
-	bal	_$L12
-_$L14 :
-	add	r2,	#01h
-_$L12 :
-	mov	r0,	r2
+;;    while(program_array[i]) (i++);
+CLINEA 0000H 0001H 0055H 0005H 0022H
+	bal	_$L44
+_$L46 :
+	add	r4,	#01h
+_$L44 :
+
+;;    while(program_array[i]) (i++);
+CLINEA 0000H 0000H 0055H 0014H 0020H
+	mov	r0,	r4
 	mov	r1,	#00h
 	add	er0,	er0
 	l	er0,	09c00h[er0]
-	bne	_$L14
+	bne	_$L46
 
-;;    derefw(MAXIMUS_PROGRAMUS_START + (i * 2)) = dadr;
-CLINEA 0000H 0001H 0026H 0005H 0035H
-	mov	r0,	r2
+;;    program_array[i] = adr;
+CLINEA 0000H 0001H 0056H 0005H 001BH
+	mov	r0,	r4
 	mov	r1,	#00h
 	add	er0,	er0
-	st	er4,	09c00h[er0]
-CBLOCKEND 4 2 39
+	st	er8,	09c00h[er0]
+CBLOCKEND 4 2 87
 
 ;;}
-CLINEA 0000H 0001H 0027H 0001H 0001H
+CLINEA 0000H 0001H 0057H 0001H 0001H
 	pop	er4
 	pop	er8
-	rt
-CBLOCKEND 4 1 39
+	pop	pc
+CBLOCKEND 4 1 87
 CFUNCTIONEND 4
 
+
+	rseg $$read_byte$vm
+CFUNCTION 5
+
+_read_byte	:
+CBLOCK 5 1 89
+
+;;{
+CLINEA 0000H 0001H 0059H 0001H 0001H
+	push	er10
+	push	er4
+	mov	er10,	er2
+CBLOCK 5 2 89
+CARGUMENT 46H 0002H 0024H "PID" 02H 00H 01H
+CARGUMENT 46H 0002H 0029H "addr" 02H 00H 01H
+CLOCAL 4AH 0002H 0000H 0002H "mrams" 02H 00H 08H
+
+;;    if(addr > mrams) {return 0;} //out of bounds
+CLINEA 0000H 0001H 005BH 0005H 0030H
+	l	er2,	02h[er0]
+	cmp	er10,	er2
+	ble	_$L49
+CBLOCK 5 3 91
+	mov	r4,	#00h
+CBLOCKEND 5 3 91
+_$L49 :
+CBLOCKEND 5 2 93
+
+;;}
+CLINEA 0000H 0001H 005DH 0001H 0001H
+	mov	r0,	r4
+	pop	er4
+	pop	er10
+	rt
+CBLOCKEND 5 1 93
+CFUNCTIONEND 5
+
+	public _read_byte
+	public _bubble_sortw
+	public _del_index
 	public _msg
 	public _error
+	public _kill
 	public _invalid_instruction
 	public _memcpy
 	public _init_prog
 	public _load_from_rom
+	public _get_program_start
 	extrn code far : _print
 	extrn code far : _main
 

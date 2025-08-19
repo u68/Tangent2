@@ -1,7 +1,7 @@
 RASU8(ML620909)Relocatable Assembler, Ver.1.80.4    assemble list. page:   1 
  Source File: src\main.asm
  Object File: src\main.obj
- Date  : 2025/08/18 Mon.[ 1:03]
+ Date  : 2025/08/19 Tue.[23:52]
  Title : 
 ## Loc. Object                   Line   Source Statements
 
@@ -15,8 +15,8 @@ RASU8(ML620909)Relocatable Assembler, Ver.1.80.4    assemble list. page:   1
                                     8   	$$main$main segment code 2h any
                                     9   	STACKSEG 0400h
                                    10   CVERSION 3.66.2
-                                   11   CGLOBAL 01H 03H 0000H "main" 08H 02H 0DH 00H 80H 00H 00H 00H 07H
-                                   12   CGLOBAL 01H 03H 0000H "custom_break" 08H 02H 0CH 00H 80H 00H 00H 00H 07H
+                                   11   CGLOBAL 01H 03H 0000H "main" 08H 02H 16H 00H 80H 00H 00H 00H 07H
+                                   12   CGLOBAL 01H 03H 0000H "custom_break" 08H 02H 15H 00H 80H 00H 00H 00H 07H
                                    13   CENUMTAG 0000H 0000H 0001H 0017H "SPECIAL_CHARS"
                                    14   CENUMMEM 0000000AH "SP_EXE"
                                    15   CENUMMEM 00000009H "SP_TAB"
@@ -84,51 +84,64 @@ RASU8(ML620909)Relocatable Assembler, Ver.1.80.4    assemble list. page:   1
                                    77   CTYPEDEF 0000H 0000H 42H "word" 02H 00H 08H
                                    78   CFILE 0001H 00000070H "..\\src\\base.h"
                                    79   CFILE 0002H 00000072H "..\\src\\io.h"
-                                   80   CFILE 0000H 00000011H "..\\src\\main.c"
-                                   81   
-  --------------------------       82   	rseg $$custom_break$main
-                                   83   CFUNCTION 12
-                                   84   
-??:0000                            85   _custom_break	:
-                                   86   CBLOCK 12 1 5
-                                   87   
-                                   88   ;;{
-                                   89   CLINEA 0000H 0001H 0005H 0001H 0001H
-                                   90   CBLOCK 12 2 5
-                                   91   
-                                   92   ;;	while(1)
-                                   93   CLINEA 0000H 0000H 0006H 0002H 0009H
-??:0000                            94   _$L3 :
-??:0000 FF CE                      95   	bal	_$L3
-                                   96   CBLOCKEND 12 2 11
-                                   97   
-                                   98   ;;}
-                                   99   CLINEA 0000H 0001H 000BH 0001H 0001H
-                                  100   CBLOCKEND 12 1 11
-                                  101   CFUNCTIONEND 12
-                                  102   
+                                   80   CFILE 0003H 00000014H "..\\src\\vm.h"
+                                   81   CFILE 0000H 0000003BH "..\\src\\main.c"
+                                   82   
+  --------------------------       83   	rseg $$custom_break$main
+                                   84   CFUNCTION 21
+                                   85   
+??:0000                            86   _custom_break	:
+                                   87   CBLOCK 21 1 6
+                                   88   
+                                   89   ;;{
+                                   90   CLINEA 0000H 0001H 0006H 0001H 0001H
+                                   91   CBLOCK 21 2 6
+                                   92   
+                                   93   ;;	while(1)
+                                   94   CLINEA 0000H 0000H 0007H 0002H 0009H
+??:0000                            95   _$L3 :
+??:0000 FF CE                      96   	bal	_$L3
+                                   97   CBLOCKEND 21 2 12
+                                   98   
+                                   99   ;;}
+                                  100   CLINEA 0000H 0001H 000CH 0001H 0001H
+                                  101   CBLOCKEND 21 1 12
+                                  102   CFUNCTIONEND 21
                                   103   
-  --------------------------      104   	rseg $$main$main
-                                  105   CFUNCTION 13
-                                  106   
-??:0000                           107   _main	:
-                                  108   CBLOCK 13 1 14
-                                  109   
-                                  110   ;;}
-                                  111   CLINEA 0000H 0001H 0010H 0001H 0001H
-??:0000                           112   _$$end_of_main :
-??:0000 FF CE                     113   	bal	$
-                                  114   CBLOCKEND 13 1 16
-                                  115   CFUNCTIONEND 13
-                                  116   
-                                  117   	public _main
-                                  118   	public _custom_break
-                                  119   	extrn code : $$start_up
-                                  120   
-  --------------------------      121   	cseg #00h at 02h
-00:0002 00-00'                    122   	dw	$$start_up
-                                  123   
-                                  124   	end
+                                  104   
+  --------------------------      105   	rseg $$main$main
+                                  106   CFUNCTION 22
+                                  107   
+??:0000                           108   _main	:
+                                  109   CBLOCK 22 1 55
+                                  110   
+                                  111   ;;{
+                                  112   CLINEA 0000H 0001H 0037H 0001H 0001H
+                                  113   CBLOCK 22 2 55
+                                  114   
+                                  115   ;;	invalid_instruction(0x1234);
+                                  116   CLINEA 0000H 0001H 0038H 0002H 001DH
+??:0000 34 00                     117   	mov	r0,	#034h
+??:0002 12 01                     118   	mov	r1,	#012h
+??:0004 01-F0'00-00'              119   	bl	_invalid_instruction
+                                  120   CBLOCKEND 22 2 57
+                                  121   
+                                  122   ;;}
+                                  123   CLINEA 0000H 0001H 0039H 0001H 0001H
+??:0008                           124   _$$end_of_main :
+??:0008 FF CE                     125   	bal	$
+                                  126   CBLOCKEND 22 1 57
+                                  127   CFUNCTIONEND 22
+                                  128   
+                                  129   	public _main
+                                  130   	public _custom_break
+                                  131   	extrn code far : _invalid_instruction
+                                  132   	extrn code : $$start_up
+                                  133   
+  --------------------------      134   	cseg #00h at 02h
+00:0002 00-00'                    135   	dw	$$start_up
+                                  136   
+                                  137   	end
 
 
 
@@ -140,4 +153,4 @@ RASU8(ML620909)Relocatable Assembler, Ver.1.80.4    assemble list. page:   1
 
   Errors   : 0
   Warnings : 0  (/Wrpeast)
-  Lines    : 124
+  Lines    : 137

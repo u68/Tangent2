@@ -41,11 +41,39 @@ void bubble_sortw(word arr[], byte size)
     }
 }
 
+void del_index(word arr[], byte size, byte index)
+{
+    byte i;
+    if(index >= size) return;
+    for(i = index; i < size - 1; i++)
+    {
+        arr[i] = arr[i + 1];
+    }
+    arr[size - 1] = 0; 
+}
+
+word get_program_start(word PID)
+{
+    word *program_start_array = (word *)PROGRAMUS_START_START;
+    byte i = 0;
+    bubble_sortw(program_start_array, MAXIMUS_PROGRAMUS);
+    while(program_start_array[i])
+    {
+        if(program_start_array[i] == PID) return program_start_array[i];
+        i++;
+    }
+    return 0; //not found
+}
+
 void init_prog()
 {
     // I lowk dunno what this is for now so ill leave it here lol
 }
-void kill(word PID);  //pid is now just direct address instead of bit with magic math
+void kill(word PID)  //pid is now just direct address instead of bit with magic math but you use it as an index to an array as an index to an array to get the true ram adress of the program
+{
+    del_index((word *)MAXIMUS_PROGRAMUS_START, MAXIMUS_PROGRAMUS, PID);
+    del_index((word *)PROGRAMUS_START_START, MAXIMUS_PROGRAMUS, PID);
+}
 void load_from_rom(word adr)
 {
     //go through start of ram and check for next free program slot
@@ -57,7 +85,12 @@ void load_from_rom(word adr)
     while(program_array[i]) (i++);
     program_array[i] = adr;
 }
-byte read_byte(word PID, word addr);
+byte read_byte(word PID, word addr)
+{
+    word mrams = derefw(PID + 2);
+    if(addr > mrams) {return 0;} //out of bounds
+
+}
 word read_word(word PID, word addr);
 void write_byte(word PID, word addr, byte data);
 void write_word(word PID, word addr, word data);
