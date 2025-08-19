@@ -1,5 +1,6 @@
 #include "base.h"
 #include "io.h"
+#include "vm.h"
 
 void custom_break()
 {
@@ -12,5 +13,5 @@ void custom_break()
 
 void main()
 {
-
+	invalid_instruction(0x1234);
 }
