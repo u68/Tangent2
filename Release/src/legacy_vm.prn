@@ -1,0 +1,3404 @@
+RASU8(ML620909)Relocatable Assembler, Ver.1.80.4    assemble list. page:   1 
+ Source File: src\legacy_vm.asm
+ Object File: src\legacy_vm.obj
+ Date  : 2025/08/19 Tue.[23:46]
+ Title : 
+## Loc. Object                   Line   Source Statements
+
+                                    1   ;; Compile Options : /TML620909 /ML /near /SD /Oa /Ot /W 1 /Fasrc\ 
+                                    2   ;; Version Number  : Ver.3.66.2
+                                    3   ;; File Name       : legacy_vm.c
+                                    4   
+                                    5   	type (ML620909) 
+                                    6   	model large, near
+                                    7   	$$NTABlegacy_vm segment table 2h #0h
+                                    8   	$$lcmp_flags_byte$legacy_vm segment code 2h any
+                                    9   	$$lcmp_flags_word$legacy_vm segment code 2h any
+                                   10   	$$lexc_instruction$legacy_vm segment code 2h any
+                                   11   	$$linit_prog$legacy_vm segment code 2h any
+                                   12   	$$lkill$legacy_vm segment code 2h any
+                                   13   	$$lload_from_rom$legacy_vm segment code 2h any
+                                   14   	$$lmemcpy$legacy_vm segment code 2h any
+                                   15   	$$lread_byte$legacy_vm segment code 2h any
+                                   16   	$$lread_word$legacy_vm segment code 2h any
+                                   17   	$$lwrite_byte$legacy_vm segment code 2h any
+                                   18   	$$lwrite_word$legacy_vm segment code 2h any
+                                   19   	$$NTABlexc_instruction$legacy_vm segment table 2h #0h
+                                   20   CVERSION 3.66.2
+                                   21   CGLOBAL 01H 03H 0000H "lexc_instruction" 08H 02H 07H 00H 83H 24H 00H 00H 07H
+                                   22   CGLOBAL 01H 02H 0000H "lread_word" 08H 02H 04H 00H 81H 06H 00H 00H 08H
+                                   23   CGLOBAL 01H 03H 0000H "linit_prog" 08H 02H 00H 00H 80H 04H 00H 00H 07H
+                                   24   CGLOBAL 01H 03H 0000H "lcmp_flags_word" 08H 02H 17H 00H 82H 08H 00H 00H 07H
+                                   25   CGLOBAL 01H 03H 0000H "lwrite_byte" 08H 02H 05H 00H 83H 08H 00H 00H 07H
+                                   26   CGLOBAL 01H 03H 0000H "lwrite_word" 08H 02H 06H 00H 83H 08H 00H 00H 07H
+                                   27   CGLOBAL 01H 03H 0000H "lcmp_flags_byte" 08H 02H 18H 00H 80H 04H 00H 00H 07H
+                                   28   CGLOBAL 01H 03H 0000H "lmemcpy" 08H 02H 08H 00H 82H 08H 00H 00H 07H
+                                   29   CGLOBAL 01H 02H 0000H "lread_byte" 08H 02H 03H 00H 81H 06H 00H 00H 00H
+                                   30   CGLOBAL 01H 03H 0000H "lload_from_rom" 08H 02H 02H 00H 81H 0cH 00H 00H 07H
+                                   31   CGLOBAL 01H 03H 0000H "lkill" 08H 02H 01H 00H 81H 04H 00H 00H 07H
+                                   32   CTYPEDEF 0000H 0000H 42H "ushort" 02H 00H 08H
+                                   33   CTYPEDEF 0000H 0000H 42H "byte" 02H 00H 00H
+                                   34   CTYPEDEF 0000H 0000H 42H "word" 02H 00H 08H
+                                   35   CFILE 0001H 0000006BH "..\\src\\lbase.h"
+                                   36   CFILE 0002H 00000013H "..\\src\\lconfig.h"
+                                   37   CFILE 0003H 00000012H "..\\src\\lfunc_defs.h"
+                                   38   CFILE 0000H 00000255H "..\\src\\legacy_vm.c"
+                                   39   
+  --------------------------       40   	rseg $$linit_prog$legacy_vm
+                                   41   CFUNCTION 0
+                                   42   
+??:0000                            43   _linit_prog	:
+                                   44   CBLOCK 0 1 6
+                                   45   
+                                   46   ;;{
+                                   47   CLINEA 0000H 0001H 0006H 0001H 0001H
+??:0000 6E-F4                      48   	push	xr4
+                                   49   CBLOCK 0 2 6
+                                   50   CLOCAL 46H 0001H 0018H 0002H "prog_index" 02H 00H 00H
+                                   51   CLOCAL 46H 0002H 0027H 0002H "progs" 02H 00H 08H
+                                   52   
+                                   53   ;;    byte prog_index = 0;
+                                   54   CLINEA 0000H 0001H 0007H 0005H 0018H
+??:0002 00 04                      55   	mov	r4,	#00h
+                                   56   
+                                   57   ;;    word progs = derefw(0x9000);
+                                   58   CLINEA 0000H 0001H 0008H 0005H 0020H
+??:0004 12-96 00-90                59   	l	er6,	09000h
+                                   60   
+                                   61   ;;    for (prog_index = 0;prog_index < 16;prog_index++)
+                                   62   CLINEA 0000H 0000H 0009H 0005H 0035H
+??:0008                            63   _$L3 :
+                                   64   CBLOCK 0 3 10
+                                   65   
+                                   66   ;;        if((((progs << prog_index) & 32768) >> 15) == 0)
+                                   67   CLINEA 0000H 0001H 000BH 0009H 0038H
+??:0008 65-F0                      68   	mov	er0,	er6
+??:000A 40-82                      69   	mov	r2,	r4
+??:000C                            70   _$M2 :
+??:000C 07 72                      71   	cmp	r2,	#07h
+??:000E 04 C3                      72   	ble	_$M1
+??:0010 7B-91                      73   	sllc	r1,	#07h
+??:0012 7A-90                      74   	sll	r0,	#07h
+??:0014 F9 12                      75   	add	r2,	#0f9h
+??:0016 FA C8                      76   	bne	_$M2
+??:0018                            77   _$M1 :
+??:0018 2B-81                      78   	sllc	r1,	r2
+??:001A 00 E2                      79   	mov	er2,	#0 
+??:001C 80 21                      80   	and	r1,	#080h
+??:001E 00 22                      81   	and	r2,	#00h
+??:0020 00 23                      82   	and	r3,	#00h
+??:0022 10-80                      83   	mov	r0,	r1
+??:0024 20-81                      84   	mov	r1,	r2
+??:0026 30-82                      85   	mov	r2,	r3
+??:0028 7D-90                      86   	srlc	r0,	#07h
+??:002A 7D-91                      87   	srlc	r1,	#07h
+??:002C 7E-92                      88   	sra	r2,	#07h
+??:002E 2F-83                      89   	extbw	er2
+??:0030 00 70                      90   	cmp	r0,	#00h
+??:0032 00 51                      91   	cmpc	r1,	#00h
+??:0034 00 52                      92   	cmpc	r2,	#00h
+??:0036 00 53                      93   	cmpc	r3,	#00h
+??:0038 14 C8                      94   	bne	_$L7
+                                   95   CBLOCK 0 4 12
+                                   96   
+                                   97   ;;            derefw(0x9000) |= (32768 >> prog_index);
+                                   98   CLINEA 0000H 0001H 000DH 000DH 0034H
+??:003A 00 00                      99   	mov	r0,	#00h
+??:003C 80 01                     100   	mov	r1,	#080h
+??:003E 00 E2                     101   	mov	er2,	#0 
+??:0040                           102   _$M4 :
+??:0040 07 74                     103   	cmp	r4,	#07h
+??:0042 06 C3                     104   	ble	_$M3
+??:0044 7D-90                     105   	srlc	r0,	#07h
+??:0046 7D-91                     106   	srlc	r1,	#07h
+??:0048 7D-92                     107   	srlc	r2,	#07h
+??:004A 7E-93                     108   	sra	r3,	#07h
+??:004C F9 14                     109   	add	r4,	#0f9h
+??:004E F8 C8                     110   	bne	_$M4
+??:0050                           111   _$M3 :
+??:0050 4D-80                     112   	srlc	r0,	r4
+??:0052 4D-81                     113   	srlc	r1,	r4
+??:0054 12-92 00-90               114   	l	er2,	09000h
+??:0058 03-82                     115   	or	r2,	r0
+??:005A 13-83                     116   	or	r3,	r1
+??:005C 13-92 00-90               117   	st	er2,	09000h
+                                  118   
+                                  119   ;;            break;
+                                  120   CLINEA 0000H 0001H 000EH 000DH 0012H
+??:0060 03 CE                     121   	bal	_$L2
+                                  122   CBLOCKEND 0 4 15
+                                  123   
+                                  124   ;;        }
+                                  125   CLINEA 0000H 0000H 000FH 0009H 0009H
+??:0062                           126   _$L7 :
+                                  127   CBLOCKEND 0 3 16
+                                  128   
+                                  129   ;;    for (prog_index = 0;prog_index < 16;prog_index++)
+                                  130   CLINEA 0000H 0000H 0009H 0005H 0035H
+??:0062 01 14                     131   	add	r4,	#01h
+??:0064 10 74                     132   	cmp	r4,	#010h
+??:0066 D0 C1                     133   	blt	_$L3
+??:0068                           134   _$L2 :
+                                  135   CBLOCKEND 0 2 17
+                                  136   
+                                  137   ;;}
+                                  138   CLINEA 0000H 0001H 0011H 0001H 0001H
+??:0068 2E-F4                     139   	pop	xr4
+??:006A 1F-FE                     140   	rt
+                                  141   CBLOCKEND 0 1 17
+                                  142   CFUNCTIONEND 0
+                                  143   
+                                  144   
+  --------------------------      145   	rseg $$lkill$legacy_vm
+                                  146   CFUNCTION 1
+                                  147   
+??:0000                           148   _lkill	:
+                                  149   CBLOCK 1 1 20
+                                  150   
+                                  151   ;;{
+                                  152   CLINEA 0000H 0001H 0014H 0001H 0001H
+??:0000 CE-F8                     153   	push	lr
+                                  154   CBLOCK 1 2 20
+                                  155   CRET 0000H
+                                  156   CARGUMENT 46H 0002H 0024H "PID" 02H 00H 01H
+                                  157   CLOCAL 4AH 0001H 0000H 0002H "prog_index" 02H 00H 00H
+                                  158   
+                                  159   ;;    derefw(PROGRAM_COUNT) &= ~(1 << prog_index);
+                                  160   CLINEA 0000H 0001H 0016H 0005H 0030H
+??:0002 FE 10                     161   	add	r0,	#0feh
+??:0004 63 61                     162   	addc	r1,	#063h
+??:0006 0A E2                     163   	mov	er2,	#10
+??:0008 01-F0'00-00'              164   	bl	__uidivu8lw
+??:000C 00-82                     165   	mov	r2,	r0
+??:000E 10 12                     166   	add	r2,	#010h
+??:0010 01 E0                     167   	mov	er0,	#1 
+??:0012                           168   _$M7 :
+??:0012 07 72                     169   	cmp	r2,	#07h
+??:0014 04 C3                     170   	ble	_$M6
+??:0016 7B-91                     171   	sllc	r1,	#07h
+??:0018 7A-90                     172   	sll	r0,	#07h
+??:001A F9 12                     173   	add	r2,	#0f9h
+??:001C FA C8                     174   	bne	_$M7
+??:001E                           175   _$M6 :
+??:001E 2B-81                     176   	sllc	r1,	r2
+??:0020 2A-80                     177   	sll	r0,	r2
+??:0022 FF 40                     178   	xor	r0,	#0ffh
+??:0024 FF 41                     179   	xor	r1,	#0ffh
+??:0026 12-92 00-90               180   	l	er2,	09000h
+??:002A 02-82                     181   	and	r2,	r0
+??:002C 12-83                     182   	and	r3,	r1
+??:002E 13-92 00-90               183   	st	er2,	09000h
+                                  184   CBLOCKEND 1 2 23
+                                  185   
+                                  186   ;;}
+                                  187   CLINEA 0000H 0001H 0017H 0001H 0001H
+??:0032 8E-F2                     188   	pop	pc
+                                  189   CBLOCKEND 1 1 23
+                                  190   CFUNCTIONEND 1
+                                  191   
+                                  192   
+  --------------------------      193   	rseg $$lmemcpy$legacy_vm
+                                  194   CFUNCTION 8
+                                  195   
+??:0000                           196   _lmemcpy	:
+                                  197   CBLOCK 8 1 26
+                                  198   
+                                  199   ;;{
+                                  200   CLINEA 0000H 0001H 001AH 0001H 0001H
+??:0000 5E-FE                     201   	push	fp
+??:0002 1A-AE                     202   	mov	fp,	sp
+??:0004 6E-F8                     203   	push	xr8
+??:0006 5E-F4                     204   	push	er4
+??:0008 25-FA                     205   	mov	er10,	er2
+??:000A 05-F8                     206   	mov	er8,	er0
+                                  207   CBLOCK 8 2 26
+                                  208   CARGUMENT 46H 0002H 0028H "dest" 02H 00H 01H
+                                  209   CARGUMENT 46H 0002H 0029H "src" 02H 00H 01H
+                                  210   CARGUMENT 42H 0002H 0002H "size" 02H 00H 01H
+                                  211   CLOCAL 46H 0002H 0026H 0002H "i" 02H 00H 08H
+                                  212   
+                                  213   ;;    for(i = 0;i < size;i++)
+                                  214   CLINEA 0000H 0001H 001CH 0005H 001BH
+??:000C 00 E4                     215   	mov	er4,	#0 
+??:000E 08 CE                     216   	bal	_$L16
+??:0010                           217   _$L13 :
+                                  218   CBLOCK 8 3 29
+                                  219   
+                                  220   ;;        deref(dest+i) = deref(src+i);
+                                  221   CLINEA 0000H 0001H 001EH 0009H 0025H
+??:0010 A5-F0                     222   	mov	er0,	er10
+??:0012 46-F0                     223   	add	er0,	er4
+??:0014 05-F2                     224   	mov	er2,	er0
+??:0016 85-F0                     225   	mov	er0,	er8
+??:0018 46-F0                     226   	add	er0,	er4
+??:001A 20-92                     227   	l	r2,	[er2]
+??:001C 01-92                     228   	st	r2,	[er0]
+                                  229   CBLOCKEND 8 3 31
+                                  230   
+                                  231   ;;    for(i = 0;i < size;i++)
+                                  232   CLINEA 0000H 0000H 001CH 0005H 001BH
+??:001E 81 E4                     233   	add	er4,	#1 
+??:0020                           234   _$L16 :
+??:0020 42 B2                     235   	l	er2,	2[fp]
+??:0022 27-F4                     236   	cmp	er4,	er2
+??:0024 F5 C1                     237   	blt	_$L13
+                                  238   CBLOCKEND 8 2 32
+                                  239   
+                                  240   ;;}
+                                  241   CLINEA 0000H 0001H 0020H 0001H 0001H
+??:0026 1E-F4                     242   	pop	er4
+??:0028 2E-F8                     243   	pop	xr8
+??:002A EA-A1                     244   	mov	sp,	fp
+??:002C 1E-FE                     245   	pop	fp
+??:002E 1F-FE                     246   	rt
+                                  247   CBLOCKEND 8 1 32
+                                  248   CFUNCTIONEND 8
+                                  249   
+                                  250   
+  --------------------------      251   	rseg $$lload_from_rom$legacy_vm
+                                  252   CFUNCTION 2
+                                  253   
+??:0000                           254   _lload_from_rom	:
+                                  255   CBLOCK 2 1 35
+                                  256   
+                                  257   ;;{
+                                  258   CLINEA 0000H 0001H 0023H 0001H 0001H
+??:0000 CE-F8                     259   	push	lr
+??:0002 6E-F4                     260   	push	xr4
+??:0004 5E-F8                     261   	push	er8
+??:0006 05-F8                     262   	mov	er8,	er0
+                                  263   CBLOCK 2 2 35
+                                  264   CRET 0006H
+                                  265   CARGUMENT 46H 0002H 0028H "adr" 02H 00H 01H
+                                  266   CLOCAL 46H 0001H 0018H 0002H "prog_index" 02H 00H 00H
+                                  267   CLOCAL 46H 0002H 0027H 0002H "progs" 02H 00H 08H
+                                  268   CLOCAL 4AH 0002H 0000H 0002H "prog_size" 02H 00H 08H
+                                  269   
+                                  270   ;;    byte prog_index = 0;
+                                  271   CLINEA 0000H 0001H 0024H 0005H 0018H
+??:0008 00 04                     272   	mov	r4,	#00h
+                                  273   
+                                  274   ;;    word progs = derefw(PROGRAM_COUNT);
+                                  275   CLINEA 0000H 0001H 0025H 0005H 0027H
+??:000A 12-96 00-90               276   	l	er6,	09000h
+                                  277   
+                                  278   ;;    for (prog_index = 0;prog_index < 16;prog_index++)
+                                  279   CLINEA 0000H 0000H 0027H 0005H 0035H
+??:000E                           280   _$L20 :
+                                  281   CBLOCK 2 3 40
+                                  282   
+                                  283   ;;        if(((progs << prog_index) & 32768) == 0)
+                                  284   CLINEA 0000H 0001H 002AH 0009H 0030H
+??:000E 65-F0                     285   	mov	er0,	er6
+??:0010 40-82                     286   	mov	r2,	r4
+??:0012                           287   _$M11 :
+??:0012 07 72                     288   	cmp	r2,	#07h
+??:0014 04 C3                     289   	ble	_$M10
+??:0016 7B-91                     290   	sllc	r1,	#07h
+??:0018 7A-90                     291   	sll	r0,	#07h
+??:001A F9 12                     292   	add	r2,	#0f9h
+??:001C FA C8                     293   	bne	_$M11
+??:001E                           294   _$M10 :
+??:001E 2B-81                     295   	sllc	r1,	r2
+??:0020 71-A1                     296   	tb	r1.7
+??:0022 1C C8                     297   	bne	_$L24
+                                  298   CBLOCK 2 4 43
+                                  299   
+                                  300   ;;            memcpy((prog_index*prog_size)+0x9C02,adr,PROGRAM_SIZE);
+                                  301   CLINEA 0000H 0001H 002EH 000DH 0043H
+??:0024 1A 00                     302   	mov	r0,	#01ah
+??:0026 05 01                     303   	mov	r1,	#05h
+??:0028 5E-F0                     304   	push	er0
+??:002A 85-F2                     305   	mov	er2,	er8
+??:002C 40-80                     306   	mov	r0,	r4
+??:002E 00 01                     307   	mov	r1,	#00h
+??:0030 05-F4                     308   	mov	er4,	er0
+??:0032 2B-95                     309   	sllc	r5,	#02h
+??:0034 2A-94                     310   	sll	r4,	#02h
+??:0036 06-F4                     311   	add	er4,	er0
+??:0038 4B-95                     312   	sllc	r5,	#04h
+??:003A 4A-94                     313   	sll	r4,	#04h
+??:003C 06-F4                     314   	add	er4,	er0
+??:003E 46-F4                     315   	add	er4,	er4
+??:0040 06-F4                     316   	add	er4,	er0
+??:0042 2B-95                     317   	sllc	r5,	#02h
+??:0044 2A-94                     318   	sll	r4,	#02h
+??:0046 06-F4                     319   	add	er4,	er0
+??:0048 46-F4                     320   	add	er4,	er4
+??:004A 45-F0                     321   	mov	er0,	er4
+??:004C 02 10                     322   	add	r0,	#02h
+??:004E 9C 61                     323   	addc	r1,	#09ch
+??:0050 01-F0'00-00'              324   	bl	_memcpy
+??:0054 02 E1                     325   	add	sp,	#2 
+                                  326   
+                                  327   ;;            init_prog();
+                                  328   CLINEA 0000H 0001H 0030H 000DH 0018H
+??:0056 01-F0'00-00'              329   	bl	_init_prog
+                                  330   
+                                  331   ;;            break;
+                                  332   CLINEA 0000H 0001H 0031H 000DH 0012H
+??:005A 03 CE                     333   	bal	_$L19
+                                  334   CBLOCKEND 2 4 50
+                                  335   
+                                  336   ;;        }
+                                  337   CLINEA 0000H 0000H 0032H 0009H 0009H
+??:005C                           338   _$L24 :
+                                  339   CBLOCKEND 2 3 51
+                                  340   
+                                  341   ;;    for (prog_index = 0;prog_index < 16;prog_index++)
+                                  342   CLINEA 0000H 0000H 0027H 0005H 0035H
+??:005C 01 14                     343   	add	r4,	#01h
+??:005E 10 74                     344   	cmp	r4,	#010h
+??:0060 D6 C1                     345   	blt	_$L20
+??:0062                           346   _$L19 :
+                                  347   CBLOCKEND 2 2 52
+                                  348   
+                                  349   ;;}
+                                  350   CLINEA 0000H 0001H 0034H 0001H 0001H
+??:0062 1E-F8                     351   	pop	er8
+??:0064 2E-F4                     352   	pop	xr4
+??:0066 8E-F2                     353   	pop	pc
+                                  354   CBLOCKEND 2 1 52
+                                  355   CFUNCTIONEND 2
+                                  356   
+                                  357   
+  --------------------------      358   	rseg $$lread_byte$legacy_vm
+                                  359   CFUNCTION 3
+                                  360   
+??:0000                           361   _lread_byte	:
+                                  362   CBLOCK 3 1 55
+                                  363   
+                                  364   ;;{
+                                  365   CLINEA 0000H 0001H 0037H 0001H 0001H
+??:0000 CE-F8                     366   	push	lr
+??:0002 5E-F8                     367   	push	er8
+??:0004 05-F8                     368   	mov	er8,	er0
+                                  369   CBLOCK 3 2 55
+                                  370   CRET 0002H
+                                  371   CARGUMENT 46H 0002H 0028H "PID" 02H 00H 01H
+                                  372   CARGUMENT 46H 0002H 0025H "addr" 02H 00H 01H
+                                  373   
+                                  374   ;;    if(addr < RAM_SIZE)
+                                  375   CLINEA 0000H 0001H 0038H 0005H 0017H
+??:0006 25-F0                     376   	mov	er0,	er2
+??:0008 00 72                     377   	cmp	r2,	#00h
+??:000A 01 53                     378   	cmpc	r3,	#01h
+??:000C 05 C0                     379   	bge	_$L27
+                                  380   CBLOCK 3 3 57
+                                  381   
+                                  382   ;;        return deref(PID + 10 + NUM_REGS + addr);
+                                  383   CLINEA 0000H 0001H 003AH 0009H 0031H
+??:000E 86-F0                     384   	add	er0,	er8
+??:0010 08-90 1A-00               385   	l	r0,	01ah[er0]
+                                  386   CBLOCKEND 3 3 59
+                                  387   CBLOCKEND 3 2 63
+                                  388   
+                                  389   ;;}
+                                  390   CLINEA 0000H 0001H 003FH 0001H 0001H
+??:0014                           391   _$L26 :
+??:0014 1E-F8                     392   	pop	er8
+??:0016 8E-F2                     393   	pop	pc
+??:0018                           394   _$L27 :
+                                  395   
+                                  396   ;;    } else {
+                                  397   CLINEA 0000H 0000H 003BH 0005H 000CH
+                                  398   CBLOCK 3 4 59
+                                  399   
+                                  400   ;;        custom_break();
+                                  401   CLINEA 0000H 0001H 003CH 0009H 0017H
+??:0018 01-F0'00-00'              402   	bl	_custom_break
+                                  403   CBLOCKEND 3 4 61
+                                  404   
+                                  405   ;;    return 0;
+                                  406   CLINEA 0000H 0001H 003EH 0005H 000DH
+??:001C 00 00                     407   	mov	r0,	#00h
+??:001E FA CE                     408   	bal	_$L26
+                                  409   CBLOCKEND 3 1 63
+                                  410   CFUNCTIONEND 3
+                                  411   
+                                  412   
+  --------------------------      413   	rseg $$lread_word$legacy_vm
+                                  414   CFUNCTION 4
+                                  415   
+??:0000                           416   _lread_word	:
+                                  417   CBLOCK 4 1 66
+                                  418   
+                                  419   ;;{
+                                  420   CLINEA 0000H 0001H 0042H 0001H 0001H
+??:0000 CE-F8                     421   	push	lr
+??:0002 5E-F8                     422   	push	er8
+??:0004 05-F8                     423   	mov	er8,	er0
+                                  424   CBLOCK 4 2 66
+                                  425   CRET 0002H
+                                  426   CARGUMENT 46H 0002H 0028H "PID" 02H 00H 01H
+                                  427   CARGUMENT 46H 0002H 0025H "addr" 02H 00H 01H
+                                  428   
+                                  429   ;;    if(addr < RAM_SIZE)
+                                  430   CLINEA 0000H 0001H 0043H 0005H 0017H
+??:0006 25-F0                     431   	mov	er0,	er2
+??:0008 00 72                     432   	cmp	r2,	#00h
+??:000A 01 53                     433   	cmpc	r3,	#01h
+??:000C 05 C0                     434   	bge	_$L31
+                                  435   CBLOCK 4 3 68
+                                  436   
+                                  437   ;;        return derefw(PID + 10 + NUM_REGS + addr);
+                                  438   CLINEA 0000H 0001H 0045H 0009H 0032H
+??:000E 86-F0                     439   	add	er0,	er8
+??:0010 08-A0 1A-00               440   	l	er0,	01ah[er0]
+                                  441   CBLOCKEND 4 3 70
+                                  442   CBLOCKEND 4 2 74
+                                  443   
+                                  444   ;;}
+                                  445   CLINEA 0000H 0001H 004AH 0001H 0001H
+??:0014                           446   _$L30 :
+??:0014 1E-F8                     447   	pop	er8
+??:0016 8E-F2                     448   	pop	pc
+??:0018                           449   _$L31 :
+                                  450   
+                                  451   ;;    } else {
+                                  452   CLINEA 0000H 0000H 0046H 0005H 000CH
+                                  453   CBLOCK 4 4 70
+                                  454   
+                                  455   ;;        custom_break();
+                                  456   CLINEA 0000H 0001H 0047H 0009H 0017H
+??:0018 01-F0'00-00'              457   	bl	_custom_break
+                                  458   CBLOCKEND 4 4 72
+                                  459   
+                                  460   ;;    return 0;
+                                  461   CLINEA 0000H 0001H 0049H 0005H 000DH
+??:001C 00 E0                     462   	mov	er0,	#0 
+??:001E FA CE                     463   	bal	_$L30
+                                  464   CBLOCKEND 4 1 74
+                                  465   CFUNCTIONEND 4
+                                  466   
+                                  467   
+  --------------------------      468   	rseg $$lwrite_byte$legacy_vm
+                                  469   CFUNCTION 5
+                                  470   
+??:0000                           471   _lwrite_byte	:
+                                  472   CBLOCK 5 1 77
+                                  473   
+                                  474   ;;{
+                                  475   CLINEA 0000H 0001H 004DH 0001H 0001H
+??:0000 CE-F8                     476   	push	lr
+??:0002 5E-FE                     477   	push	fp
+??:0004 1A-AE                     478   	mov	fp,	sp
+??:0006 5E-F8                     479   	push	er8
+??:0008 05-F8                     480   	mov	er8,	er0
+                                  481   CBLOCK 5 2 77
+                                  482   CRET 0004H
+                                  483   CARGUMENT 46H 0002H 0028H "PID" 02H 00H 01H
+                                  484   CARGUMENT 46H 0002H 0025H "addr" 02H 00H 01H
+                                  485   CARGUMENT 42H 0001H 0006H "data" 02H 00H 00H
+                                  486   
+                                  487   ;;    if(addr < RAM_SIZE)
+                                  488   CLINEA 0000H 0001H 004EH 0005H 0017H
+??:000A 25-F0                     489   	mov	er0,	er2
+??:000C 00 72                     490   	cmp	r2,	#00h
+??:000E 01 53                     491   	cmpc	r3,	#01h
+??:0010 05 C0                     492   	bge	_$L35
+                                  493   CBLOCK 5 3 79
+                                  494   
+                                  495   ;;        deref(PID + 10 + NUM_REGS + addr) = data;
+                                  496   CLINEA 0000H 0001H 0050H 0009H 0031H
+??:0012 86-F0                     497   	add	er0,	er8
+??:0014 46 D2                     498   	l	r2,	6[fp]
+??:0016 09-92 1A-00               499   	st	r2,	01ah[er0]
+                                  500   CBLOCKEND 5 3 81
+??:001A 02 CE                     501   	bal	_$L37
+??:001C                           502   _$L35 :
+                                  503   
+                                  504   ;;    } else {
+                                  505   CLINEA 0000H 0000H 0051H 0005H 000CH
+                                  506   CBLOCK 5 4 81
+                                  507   
+                                  508   ;;        custom_break();
+                                  509   CLINEA 0000H 0001H 0052H 0009H 0017H
+??:001C 01-F0'00-00'              510   	bl	_custom_break
+                                  511   CBLOCKEND 5 4 83
+                                  512   
+                                  513   ;;    }
+                                  514   CLINEA 0000H 0000H 0053H 0005H 0005H
+??:0020                           515   _$L37 :
+                                  516   CBLOCKEND 5 2 84
+                                  517   
+                                  518   ;;}
+                                  519   CLINEA 0000H 0001H 0054H 0001H 0001H
+??:0020 1E-F8                     520   	pop	er8
+??:0022 EA-A1                     521   	mov	sp,	fp
+??:0024 1E-FE                     522   	pop	fp
+??:0026 8E-F2                     523   	pop	pc
+                                  524   CBLOCKEND 5 1 84
+                                  525   CFUNCTIONEND 5
+                                  526   
+                                  527   
+  --------------------------      528   	rseg $$lwrite_word$legacy_vm
+                                  529   CFUNCTION 6
+                                  530   
+??:0000                           531   _lwrite_word	:
+                                  532   CBLOCK 6 1 87
+                                  533   
+                                  534   ;;{
+                                  535   CLINEA 0000H 0001H 0057H 0001H 0001H
+??:0000 CE-F8                     536   	push	lr
+??:0002 5E-FE                     537   	push	fp
+??:0004 1A-AE                     538   	mov	fp,	sp
+??:0006 5E-F8                     539   	push	er8
+??:0008 05-F8                     540   	mov	er8,	er0
+                                  541   CBLOCK 6 2 87
+                                  542   CRET 0004H
+                                  543   CARGUMENT 46H 0002H 0028H "PID" 02H 00H 01H
+                                  544   CARGUMENT 46H 0002H 0025H "addr" 02H 00H 01H
+                                  545   CARGUMENT 42H 0002H 0006H "data" 02H 00H 01H
+                                  546   
+                                  547   ;;    if(addr < RAM_SIZE)
+                                  548   CLINEA 0000H 0001H 0058H 0005H 0017H
+??:000A 25-F0                     549   	mov	er0,	er2
+??:000C 00 72                     550   	cmp	r2,	#00h
+??:000E 01 53                     551   	cmpc	r3,	#01h
+??:0010 05 C0                     552   	bge	_$L39
+                                  553   CBLOCK 6 3 89
+                                  554   
+                                  555   ;;        derefw(PID + 10 + NUM_REGS + addr) = data;
+                                  556   CLINEA 0000H 0001H 005AH 0009H 0032H
+??:0012 86-F0                     557   	add	er0,	er8
+??:0014 46 B2                     558   	l	er2,	6[fp]
+??:0016 09-A2 1A-00               559   	st	er2,	01ah[er0]
+                                  560   CBLOCKEND 6 3 91
+??:001A 02 CE                     561   	bal	_$L41
+??:001C                           562   _$L39 :
+                                  563   
+                                  564   ;;    } else {
+                                  565   CLINEA 0000H 0000H 005BH 0005H 000CH
+                                  566   CBLOCK 6 4 91
+                                  567   
+                                  568   ;;        custom_break();
+                                  569   CLINEA 0000H 0001H 005CH 0009H 0017H
+??:001C 01-F0'00-00'              570   	bl	_custom_break
+                                  571   CBLOCKEND 6 4 93
+                                  572   
+                                  573   ;;    }
+                                  574   CLINEA 0000H 0000H 005DH 0005H 0005H
+??:0020                           575   _$L41 :
+                                  576   CBLOCKEND 6 2 94
+                                  577   
+                                  578   ;;}
+                                  579   CLINEA 0000H 0001H 005EH 0001H 0001H
+??:0020 1E-F8                     580   	pop	er8
+??:0022 EA-A1                     581   	mov	sp,	fp
+??:0024 1E-FE                     582   	pop	fp
+??:0026 8E-F2                     583   	pop	pc
+                                  584   CBLOCKEND 6 1 94
+                                  585   CFUNCTIONEND 6
+                                  586   
+                                  587   
+  --------------------------      588   	rseg $$lcmp_flags_word$legacy_vm
+                                  589   CFUNCTION 23
+                                  590   
+??:0000                           591   _lcmp_flags_word	:
+                                  592   CBLOCK 23 1 96
+                                  593   
+                                  594   ;;void lcmp_flags_word(word val1, word val2, word flags_addr) {
+                                  595   CLINEA 0000H 0001H 0060H 0001H 003DH
+??:0000 5E-FE                     596   	push	fp
+??:0002 1A-AE                     597   	mov	fp,	sp
+??:0004 6E-F8                     598   	push	xr8
+??:0006 5E-FC                     599   	push	bp
+??:0008 05-F8                     600   	mov	er8,	er0
+??:000A 25-FA                     601   	mov	er10,	er2
+                                  602   CBLOCK 23 2 96
+                                  603   CARGUMENT 46H 0002H 0028H "val1" 02H 00H 01H
+                                  604   CARGUMENT 46H 0002H 0029H "val2" 02H 00H 01H
+                                  605   CARGUMENT 42H 0002H 0002H "flags_addr" 02H 00H 01H
+                                  606   
+                                  607   ;;    deref(flags_addr) = 0;
+                                  608   CLINEA 0000H 0001H 0061H 0005H 001AH
+??:000C 42 BC                     609   	l	bp,	2[fp]
+??:000E 00 00                     610   	mov	r0,	#00h
+??:0010 C1-90                     611   	st	r0,	[bp]
+                                  612   
+                                  613   ;;    if (val1 == val2) deref(flags_addr) |= 0x01;
+                                  614   CLINEA 0000H 0001H 0062H 0005H 0030H
+??:0012 27-F8                     615   	cmp	er8,	er2
+??:0014 04 C8                     616   	bne	_$L43
+??:0016 42 BC                     617   	l	bp,	2[fp]
+??:0018 C0-90                     618   	l	r0,	[bp]
+??:001A 01 30                     619   	or	r0,	#01h
+??:001C C1-90                     620   	st	r0,	[bp]
+??:001E                           621   _$L43 :
+                                  622   
+                                  623   ;;    if (val1 >  val2) deref(flags_addr) |= 0x02;
+                                  624   CLINEA 0000H 0001H 0063H 0005H 0030H
+??:001E 27-F8                     625   	cmp	er8,	er2
+??:0020 04 C3                     626   	ble	_$L45
+??:0022 42 BC                     627   	l	bp,	2[fp]
+??:0024 C0-90                     628   	l	r0,	[bp]
+??:0026 02 30                     629   	or	r0,	#02h
+??:0028 C1-90                     630   	st	r0,	[bp]
+??:002A                           631   _$L45 :
+                                  632   
+                                  633   ;;    if (val1 <  val2) deref(flags_addr) |= 0x04;
+                                  634   CLINEA 0000H 0001H 0064H 0005H 0030H
+??:002A A7-F8                     635   	cmp	er8,	er10
+??:002C 04 C0                     636   	bge	_$L47
+??:002E 42 BC                     637   	l	bp,	2[fp]
+??:0030 C0-90                     638   	l	r0,	[bp]
+??:0032 04 30                     639   	or	r0,	#04h
+??:0034 C1-90                     640   	st	r0,	[bp]
+??:0036                           641   _$L47 :
+                                  642   
+                                  643   ;;    if (val1 >= val2) deref(flags_addr) |= 0x08;
+                                  644   CLINEA 0000H 0001H 0065H 0005H 0030H
+??:0036 A7-F8                     645   	cmp	er8,	er10
+??:0038 04 C1                     646   	blt	_$L49
+??:003A 42 BC                     647   	l	bp,	2[fp]
+??:003C C0-90                     648   	l	r0,	[bp]
+??:003E 08 30                     649   	or	r0,	#08h
+??:0040 C1-90                     650   	st	r0,	[bp]
+??:0042                           651   _$L49 :
+                                  652   
+                                  653   ;;    if (val1 <= val2) deref(flags_addr) |= 0x10;
+                                  654   CLINEA 0000H 0001H 0066H 0005H 0030H
+??:0042 A7-F8                     655   	cmp	er8,	er10
+??:0044 04 C2                     656   	bgt	_$L51
+??:0046 42 BC                     657   	l	bp,	2[fp]
+??:0048 C0-90                     658   	l	r0,	[bp]
+??:004A 10 30                     659   	or	r0,	#010h
+??:004C C1-90                     660   	st	r0,	[bp]
+??:004E                           661   _$L51 :
+                                  662   CBLOCKEND 23 2 103
+                                  663   
+                                  664   ;;}
+                                  665   CLINEA 0000H 0001H 0067H 0001H 0001H
+??:004E 1E-FC                     666   	pop	bp
+??:0050 2E-F8                     667   	pop	xr8
+??:0052 EA-A1                     668   	mov	sp,	fp
+??:0054 1E-FE                     669   	pop	fp
+??:0056 1F-FE                     670   	rt
+                                  671   CBLOCKEND 23 1 103
+                                  672   CFUNCTIONEND 23
+                                  673   
+                                  674   
+  --------------------------      675   	rseg $$lcmp_flags_byte$legacy_vm
+                                  676   CFUNCTION 24
+                                  677   
+??:0000                           678   _lcmp_flags_byte	:
+                                  679   CBLOCK 24 1 105
+                                  680   
+                                  681   ;;void lcmp_flags_byte(byte val1, byte val2, word flags_addr) {
+                                  682   CLINEA 0000H 0001H 0069H 0001H 003DH
+??:0000 6E-F8                     683   	push	xr8
+??:0002 25-FA                     684   	mov	er10,	er2
+??:0004 10-89                     685   	mov	r9,	r1
+??:0006 00-88                     686   	mov	r8,	r0
+                                  687   CBLOCK 24 2 105
+                                  688   CARGUMENT 46H 0001H 001CH "val1" 02H 00H 00H
+                                  689   CARGUMENT 46H 0001H 001DH "val2" 02H 00H 00H
+                                  690   CARGUMENT 46H 0002H 0029H "flags_addr" 02H 00H 01H
+                                  691   
+                                  692   ;;    deref(flags_addr) = 0;
+                                  693   CLINEA 0000H 0001H 006AH 0005H 001AH
+??:0008 00 02                     694   	mov	r2,	#00h
+??:000A A1-92                     695   	st	r2,	[er10]
+                                  696   
+                                  697   ;;    if (val1 == val2) deref(flags_addr) |= 0x01;
+                                  698   CLINEA 0000H 0001H 006BH 0005H 0030H
+??:000C 07-81                     699   	cmp	r1,	r0
+??:000E 03 C8                     700   	bne	_$L54
+??:0010 20-80                     701   	mov	r0,	r2
+??:0012 01 30                     702   	or	r0,	#01h
+??:0014 A1-90                     703   	st	r0,	[er10]
+??:0016                           704   _$L54 :
+                                  705   
+                                  706   ;;    if (val1 >  val2) deref(flags_addr) |= 0x02;
+                                  707   CLINEA 0000H 0001H 006CH 0005H 0030H
+??:0016 17-88                     708   	cmp	r8,	r1
+??:0018 03 C3                     709   	ble	_$L56
+??:001A A0-90                     710   	l	r0,	[er10]
+??:001C 02 30                     711   	or	r0,	#02h
+??:001E A1-90                     712   	st	r0,	[er10]
+??:0020                           713   _$L56 :
+                                  714   
+                                  715   ;;    if (val1 <  val2) deref(flags_addr) |= 0x04;
+                                  716   CLINEA 0000H 0001H 006DH 0005H 0030H
+??:0020 97-88                     717   	cmp	r8,	r9
+??:0022 03 C0                     718   	bge	_$L58
+??:0024 A0-90                     719   	l	r0,	[er10]
+??:0026 04 30                     720   	or	r0,	#04h
+??:0028 A1-90                     721   	st	r0,	[er10]
+??:002A                           722   _$L58 :
+                                  723   
+                                  724   ;;    if (val1 >= val2) deref(flags_addr) |= 0x08;
+                                  725   CLINEA 0000H 0001H 006EH 0005H 0030H
+??:002A 97-88                     726   	cmp	r8,	r9
+??:002C 03 C1                     727   	blt	_$L60
+??:002E A0-90                     728   	l	r0,	[er10]
+??:0030 08 30                     729   	or	r0,	#08h
+??:0032 A1-90                     730   	st	r0,	[er10]
+??:0034                           731   _$L60 :
+                                  732   
+                                  733   ;;    if (val1 <= val2) deref(flags_addr) |= 0x10;
+                                  734   CLINEA 0000H 0001H 006FH 0005H 0030H
+??:0034 97-88                     735   	cmp	r8,	r9
+??:0036 03 C2                     736   	bgt	_$L62
+??:0038 A0-90                     737   	l	r0,	[er10]
+??:003A 10 30                     738   	or	r0,	#010h
+??:003C A1-90                     739   	st	r0,	[er10]
+??:003E                           740   _$L62 :
+                                  741   CBLOCKEND 24 2 112
+                                  742   
+                                  743   ;;}
+                                  744   CLINEA 0000H 0001H 0070H 0001H 0001H
+??:003E 2E-F8                     745   	pop	xr8
+??:0040 1F-FE                     746   	rt
+                                  747   CBLOCKEND 24 1 112
+                                  748   CFUNCTIONEND 24
+                                  749   
+                                  750   
+  --------------------------      751   	rseg $$lexc_instruction$legacy_vm
+                                  752   CFUNCTION 7
+                                  753   
+??:0000                           754   _lexc_instruction	:
+                                  755   CBLOCK 7 1 115
+                                  756   
+                                  757   ;;{
+                                  758   CLINEA 0000H 0001H 0073H 0001H 0001H
+??:0000 CE-F8                     759   	push	lr
+??:0002 5E-FE                     760   	push	fp
+??:0004 1A-AE                     761   	mov	fp,	sp
+??:0006 F2 E1                     762   	add	sp,	#-014
+??:0008 6E-F8                     763   	push	xr8
+??:000A 6E-F4                     764   	push	xr4
+??:000C 5E-FC                     765   	push	bp
+??:000E 05-F8                     766   	mov	er8,	er0
+                                  767   CBLOCK 7 2 115
+                                  768   CRET 001AH
+                                  769   CARGUMENT 46H 0002H 0028H "PID" 02H 00H 01H
+                                  770   CLOCAL 42H 0002H 0002H 0002H "PC" 02H 00H 08H
+                                  771   CLOCAL 42H 0002H 0008H 0002H "SP" 02H 00H 08H
+                                  772   CLOCAL 42H 0002H 000AH 0002H "LR" 02H 00H 08H
+                                  773   CLOCAL 42H 0002H 0006H 0002H "FLAGS" 02H 00H 08H
+                                  774   CLOCAL 46H 0002H 0027H 0002H "regs" 02H 00H 08H
+                                  775   CLOCAL 4AH 0002H 0000H 0002H "ram" 02H 00H 08H
+                                  776   CLOCAL 42H 0002H 0004H 0002H "code" 02H 00H 08H
+                                  777   CLOCAL 42H 0002H 000EH 0002H "instruction" 02H 00H 08H
+                                  778   CLOCAL 42H 0001H 000BH 0002H "opcode" 02H 00H 00H
+                                  779   CLOCAL 46H 0001H 0017H 0002H "operand" 02H 00H 00H
+                                  780   CLOCAL 46H 0001H 001EH 0002H "reg1" 02H 00H 00H
+                                  781   CLOCAL 46H 0001H 001FH 0002H "reg2" 02H 00H 00H
+                                  782   CLOCAL 46H 0002H 0026H 0002H "cpc" 02H 00H 08H
+                                  783   
+                                  784   ;;    word PC = PID + 2;
+                                  785   CLINEA 0000H 0001H 0074H 0005H 0016H
+??:0010 82 E0                     786   	add	er0,	#2 
+??:0012 FE B0                     787   	st	er0,	-2[fp]
+                                  788   
+                                  789   ;;    word SP = PID + 4;
+                                  790   CLINEA 0000H 0001H 0075H 0005H 0016H
+??:0014 85-F0                     791   	mov	er0,	er8
+??:0016 84 E0                     792   	add	er0,	#4 
+??:0018 F8 B0                     793   	st	er0,	-8[fp]
+                                  794   
+                                  795   ;;    word LR = PID + 6;
+                                  796   CLINEA 0000H 0001H 0076H 0005H 0016H
+??:001A 85-F0                     797   	mov	er0,	er8
+??:001C 86 E0                     798   	add	er0,	#6 
+??:001E F6 B0                     799   	st	er0,	-10[fp]
+                                  800   
+                                  801   ;;    word FLAGS = PID + 8;
+                                  802   CLINEA 0000H 0001H 0077H 0005H 0019H
+??:0020 85-F0                     803   	mov	er0,	er8
+??:0022 88 E0                     804   	add	er0,	#8 
+??:0024 FA B0                     805   	st	er0,	-6[fp]
+                                  806   
+                                  807   ;;    word regs = PID + 10;
+                                  808   CLINEA 0000H 0001H 0078H 0005H 0019H
+??:0026 85-F0                     809   	mov	er0,	er8
+??:0028 8A E0                     810   	add	er0,	#10
+??:002A 05-F6                     811   	mov	er6,	er0
+                                  812   
+                                  813   ;;    word code = PID + 10 + NUM_REGS + RAM_SIZE;
+                                  814   CLINEA 0000H 0001H 007AH 0005H 002FH
+??:002C 85-FC                     815   	mov	bp,	er8
+??:002E 1A 1C                     816   	add	r12,	#01ah
+??:0030 01 6D                     817   	addc	r13,	#01h
+??:0032 FC BC                     818   	st	bp,	-4[fp]
+                                  819   
+                                  820   ;;    word instruction = derefw(derefw(PC)+code);
+                                  821   CLINEA 0000H 0001H 007BH 0005H 002FH
+??:0034 88-A0 02-00               822   	l	er0,	02h[er8]
+??:0038 C6-F0                     823   	add	er0,	bp
+??:003A 02-92                     824   	l	er2,	[er0]
+??:003C F2 B2                     825   	st	er2,	-14[fp]
+                                  826   
+                                  827   ;;    byte opcode = (instruction & 0xFF00) >> 8;
+                                  828   CLINEA 0000H 0001H 007CH 0005H 002EH
+??:003E 02-92                     829   	l	er2,	[er0]
+??:0040 F5 D3                     830   	st	r3,	-11[fp]
+                                  831   
+                                  832   ;;    byte operand = instruction & 0x00FF;
+                                  833   CLINEA 0000H 0001H 007DH 0005H 0028H
+??:0042 02-90                     834   	l	er0,	[er0]
+??:0044 00-82                     835   	mov	r2,	r0
+??:0046 00-83                     836   	mov	r3,	r0
+                                  837   
+                                  838   ;;    byte reg1 = (operand & 0xF0) >> 4;
+                                  839   CLINEA 0000H 0001H 007EH 0005H 0026H
+??:0048 00 01                     840   	mov	r1,	#00h
+??:004A F0 20                     841   	and	r0,	#0f0h
+??:004C 00 21                     842   	and	r1,	#00h
+??:004E 4D-90                     843   	srlc	r0,	#04h
+??:0050 00-8A                     844   	mov	r10,	r0
+                                  845   
+                                  846   ;;    byte reg2 = operand & 0x0F;
+                                  847   CLINEA 0000H 0001H 007FH 0005H 001FH
+??:0052 0F 22                     848   	and	r2,	#0fh
+??:0054 20-8B                     849   	mov	r11,	r2
+                                  850   
+                                  851   ;;    derefw(PC) += 2;
+                                  852   CLINEA 0000H 0001H 0086H 0005H 0014H
+??:0056 88-A0 02-00               853   	l	er0,	02h[er8]
+??:005A 82 E0                     854   	add	er0,	#2 
+??:005C 89-A0 02-00               855   	st	er0,	02h[er8]
+                                  856   
+                                  857   ;;    cpc = derefw(PC);
+                                  858   CLINEA 0000H 0001H 0087H 0005H 0015H
+??:0060 7E BC                     859   	l	bp,	-2[fp]
+??:0062 C2-90                     860   	l	er0,	[bp]
+??:0064 05-F4                     861   	mov	er4,	er0
+                                  862   
+                                  863   ;;    switch(opcode)
+                                  864   CLINEA 0000H 0001H 0088H 0005H 0012H
+??:0066 75 D0                     865   	l	r0,	-11[fp]
+??:0068 00 01                     866   	mov	r1,	#00h
+                                  867   CBLOCK 7 3 137
+??:006A FF 70                     868   	cmp	r0,	#0ffh
+??:006C 00 51                     869   	cmpc	r1,	#00h
+??:006E 02 C3                     870   	ble	_$M36
+??:0070 00-F0'00-00'              871   	b	_$L198
+??:0074                           872   _$M36 :
+??:0074 1B-91                     873   	sllc	r1,	#01h
+??:0076 1A-90                     874   	sll	r0,	#01h
+??:0078 08-A0 00-00'              875   	l	er0,	NEAR _$M19[er0]
+??:007C 02-F0                     876   	b	er0
+                                  877   
+                                  878   ;;    }
+??:007E                           879   _$L68 :
+                                  880   CBLOCKEND 7 2 596
+                                  881   
+                                  882   ;;}
+                                  883   CLINEA 0000H 0001H 0254H 0001H 0001H
+??:007E 1E-FC                     884   	pop	bp
+??:0080 2E-F4                     885   	pop	xr4
+??:0082 2E-F8                     886   	pop	xr8
+??:0084 EA-A1                     887   	mov	sp,	fp
+??:0086 1E-FE                     888   	pop	fp
+??:0088 8E-F2                     889   	pop	pc
+                                  890   
+                                  891   ;;        case 0x00:
+                                  892   CLINEA 0000H 0001H 008BH 0009H 0012H
+??:008A                           893   _$S70 :
+                                  894   
+                                  895   ;;            deref(regs + reg1) = deref(regs + reg2);
+                                  896   CLINEA 0000H 0001H 008DH 000DH 0034H
+??:008A B0-80                     897   	mov	r0,	r11
+??:008C 00 01                     898   	mov	r1,	#00h
+??:008E 66-F0                     899   	add	er0,	er6
+??:0090 05-F2                     900   	mov	er2,	er0
+??:0092 A0-80                     901   	mov	r0,	r10
+??:0094 00 01                     902   	mov	r1,	#00h
+??:0096 66-F0                     903   	add	er0,	er6
+??:0098 20-92                     904   	l	r2,	[er2]
+??:009A 01-92                     905   	st	r2,	[er0]
+                                  906   
+                                  907   ;;            break;
+                                  908   CLINEA 0000H 0001H 008EH 000DH 0012H
+??:009C F0 CE                     909   	bal	_$L68
+                                  910   
+                                  911   ;;        case 0x01:
+                                  912   CLINEA 0000H 0001H 008FH 0009H 0012H
+??:009E                           913   _$S71 :
+                                  914   
+                                  915   ;;            deref(regs + reg1) += deref(regs + reg2);
+                                  916   CLINEA 0000H 0001H 0091H 000DH 0035H
+??:009E A0-80                     917   	mov	r0,	r10
+??:00A0 00 01                     918   	mov	r1,	#00h
+??:00A2 66-F0                     919   	add	er0,	er6
+??:00A4 B0-82                     920   	mov	r2,	r11
+??:00A6 00 03                     921   	mov	r3,	#00h
+??:00A8 66-F2                     922   	add	er2,	er6
+??:00AA 00-94                     923   	l	r4,	[er0]
+??:00AC 20-92                     924   	l	r2,	[er2]
+??:00AE 21-84                     925   	add	r4,	r2
+??:00B0 01-94                     926   	st	r4,	[er0]
+                                  927   
+                                  928   ;;            break;
+                                  929   CLINEA 0000H 0001H 0092H 000DH 0012H
+??:00B2 E5 CE                     930   	bal	_$L68
+                                  931   
+                                  932   ;;        case 0x02:
+                                  933   CLINEA 0000H 0001H 0093H 0009H 0012H
+??:00B4                           934   _$S72 :
+                                  935   
+                                  936   ;;            deref(regs + reg1) -= deref(regs + reg2);
+                                  937   CLINEA 0000H 0001H 0095H 000DH 0035H
+??:00B4 A0-80                     938   	mov	r0,	r10
+??:00B6 00 01                     939   	mov	r1,	#00h
+??:00B8 66-F0                     940   	add	er0,	er6
+??:00BA B0-82                     941   	mov	r2,	r11
+??:00BC 00 03                     942   	mov	r3,	#00h
+??:00BE 66-F2                     943   	add	er2,	er6
+??:00C0 00-94                     944   	l	r4,	[er0]
+??:00C2 20-92                     945   	l	r2,	[er2]
+??:00C4 28-84                     946   	sub	r4,	r2
+??:00C6 01-94                     947   	st	r4,	[er0]
+                                  948   
+                                  949   ;;            break;
+                                  950   CLINEA 0000H 0001H 0096H 000DH 0012H
+??:00C8 DA CE                     951   	bal	_$L68
+                                  952   
+                                  953   ;;        case 0x03:
+                                  954   CLINEA 0000H 0001H 0097H 0009H 0012H
+??:00CA                           955   _$S73 :
+                                  956   
+                                  957   ;;            deref(regs + reg1) *= deref(regs + reg2);
+                                  958   CLINEA 0000H 0001H 0099H 000DH 0035H
+??:00CA A0-80                     959   	mov	r0,	r10
+??:00CC 00 01                     960   	mov	r1,	#00h
+??:00CE 66-F0                     961   	add	er0,	er6
+??:00D0 B0-82                     962   	mov	r2,	r11
+??:00D2 00 03                     963   	mov	r3,	#00h
+??:00D4 66-F2                     964   	add	er2,	er6
+??:00D6 00-94                     965   	l	r4,	[er0]
+??:00D8 20-92                     966   	l	r2,	[er2]
+??:00DA 24-F4                     967   	mul	er4,	r2
+??:00DC 01-94                     968   	st	r4,	[er0]
+                                  969   
+                                  970   ;;            break;
+                                  971   CLINEA 0000H 0001H 009AH 000DH 0012H
+??:00DE CF CE                     972   	bal	_$L68
+                                  973   
+                                  974   ;;        case 0x04:
+                                  975   CLINEA 0000H 0001H 009BH 0009H 0012H
+??:00E0                           976   _$S74 :
+                                  977   
+                                  978   ;;            deref(regs + reg1) /= deref(regs + reg2);
+                                  979   CLINEA 0000H 0001H 009DH 000DH 0035H
+??:00E0 A0-80                     980   	mov	r0,	r10
+??:00E2 00 01                     981   	mov	r1,	#00h
+??:00E4 66-F0                     982   	add	er0,	er6
+??:00E6 00-94                     983   	l	r4,	[er0]
+??:00E8 00 05                     984   	mov	r5,	#00h
+??:00EA B0-82                     985   	mov	r2,	r11
+??:00EC 00 03                     986   	mov	r3,	#00h
+??:00EE 66-F2                     987   	add	er2,	er6
+??:00F0 20-92                     988   	l	r2,	[er2]
+??:00F2 29-F4                     989   	div	er4,	r2
+??:00F4 01-94                     990   	st	r4,	[er0]
+                                  991   
+                                  992   ;;            break;
+                                  993   CLINEA 0000H 0001H 009EH 000DH 0012H
+??:00F6 00-F0'00-00'              994   	b	_$L68
+                                  995   
+                                  996   ;;        case 0x05:
+                                  997   CLINEA 0000H 0001H 009FH 0009H 0012H
+??:00FA                           998   _$S75 :
+                                  999   
+                                 1000   ;;            deref(regs + reg1) = deref(regs + reg1) << deref(regs + reg2);
+                                 1001   CLINEA 0000H 0001H 00A1H 000DH 004AH
+??:00FA A0-80                    1002   	mov	r0,	r10
+??:00FC 00 01                    1003   	mov	r1,	#00h
+??:00FE 66-F0                    1004   	add	er0,	er6
+??:0100 05-F2                    1005   	mov	er2,	er0
+??:0102 B0-80                    1006   	mov	r0,	r11
+??:0104 00 01                    1007   	mov	r1,	#00h
+??:0106 66-F0                    1008   	add	er0,	er6
+??:0108 05-F4                    1009   	mov	er4,	er0
+??:010A 20-90                    1010   	l	r0,	[er2]
+??:010C 40-91                    1011   	l	r1,	[er4]
+??:010E 07 71                    1012   	cmp	r1,	#07h
+??:0110 03 C2                    1013   	bgt	_$M20
+??:0112 1A-80                    1014   	sll	r0,	r1
+??:0114 00-F0'00-00'             1015   	b	_$M21
+??:0118                          1016   _$M20 :
+??:0118 00 00                    1017   	mov	r0,	#00h
+??:011A                          1018   _$M21 :
+??:011A A0-82                    1019   	mov	r2,	r10
+??:011C 00 03                    1020   	mov	r3,	#00h
+??:011E 66-F2                    1021   	add	er2,	er6
+??:0120 21-90                    1022   	st	r0,	[er2]
+                                 1023   
+                                 1024   ;;            break;
+                                 1025   CLINEA 0000H 0001H 00A2H 000DH 0012H
+??:0122 00-F0'00-00'             1026   	b	_$L68
+                                 1027   
+                                 1028   ;;        case 0x06:
+                                 1029   CLINEA 0000H 0001H 00A3H 0009H 0012H
+??:0126                          1030   _$S76 :
+                                 1031   
+                                 1032   ;;            deref(regs + reg1) = deref(regs + reg1) >> deref(regs + reg2);
+                                 1033   CLINEA 0000H 0001H 00A5H 000DH 004AH
+??:0126 A0-80                    1034   	mov	r0,	r10
+??:0128 00 01                    1035   	mov	r1,	#00h
+??:012A 66-F0                    1036   	add	er0,	er6
+??:012C 05-F2                    1037   	mov	er2,	er0
+??:012E B0-80                    1038   	mov	r0,	r11
+??:0130 00 01                    1039   	mov	r1,	#00h
+??:0132 66-F0                    1040   	add	er0,	er6
+??:0134 05-F4                    1041   	mov	er4,	er0
+??:0136 20-90                    1042   	l	r0,	[er2]
+??:0138 40-91                    1043   	l	r1,	[er4]
+??:013A 07 71                    1044   	cmp	r1,	#07h
+??:013C 03 C2                    1045   	bgt	_$M22
+??:013E 1C-80                    1046   	srl	r0,	r1
+??:0140 00-F0'00-00'             1047   	b	_$M23
+??:0144                          1048   _$M22 :
+??:0144 00 00                    1049   	mov	r0,	#00h
+??:0146                          1050   _$M23 :
+??:0146 A0-82                    1051   	mov	r2,	r10
+??:0148 00 03                    1052   	mov	r3,	#00h
+??:014A 66-F2                    1053   	add	er2,	er6
+??:014C 21-90                    1054   	st	r0,	[er2]
+                                 1055   
+                                 1056   ;;            break;
+                                 1057   CLINEA 0000H 0001H 00A6H 000DH 0012H
+??:014E 00-F0'00-00'             1058   	b	_$L68
+                                 1059   
+                                 1060   ;;        case 0x07:
+                                 1061   CLINEA 0000H 0001H 00A7H 0009H 0012H
+??:0152                          1062   _$S77 :
+                                 1063   
+                                 1064   ;;            deref(regs + reg1) = lread_byte(PID, derefw(regs + reg2));
+                                 1065   CLINEA 0000H 0000H 00A9H 000DH 0046H
+??:0152 B0-80                    1066   	mov	r0,	r11
+??:0154 00 01                    1067   	mov	r1,	#00h
+??:0156 66-F0                    1068   	add	er0,	er6
+??:0158 02-92                    1069   	l	er2,	[er0]
+??:015A 85-F0                    1070   	mov	er0,	er8
+??:015C 01-F0'00-00'             1071   	bl	_lread_byte
+??:0160 00-84                    1072   	mov	r4,	r0
+??:0162 A0-80                    1073   	mov	r0,	r10
+??:0164 00 01                    1074   	mov	r1,	#00h
+??:0166 66-F0                    1075   	add	er0,	er6
+??:0168 01-94                    1076   	st	r4,	[er0]
+                                 1077   
+                                 1078   ;;            break;
+                                 1079   CLINEA 0000H 0001H 00AAH 000DH 0012H
+??:016A 00-F0'00-00'             1080   	b	_$L68
+                                 1081   
+                                 1082   ;;        case 0x08:
+                                 1083   CLINEA 0000H 0001H 00ABH 0009H 0012H
+??:016E                          1084   _$S78 :
+                                 1085   
+                                 1086   ;;            lwrite_byte(PID, derefw(regs + reg2), deref(regs + reg1));
+                                 1087   CLINEA 0000H 0001H 00ADH 000DH 0046H
+??:016E A0-80                    1088   	mov	r0,	r10
+??:0170 00 01                    1089   	mov	r1,	#00h
+??:0172 66-F0                    1090   	add	er0,	er6
+??:0174 00-90                    1091   	l	r0,	[er0]
+??:0176 4E-F0                    1092   	push	r0
+??:0178 B0-80                    1093   	mov	r0,	r11
+??:017A 00 01                    1094   	mov	r1,	#00h
+??:017C 66-F0                    1095   	add	er0,	er6
+??:017E 02-92                    1096   	l	er2,	[er0]
+??:0180 85-F0                    1097   	mov	er0,	er8
+??:0182 01-F0'00-00'             1098   	bl	_lwrite_byte
+??:0186 02 E1                    1099   	add	sp,	#2 
+                                 1100   
+                                 1101   ;;            break;
+                                 1102   CLINEA 0000H 0001H 00AEH 000DH 0012H
+??:0188 00-F0'00-00'             1103   	b	_$L68
+                                 1104   
+                                 1105   ;;        case 0x09:
+                                 1106   CLINEA 0000H 0001H 00AFH 0009H 0012H
+??:018C                          1107   _$S79 :
+                                 1108   
+                                 1109   ;;            deref(regs + reg1) &= deref(regs + reg2);
+                                 1110   CLINEA 0000H 0001H 00B1H 000DH 0035H
+??:018C A0-80                    1111   	mov	r0,	r10
+??:018E 00 01                    1112   	mov	r1,	#00h
+??:0190 66-F0                    1113   	add	er0,	er6
+??:0192 B0-82                    1114   	mov	r2,	r11
+??:0194 00 03                    1115   	mov	r3,	#00h
+??:0196 66-F2                    1116   	add	er2,	er6
+??:0198 00-94                    1117   	l	r4,	[er0]
+??:019A 20-92                    1118   	l	r2,	[er2]
+??:019C 22-84                    1119   	and	r4,	r2
+??:019E 01-94                    1120   	st	r4,	[er0]
+                                 1121   
+                                 1122   ;;            break;
+                                 1123   CLINEA 0000H 0001H 00B2H 000DH 0012H
+??:01A0 00-F0'00-00'             1124   	b	_$L68
+                                 1125   
+                                 1126   ;;        case 0x0A:
+                                 1127   CLINEA 0000H 0001H 00B3H 0009H 0012H
+??:01A4                          1128   _$S80 :
+                                 1129   
+                                 1130   ;;            deref(regs + reg1) |= deref(regs + reg2);
+                                 1131   CLINEA 0000H 0001H 00B5H 000DH 0035H
+??:01A4 A0-80                    1132   	mov	r0,	r10
+??:01A6 00 01                    1133   	mov	r1,	#00h
+??:01A8 66-F0                    1134   	add	er0,	er6
+??:01AA B0-82                    1135   	mov	r2,	r11
+??:01AC 00 03                    1136   	mov	r3,	#00h
+??:01AE 66-F2                    1137   	add	er2,	er6
+??:01B0 00-94                    1138   	l	r4,	[er0]
+??:01B2 20-92                    1139   	l	r2,	[er2]
+??:01B4 23-84                    1140   	or	r4,	r2
+??:01B6 01-94                    1141   	st	r4,	[er0]
+                                 1142   
+                                 1143   ;;            break;
+                                 1144   CLINEA 0000H 0001H 00B6H 000DH 0012H
+??:01B8 00-F0'00-00'             1145   	b	_$L68
+                                 1146   
+                                 1147   ;;        case 0x0B:
+                                 1148   CLINEA 0000H 0001H 00B7H 0009H 0012H
+??:01BC                          1149   _$S81 :
+                                 1150   
+                                 1151   ;;            deref(regs + reg1) ^= deref(regs + reg2);
+                                 1152   CLINEA 0000H 0001H 00B9H 000DH 0035H
+??:01BC A0-80                    1153   	mov	r0,	r10
+??:01BE 00 01                    1154   	mov	r1,	#00h
+??:01C0 66-F0                    1155   	add	er0,	er6
+??:01C2 B0-82                    1156   	mov	r2,	r11
+??:01C4 00 03                    1157   	mov	r3,	#00h
+??:01C6 66-F2                    1158   	add	er2,	er6
+??:01C8 00-94                    1159   	l	r4,	[er0]
+??:01CA 20-92                    1160   	l	r2,	[er2]
+??:01CC 24-84                    1161   	xor	r4,	r2
+??:01CE 01-94                    1162   	st	r4,	[er0]
+                                 1163   
+                                 1164   ;;            break;
+                                 1165   CLINEA 0000H 0001H 00BAH 000DH 0012H
+??:01D0 00-F0'00-00'             1166   	b	_$L68
+                                 1167   
+                                 1168   ;;        case 0x0C:
+                                 1169   CLINEA 0000H 0001H 00BBH 0009H 0012H
+??:01D4                          1170   _$S82 :
+                                 1171   
+                                 1172   ;;            deref(regs + reg1)+=1;
+                                 1173   CLINEA 0000H 0001H 00BDH 000DH 0022H
+??:01D4 A0-80                    1174   	mov	r0,	r10
+??:01D6 00 01                    1175   	mov	r1,	#00h
+??:01D8 66-F0                    1176   	add	er0,	er6
+??:01DA 0A-F0                    1177   	lea	[er0]
+??:01DC 2F-FE                    1178   	inc	[ea]
+                                 1179   
+                                 1180   ;;            break;
+                                 1181   CLINEA 0000H 0001H 00BFH 000DH 0012H
+??:01DE 00-F0'00-00'             1182   	b	_$L68
+                                 1183   
+                                 1184   ;;        case 0x0D:
+                                 1185   CLINEA 0000H 0001H 00C0H 0009H 0012H
+??:01E2                          1186   _$S83 :
+                                 1187   
+                                 1188   ;;            deref(regs + reg1)-=1;
+                                 1189   CLINEA 0000H 0001H 00C2H 000DH 0022H
+??:01E2 A0-80                    1190   	mov	r0,	r10
+??:01E4 00 01                    1191   	mov	r1,	#00h
+??:01E6 66-F0                    1192   	add	er0,	er6
+??:01E8 0A-F0                    1193   	lea	[er0]
+??:01EA 3F-FE                    1194   	dec	[ea]
+                                 1195   
+                                 1196   ;;            break;
+                                 1197   CLINEA 0000H 0001H 00C3H 000DH 0012H
+??:01EC 00-F0'00-00'             1198   	b	_$L68
+                                 1199   
+                                 1200   ;;        case 0x0E:
+                                 1201   CLINEA 0000H 0001H 00C4H 0009H 0012H
+??:01F0                          1202   _$S84 :
+                                 1203   
+                                 1204   ;;            lcmp_flags_byte(deref(regs + reg1), deref(regs + reg2), FLAGS);
+                                 1205   CLINEA 0000H 0001H 00C6H 000DH 004BH
+??:01F0 7A B2                    1206   	l	er2,	-6[fp]
+??:01F2 B0-80                    1207   	mov	r0,	r11
+??:01F4 00 01                    1208   	mov	r1,	#00h
+??:01F6 66-F0                    1209   	add	er0,	er6
+??:01F8 00-91                    1210   	l	r1,	[er0]
+??:01FA A0-84                    1211   	mov	r4,	r10
+??:01FC 00 05                    1212   	mov	r5,	#00h
+??:01FE 66-F4                    1213   	add	er4,	er6
+??:0200 40-90                    1214   	l	r0,	[er4]
+??:0202 01-F0'00-00'             1215   	bl	_lcmp_flags_byte
+                                 1216   
+                                 1217   ;;            break;
+                                 1218   CLINEA 0000H 0001H 00C7H 000DH 0012H
+??:0206 00-F0'00-00'             1219   	b	_$L68
+                                 1220   
+                                 1221   ;;        case 0x0F:
+                                 1222   CLINEA 0000H 0001H 00C8H 0009H 0012H
+??:020A                          1223   _$S85 :
+                                 1224   
+                                 1225   ;;            derefw(PC) = derefw(regs + reg1);
+                                 1226   CLINEA 0000H 0001H 00CAH 000DH 002DH
+??:020A A0-80                    1227   	mov	r0,	r10
+??:020C 00 01                    1228   	mov	r1,	#00h
+??:020E 66-F0                    1229   	add	er0,	er6
+??:0210 7E BC                    1230   	l	bp,	-2[fp]
+??:0212 02-90                    1231   	l	er0,	[er0]
+??:0214 C3-90                    1232   	st	er0,	[bp]
+                                 1233   
+                                 1234   ;;            break;
+                                 1235   CLINEA 0000H 0001H 00CBH 000DH 0012H
+??:0216 00-F0'00-00'             1236   	b	_$L68
+                                 1237   
+                                 1238   ;;        case 0x10:
+                                 1239   CLINEA 0000H 0001H 00CCH 0009H 0012H
+??:021A                          1240   _$S86 :
+                                 1241   
+                                 1242   ;;            if(deref(FLAGS) & 0x01)
+                                 1243   CLINEA 0000H 0001H 00CEH 000DH 0023H
+??:021A 7A BC                    1244   	l	bp,	-6[fp]
+??:021C C0-90                    1245   	l	r0,	[bp]
+??:021E 01-A0                    1246   	tb	r0.0
+??:0220 02 C8                    1247   	bne	_$M37
+??:0222 00-F0'00-00'             1248   	b	_$L68
+??:0226                          1249   _$M37 :
+                                 1250   CBLOCK 7 4 207
+                                 1251   
+                                 1252   ;;                derefw(PC) = derefw(regs + reg1);
+                                 1253   CLINEA 0000H 0001H 00D0H 0011H 0031H
+??:0226 A0-80                    1254   	mov	r0,	r10
+??:0228 00 01                    1255   	mov	r1,	#00h
+??:022A 66-F0                    1256   	add	er0,	er6
+??:022C 7E BC                    1257   	l	bp,	-2[fp]
+??:022E 02-90                    1258   	l	er0,	[er0]
+??:0230 C3-90                    1259   	st	er0,	[bp]
+                                 1260   CBLOCKEND 7 4 209
+                                 1261   
+                                 1262   ;;            break;
+                                 1263   CLINEA 0000H 0001H 00D2H 000DH 0012H
+??:0232 00-F0'00-00'             1264   	b	_$L68
+                                 1265   
+                                 1266   ;;        case 0x11:
+                                 1267   CLINEA 0000H 0001H 00D3H 0009H 0012H
+??:0236                          1268   _$S89 :
+                                 1269   
+                                 1270   ;;            if(!(deref(FLAGS) & 0x01))
+                                 1271   CLINEA 0000H 0000H 00D5H 000DH 0026H
+??:0236 7A BC                    1272   	l	bp,	-6[fp]
+??:0238 C0-90                    1273   	l	r0,	[bp]
+??:023A 01-A0                    1274   	tb	r0.0
+??:023C 02 C9                    1275   	beq	_$M38
+??:023E 00-F0'00-00'             1276   	b	_$L68
+??:0242                          1277   _$M38 :
+                                 1278   CBLOCK 7 5 214
+                                 1279   
+                                 1280   ;;                derefw(PC) = derefw(regs + reg1);
+                                 1281   CLINEA 0000H 0001H 00D7H 0011H 0031H
+??:0242 A0-80                    1282   	mov	r0,	r10
+??:0244 00 01                    1283   	mov	r1,	#00h
+??:0246 66-F0                    1284   	add	er0,	er6
+??:0248 7E BC                    1285   	l	bp,	-2[fp]
+??:024A 02-90                    1286   	l	er0,	[er0]
+??:024C C3-90                    1287   	st	er0,	[bp]
+                                 1288   CBLOCKEND 7 5 216
+                                 1289   
+                                 1290   ;;            break;
+                                 1291   CLINEA 0000H 0001H 00D9H 000DH 0012H
+??:024E 00-F0'00-00'             1292   	b	_$L68
+                                 1293   
+                                 1294   ;;        case 0x12:
+                                 1295   CLINEA 0000H 0001H 00DAH 0009H 0012H
+??:0252                          1296   _$S94 :
+                                 1297   
+                                 1298   ;;            if(deref(FLAGS) & 0x02)
+                                 1299   CLINEA 0000H 0001H 00DCH 000DH 0023H
+??:0252 7A BC                    1300   	l	bp,	-6[fp]
+??:0254 C0-90                    1301   	l	r0,	[bp]
+??:0256 11-A0                    1302   	tb	r0.1
+??:0258 02 C8                    1303   	bne	_$M39
+??:025A 00-F0'00-00'             1304   	b	_$L68
+??:025E                          1305   _$M39 :
+                                 1306   CBLOCK 7 6 221
+                                 1307   
+                                 1308   ;;                derefw(PC) = derefw(regs + reg1);
+                                 1309   CLINEA 0000H 0001H 00DEH 0011H 0031H
+??:025E A0-80                    1310   	mov	r0,	r10
+??:0260 00 01                    1311   	mov	r1,	#00h
+??:0262 66-F0                    1312   	add	er0,	er6
+??:0264 7E BC                    1313   	l	bp,	-2[fp]
+??:0266 02-90                    1314   	l	er0,	[er0]
+??:0268 C3-90                    1315   	st	er0,	[bp]
+                                 1316   CBLOCKEND 7 6 223
+                                 1317   
+                                 1318   ;;            break;
+                                 1319   CLINEA 0000H 0001H 00E0H 000DH 0012H
+??:026A 00-F0'00-00'             1320   	b	_$L68
+                                 1321   
+                                 1322   ;;        case 0x13:
+                                 1323   CLINEA 0000H 0001H 00E1H 0009H 0012H
+??:026E                          1324   _$S97 :
+                                 1325   
+                                 1326   ;;            if(deref(FLAGS) & 0x04)
+                                 1327   CLINEA 0000H 0001H 00E3H 000DH 0023H
+??:026E 7A BC                    1328   	l	bp,	-6[fp]
+??:0270 C0-90                    1329   	l	r0,	[bp]
+??:0272 21-A0                    1330   	tb	r0.2
+??:0274 02 C8                    1331   	bne	_$M40
+??:0276 00-F0'00-00'             1332   	b	_$L68
+??:027A                          1333   _$M40 :
+                                 1334   CBLOCK 7 7 228
+                                 1335   
+                                 1336   ;;                derefw(PC) = derefw(regs + reg1);
+                                 1337   CLINEA 0000H 0001H 00E5H 0011H 0031H
+??:027A A0-80                    1338   	mov	r0,	r10
+??:027C 00 01                    1339   	mov	r1,	#00h
+??:027E 66-F0                    1340   	add	er0,	er6
+??:0280 7E BC                    1341   	l	bp,	-2[fp]
+??:0282 02-90                    1342   	l	er0,	[er0]
+??:0284 C3-90                    1343   	st	er0,	[bp]
+                                 1344   CBLOCKEND 7 7 230
+                                 1345   
+                                 1346   ;;            break;
+                                 1347   CLINEA 0000H 0001H 00E7H 000DH 0012H
+??:0286 00-F0'00-00'             1348   	b	_$L68
+                                 1349   
+                                 1350   ;;        case 0x14:
+                                 1351   CLINEA 0000H 0001H 00E8H 0009H 0012H
+??:028A                          1352   _$S100 :
+                                 1353   
+                                 1354   ;;            if(deref(FLAGS) & 0x08)
+                                 1355   CLINEA 0000H 0001H 00EAH 000DH 0023H
+??:028A 7A BC                    1356   	l	bp,	-6[fp]
+??:028C C0-90                    1357   	l	r0,	[bp]
+??:028E 31-A0                    1358   	tb	r0.3
+??:0290 02 C8                    1359   	bne	_$M41
+??:0292 00-F0'00-00'             1360   	b	_$L68
+??:0296                          1361   _$M41 :
+                                 1362   CBLOCK 7 8 235
+                                 1363   
+                                 1364   ;;                derefw(PC) = derefw(regs + reg1);
+                                 1365   CLINEA 0000H 0001H 00ECH 0011H 0031H
+??:0296 A0-80                    1366   	mov	r0,	r10
+??:0298 00 01                    1367   	mov	r1,	#00h
+??:029A 66-F0                    1368   	add	er0,	er6
+??:029C 7E BC                    1369   	l	bp,	-2[fp]
+??:029E 02-90                    1370   	l	er0,	[er0]
+??:02A0 C3-90                    1371   	st	er0,	[bp]
+                                 1372   CBLOCKEND 7 8 237
+                                 1373   
+                                 1374   ;;            break;
+                                 1375   CLINEA 0000H 0001H 00EEH 000DH 0012H
+??:02A2 00-F0'00-00'             1376   	b	_$L68
+                                 1377   
+                                 1378   ;;        case 0x15:
+                                 1379   CLINEA 0000H 0001H 00EFH 0009H 0012H
+??:02A6                          1380   _$S103 :
+                                 1381   
+                                 1382   ;;            if(deref(FLAGS) & 0x10)
+                                 1383   CLINEA 0000H 0001H 00F1H 000DH 0023H
+??:02A6 7A BC                    1384   	l	bp,	-6[fp]
+??:02A8 C0-90                    1385   	l	r0,	[bp]
+??:02AA 41-A0                    1386   	tb	r0.4
+??:02AC 02 C8                    1387   	bne	_$M42
+??:02AE 00-F0'00-00'             1388   	b	_$L68
+??:02B2                          1389   _$M42 :
+                                 1390   CBLOCK 7 9 242
+                                 1391   
+                                 1392   ;;                derefw(PC) = derefw(regs + reg1);
+                                 1393   CLINEA 0000H 0001H 00F3H 0011H 0031H
+??:02B2 A0-80                    1394   	mov	r0,	r10
+??:02B4 00 01                    1395   	mov	r1,	#00h
+??:02B6 66-F0                    1396   	add	er0,	er6
+??:02B8 7E BC                    1397   	l	bp,	-2[fp]
+??:02BA 02-90                    1398   	l	er0,	[er0]
+??:02BC C3-90                    1399   	st	er0,	[bp]
+                                 1400   CBLOCKEND 7 9 244
+                                 1401   
+                                 1402   ;;            break;
+                                 1403   CLINEA 0000H 0001H 00F5H 000DH 0012H
+??:02BE 00-F0'00-00'             1404   	b	_$L68
+                                 1405   
+                                 1406   ;;        case 0x16:
+                                 1407   CLINEA 0000H 0001H 00F7H 0009H 0012H
+??:02C2                          1408   _$S106 :
+                                 1409   
+                                 1410   ;;            derefw(regs + reg1) = derefw(regs + reg2);
+                                 1411   CLINEA 0000H 0001H 00F9H 000DH 0036H
+??:02C2 B0-80                    1412   	mov	r0,	r11
+??:02C4 00 01                    1413   	mov	r1,	#00h
+??:02C6 66-F0                    1414   	add	er0,	er6
+??:02C8 05-F2                    1415   	mov	er2,	er0
+??:02CA A0-80                    1416   	mov	r0,	r10
+??:02CC 00 01                    1417   	mov	r1,	#00h
+??:02CE 66-F0                    1418   	add	er0,	er6
+??:02D0 22-92                    1419   	l	er2,	[er2]
+??:02D2 03-92                    1420   	st	er2,	[er0]
+                                 1421   
+                                 1422   ;;            break;
+                                 1423   CLINEA 0000H 0001H 00FAH 000DH 0012H
+??:02D4 00-F0'00-00'             1424   	b	_$L68
+                                 1425   
+                                 1426   ;;        case 0x17:
+                                 1427   CLINEA 0000H 0001H 00FBH 0009H 0012H
+??:02D8                          1428   _$S107 :
+                                 1429   
+                                 1430   ;;            derefw(regs + reg1) += derefw(regs + reg2);
+                                 1431   CLINEA 0000H 0001H 00FDH 000DH 0037H
+??:02D8 A0-80                    1432   	mov	r0,	r10
+??:02DA 00 01                    1433   	mov	r1,	#00h
+??:02DC 66-F0                    1434   	add	er0,	er6
+??:02DE B0-82                    1435   	mov	r2,	r11
+??:02E0 00 03                    1436   	mov	r3,	#00h
+??:02E2 66-F2                    1437   	add	er2,	er6
+??:02E4 02-94                    1438   	l	er4,	[er0]
+??:02E6 22-92                    1439   	l	er2,	[er2]
+??:02E8 26-F4                    1440   	add	er4,	er2
+??:02EA 03-94                    1441   	st	er4,	[er0]
+                                 1442   
+                                 1443   ;;            break;
+                                 1444   CLINEA 0000H 0001H 00FEH 000DH 0012H
+??:02EC 00-F0'00-00'             1445   	b	_$L68
+                                 1446   
+                                 1447   ;;        case 0x18:
+                                 1448   CLINEA 0000H 0001H 00FFH 0009H 0012H
+??:02F0                          1449   _$S108 :
+                                 1450   
+                                 1451   ;;            derefw(regs + reg1) -= derefw(regs + reg2);
+                                 1452   CLINEA 0000H 0001H 0101H 000DH 0037H
+??:02F0 A0-80                    1453   	mov	r0,	r10
+??:02F2 00 01                    1454   	mov	r1,	#00h
+??:02F4 66-F0                    1455   	add	er0,	er6
+??:02F6 B0-82                    1456   	mov	r2,	r11
+??:02F8 00 03                    1457   	mov	r3,	#00h
+??:02FA 66-F2                    1458   	add	er2,	er6
+??:02FC 02-94                    1459   	l	er4,	[er0]
+??:02FE 22-92                    1460   	l	er2,	[er2]
+??:0300 28-84                    1461   	sub	r4,	r2
+??:0302 39-85                    1462   	subc	r5,	r3
+??:0304 03-94                    1463   	st	er4,	[er0]
+                                 1464   
+                                 1465   ;;            break;
+                                 1466   CLINEA 0000H 0001H 0102H 000DH 0012H
+??:0306 00-F0'00-00'             1467   	b	_$L68
+                                 1468   
+                                 1469   ;;        case 0x19:
+                                 1470   CLINEA 0000H 0001H 0103H 0009H 0012H
+??:030A                          1471   _$S109 :
+                                 1472   
+                                 1473   ;;            derefw(regs + reg1) *= derefw(regs + reg2);
+                                 1474   CLINEA 0000H 0001H 0105H 000DH 0037H
+??:030A A0-84                    1475   	mov	r4,	r10
+??:030C 00 05                    1476   	mov	r5,	#00h
+??:030E 66-F4                    1477   	add	er4,	er6
+??:0310 B0-80                    1478   	mov	r0,	r11
+??:0312 00 01                    1479   	mov	r1,	#00h
+??:0314 66-F0                    1480   	add	er0,	er6
+??:0316 05-FC                    1481   	mov	bp,	er0
+??:0318 42-90                    1482   	l	er0,	[er4]
+??:031A C2-92                    1483   	l	er2,	[bp]
+??:031C 01-F0'00-00'             1484   	bl	__imulu8lw
+??:0320 43-90                    1485   	st	er0,	[er4]
+                                 1486   
+                                 1487   ;;            break;
+                                 1488   CLINEA 0000H 0001H 0106H 000DH 0012H
+??:0322 00-F0'00-00'             1489   	b	_$L68
+                                 1490   
+                                 1491   ;;        case 0x1A:
+                                 1492   CLINEA 0000H 0001H 0107H 0009H 0012H
+??:0326                          1493   _$S110 :
+                                 1494   
+                                 1495   ;;            derefw(regs + reg1) /= derefw(regs + reg2);
+                                 1496   CLINEA 0000H 0001H 0109H 000DH 0037H
+??:0326 A0-84                    1497   	mov	r4,	r10
+??:0328 00 05                    1498   	mov	r5,	#00h
+??:032A 66-F4                    1499   	add	er4,	er6
+??:032C B0-80                    1500   	mov	r0,	r11
+??:032E 00 01                    1501   	mov	r1,	#00h
+??:0330 66-F0                    1502   	add	er0,	er6
+??:0332 05-FC                    1503   	mov	bp,	er0
+??:0334 42-90                    1504   	l	er0,	[er4]
+??:0336 C2-92                    1505   	l	er2,	[bp]
+??:0338 01-F0'00-00'             1506   	bl	__uidivu8lw
+??:033C 43-90                    1507   	st	er0,	[er4]
+                                 1508   
+                                 1509   ;;            break;
+                                 1510   CLINEA 0000H 0001H 010AH 000DH 0012H
+??:033E 00-F0'00-00'             1511   	b	_$L68
+                                 1512   
+                                 1513   ;;        case 0x1B:
+                                 1514   CLINEA 0000H 0001H 010BH 0009H 0012H
+??:0342                          1515   _$S111 :
+                                 1516   
+                                 1517   ;;            derefw(regs + reg1) = derefw(regs + reg1) << derefw(regs + reg2);
+                                 1518   CLINEA 0000H 0001H 010DH 000DH 004DH
+??:0342 A0-80                    1519   	mov	r0,	r10
+??:0344 00 01                    1520   	mov	r1,	#00h
+??:0346 66-F0                    1521   	add	er0,	er6
+??:0348 05-F2                    1522   	mov	er2,	er0
+??:034A B0-80                    1523   	mov	r0,	r11
+??:034C 00 01                    1524   	mov	r1,	#00h
+??:034E 66-F0                    1525   	add	er0,	er6
+??:0350 05-F4                    1526   	mov	er4,	er0
+??:0352 22-90                    1527   	l	er0,	[er2]
+??:0354 42-92                    1528   	l	er2,	[er4]
+??:0356                          1529   _$M25 :
+??:0356 07 72                    1530   	cmp	r2,	#07h
+??:0358 00 53                    1531   	cmpc	r3,	#00h
+??:035A 04 C3                    1532   	ble	_$M24
+??:035C 7B-91                    1533   	sllc	r1,	#07h
+??:035E 7A-90                    1534   	sll	r0,	#07h
+??:0360 F9 E2                    1535   	add	er2,	#-7
+??:0362 F9 C8                    1536   	bne	_$M25
+??:0364                          1537   _$M24 :
+??:0364 2B-81                    1538   	sllc	r1,	r2
+??:0366 2A-80                    1539   	sll	r0,	r2
+??:0368 A0-82                    1540   	mov	r2,	r10
+??:036A 00 03                    1541   	mov	r3,	#00h
+??:036C 66-F2                    1542   	add	er2,	er6
+??:036E 23-90                    1543   	st	er0,	[er2]
+                                 1544   
+                                 1545   ;;            break;
+                                 1546   CLINEA 0000H 0001H 010EH 000DH 0012H
+??:0370 00-F0'00-00'             1547   	b	_$L68
+                                 1548   
+                                 1549   ;;        case 0x1C:
+                                 1550   CLINEA 0000H 0001H 010FH 0009H 0012H
+??:0374                          1551   _$S112 :
+                                 1552   
+                                 1553   ;;            derefw(regs + reg1) = derefw(regs + reg1) >> derefw(regs + reg2);
+                                 1554   CLINEA 0000H 0001H 0111H 000DH 004DH
+??:0374 A0-80                    1555   	mov	r0,	r10
+??:0376 00 01                    1556   	mov	r1,	#00h
+??:0378 66-F0                    1557   	add	er0,	er6
+??:037A 05-F2                    1558   	mov	er2,	er0
+??:037C B0-80                    1559   	mov	r0,	r11
+??:037E 00 01                    1560   	mov	r1,	#00h
+??:0380 66-F0                    1561   	add	er0,	er6
+??:0382 05-F4                    1562   	mov	er4,	er0
+??:0384 22-90                    1563   	l	er0,	[er2]
+??:0386 42-92                    1564   	l	er2,	[er4]
+??:0388                          1565   _$M27 :
+??:0388 07 72                    1566   	cmp	r2,	#07h
+??:038A 00 53                    1567   	cmpc	r3,	#00h
+??:038C 04 C3                    1568   	ble	_$M26
+??:038E 7D-90                    1569   	srlc	r0,	#07h
+??:0390 7C-91                    1570   	srl	r1,	#07h
+??:0392 F9 E2                    1571   	add	er2,	#-7
+??:0394 F9 C8                    1572   	bne	_$M27
+??:0396                          1573   _$M26 :
+??:0396 2D-80                    1574   	srlc	r0,	r2
+??:0398 2C-81                    1575   	srl	r1,	r2
+??:039A A0-82                    1576   	mov	r2,	r10
+??:039C 00 03                    1577   	mov	r3,	#00h
+??:039E 66-F2                    1578   	add	er2,	er6
+??:03A0 23-90                    1579   	st	er0,	[er2]
+                                 1580   
+                                 1581   ;;            break;
+                                 1582   CLINEA 0000H 0001H 0112H 000DH 0012H
+??:03A2 00-F0'00-00'             1583   	b	_$L68
+                                 1584   
+                                 1585   ;;        case 0x1D:
+                                 1586   CLINEA 0000H 0001H 0113H 0009H 0012H
+??:03A6                          1587   _$S113 :
+                                 1588   
+                                 1589   ;;            derefw(regs + reg1) = lread_word(PID, derefw(regs + reg2));
+                                 1590   CLINEA 0000H 0000H 0115H 000DH 0047H
+??:03A6 B0-80                    1591   	mov	r0,	r11
+??:03A8 00 01                    1592   	mov	r1,	#00h
+??:03AA 66-F0                    1593   	add	er0,	er6
+??:03AC 02-92                    1594   	l	er2,	[er0]
+??:03AE 85-F0                    1595   	mov	er0,	er8
+??:03B0 01-F0'00-00'             1596   	bl	_lread_word
+??:03B4 05-F4                    1597   	mov	er4,	er0
+??:03B6 A0-80                    1598   	mov	r0,	r10
+??:03B8 00 01                    1599   	mov	r1,	#00h
+??:03BA 66-F0                    1600   	add	er0,	er6
+??:03BC 03-94                    1601   	st	er4,	[er0]
+                                 1602   
+                                 1603   ;;            break;
+                                 1604   CLINEA 0000H 0001H 0116H 000DH 0012H
+??:03BE 00-F0'00-00'             1605   	b	_$L68
+                                 1606   
+                                 1607   ;;        case 0x1E:
+                                 1608   CLINEA 0000H 0001H 0117H 0009H 0012H
+??:03C2                          1609   _$S114 :
+                                 1610   
+                                 1611   ;;            lwrite_word(PID, derefw(regs + reg2), derefw(regs + reg1));
+                                 1612   CLINEA 0000H 0001H 0119H 000DH 0047H
+??:03C2 A0-80                    1613   	mov	r0,	r10
+??:03C4 00 01                    1614   	mov	r1,	#00h
+??:03C6 66-F0                    1615   	add	er0,	er6
+??:03C8 02-90                    1616   	l	er0,	[er0]
+??:03CA 5E-F0                    1617   	push	er0
+??:03CC B0-80                    1618   	mov	r0,	r11
+??:03CE 00 01                    1619   	mov	r1,	#00h
+??:03D0 66-F0                    1620   	add	er0,	er6
+??:03D2 02-92                    1621   	l	er2,	[er0]
+??:03D4 85-F0                    1622   	mov	er0,	er8
+??:03D6 01-F0'00-00'             1623   	bl	_lwrite_word
+??:03DA 02 E1                    1624   	add	sp,	#2 
+                                 1625   
+                                 1626   ;;            break;
+                                 1627   CLINEA 0000H 0001H 011AH 000DH 0012H
+??:03DC 00-F0'00-00'             1628   	b	_$L68
+                                 1629   
+                                 1630   ;;        case 0x1F:
+                                 1631   CLINEA 0000H 0001H 011BH 0009H 0012H
+??:03E0                          1632   _$S115 :
+                                 1633   
+                                 1634   ;;            derefw(regs + reg1) &= derefw(regs + reg2);
+                                 1635   CLINEA 0000H 0001H 011DH 000DH 0037H
+??:03E0 A0-80                    1636   	mov	r0,	r10
+??:03E2 00 01                    1637   	mov	r1,	#00h
+??:03E4 66-F0                    1638   	add	er0,	er6
+??:03E6 B0-82                    1639   	mov	r2,	r11
+??:03E8 00 03                    1640   	mov	r3,	#00h
+??:03EA 66-F2                    1641   	add	er2,	er6
+??:03EC 02-94                    1642   	l	er4,	[er0]
+??:03EE 22-92                    1643   	l	er2,	[er2]
+??:03F0 22-84                    1644   	and	r4,	r2
+??:03F2 32-85                    1645   	and	r5,	r3
+??:03F4 03-94                    1646   	st	er4,	[er0]
+                                 1647   
+                                 1648   ;;            break;
+                                 1649   CLINEA 0000H 0001H 011EH 000DH 0012H
+??:03F6 00-F0'00-00'             1650   	b	_$L68
+                                 1651   
+                                 1652   ;;        case 0x20:
+                                 1653   CLINEA 0000H 0001H 011FH 0009H 0012H
+??:03FA                          1654   _$S116 :
+                                 1655   
+                                 1656   ;;            derefw(regs + reg1) |= derefw(regs + reg2);
+                                 1657   CLINEA 0000H 0001H 0121H 000DH 0037H
+??:03FA A0-80                    1658   	mov	r0,	r10
+??:03FC 00 01                    1659   	mov	r1,	#00h
+??:03FE 66-F0                    1660   	add	er0,	er6
+??:0400 B0-82                    1661   	mov	r2,	r11
+??:0402 00 03                    1662   	mov	r3,	#00h
+??:0404 66-F2                    1663   	add	er2,	er6
+??:0406 02-94                    1664   	l	er4,	[er0]
+??:0408 22-92                    1665   	l	er2,	[er2]
+??:040A 23-84                    1666   	or	r4,	r2
+??:040C 33-85                    1667   	or	r5,	r3
+??:040E 03-94                    1668   	st	er4,	[er0]
+                                 1669   
+                                 1670   ;;            break;
+                                 1671   CLINEA 0000H 0001H 0122H 000DH 0012H
+??:0410 00-F0'00-00'             1672   	b	_$L68
+                                 1673   
+                                 1674   ;;        case 0x21:
+                                 1675   CLINEA 0000H 0001H 0123H 0009H 0012H
+??:0414                          1676   _$S117 :
+                                 1677   
+                                 1678   ;;            derefw(regs + reg1) ^= derefw(regs + reg2);
+                                 1679   CLINEA 0000H 0001H 0125H 000DH 0037H
+??:0414 A0-80                    1680   	mov	r0,	r10
+??:0416 00 01                    1681   	mov	r1,	#00h
+??:0418 66-F0                    1682   	add	er0,	er6
+??:041A B0-82                    1683   	mov	r2,	r11
+??:041C 00 03                    1684   	mov	r3,	#00h
+??:041E 66-F2                    1685   	add	er2,	er6
+??:0420 02-94                    1686   	l	er4,	[er0]
+??:0422 22-92                    1687   	l	er2,	[er2]
+??:0424 24-84                    1688   	xor	r4,	r2
+??:0426 34-85                    1689   	xor	r5,	r3
+??:0428 03-94                    1690   	st	er4,	[er0]
+                                 1691   
+                                 1692   ;;            break;
+                                 1693   CLINEA 0000H 0001H 0126H 000DH 0012H
+??:042A 00-F0'00-00'             1694   	b	_$L68
+                                 1695   
+                                 1696   ;;        case 0x22:
+                                 1697   CLINEA 0000H 0001H 0127H 0009H 0012H
+??:042E                          1698   _$S118 :
+                                 1699   
+                                 1700   ;;            derefw(regs + reg1)++;
+                                 1701   CLINEA 0000H 0000H 0129H 000DH 0022H
+??:042E A0-80                    1702   	mov	r0,	r10
+??:0430 00 01                    1703   	mov	r1,	#00h
+??:0432 66-F0                    1704   	add	er0,	er6
+??:0434 02-92                    1705   	l	er2,	[er0]
+??:0436 81 E2                    1706   	add	er2,	#1 
+??:0438 03-92                    1707   	st	er2,	[er0]
+                                 1708   
+                                 1709   ;;            break;
+                                 1710   CLINEA 0000H 0001H 012AH 000DH 0012H
+??:043A 00-F0'00-00'             1711   	b	_$L68
+                                 1712   
+                                 1713   ;;        case 0x23:
+                                 1714   CLINEA 0000H 0001H 012BH 0009H 0012H
+??:043E                          1715   _$S119 :
+                                 1716   
+                                 1717   ;;            derefw(regs + reg1)--;
+                                 1718   CLINEA 0000H 0000H 012DH 000DH 0022H
+??:043E A0-80                    1719   	mov	r0,	r10
+??:0440 00 01                    1720   	mov	r1,	#00h
+??:0442 66-F0                    1721   	add	er0,	er6
+??:0444 02-92                    1722   	l	er2,	[er0]
+??:0446 FF E2                    1723   	add	er2,	#-1
+??:0448 03-92                    1724   	st	er2,	[er0]
+                                 1725   
+                                 1726   ;;            break;
+                                 1727   CLINEA 0000H 0001H 012EH 000DH 0012H
+??:044A 00-F0'00-00'             1728   	b	_$L68
+                                 1729   
+                                 1730   ;;        case 0x24:
+                                 1731   CLINEA 0000H 0001H 012FH 0009H 0012H
+??:044E                          1732   _$S120 :
+                                 1733   
+                                 1734   ;;            lcmp_flags_word(derefw(regs + reg1), derefw(regs + reg2), FLAGS);
+                                 1735   CLINEA 0000H 0001H 0131H 000DH 004DH
+??:044E 7A B0                    1736   	l	er0,	-6[fp]
+??:0450 5E-F0                    1737   	push	er0
+??:0452 B0-80                    1738   	mov	r0,	r11
+??:0454 00 01                    1739   	mov	r1,	#00h
+??:0456 66-F0                    1740   	add	er0,	er6
+??:0458 02-92                    1741   	l	er2,	[er0]
+??:045A A0-80                    1742   	mov	r0,	r10
+??:045C 00 01                    1743   	mov	r1,	#00h
+??:045E 66-F0                    1744   	add	er0,	er6
+??:0460 02-90                    1745   	l	er0,	[er0]
+??:0462 01-F0'00-00'             1746   	bl	_lcmp_flags_word
+??:0466 02 E1                    1747   	add	sp,	#2 
+                                 1748   
+                                 1749   ;;            break;
+                                 1750   CLINEA 0000H 0001H 0132H 000DH 0012H
+??:0468 00-F0'00-00'             1751   	b	_$L68
+                                 1752   
+                                 1753   ;;        case 0x30:
+                                 1754   CLINEA 0000H 0001H 0134H 0009H 0012H
+??:046C                          1755   _$S121 :
+                                 1756   
+                                 1757   ;;            deref(regs + reg1) = deref(code + cpc);
+                                 1758   CLINEA 0000H 0001H 0136H 000DH 0033H
+??:046C 7C B0                    1759   	l	er0,	-4[fp]
+??:046E 46-F0                    1760   	add	er0,	er4
+??:0470 05-F2                    1761   	mov	er2,	er0
+??:0472 A0-80                    1762   	mov	r0,	r10
+??:0474 00 01                    1763   	mov	r1,	#00h
+??:0476 66-F0                    1764   	add	er0,	er6
+??:0478 20-92                    1765   	l	r2,	[er2]
+??:047A 01-92                    1766   	st	r2,	[er0]
+                                 1767   
+                                 1768   ;;            derefw(PC) += 2;
+                                 1769   CLINEA 0000H 0001H 0137H 000DH 001CH
+??:047C 7E BC                    1770   	l	bp,	-2[fp]
+??:047E C2-90                    1771   	l	er0,	[bp]
+??:0480 82 E0                    1772   	add	er0,	#2 
+??:0482 C3-90                    1773   	st	er0,	[bp]
+                                 1774   
+                                 1775   ;;            break;
+                                 1776   CLINEA 0000H 0001H 0138H 000DH 0012H
+??:0484 00-F0'00-00'             1777   	b	_$L68
+                                 1778   
+                                 1779   ;;        case 0x31:
+                                 1780   CLINEA 0000H 0001H 0139H 0009H 0012H
+??:0488                          1781   _$S122 :
+                                 1782   
+                                 1783   ;;            deref(regs + reg1) += deref(code + cpc);
+                                 1784   CLINEA 0000H 0001H 013BH 000DH 0034H
+??:0488 7C B0                    1785   	l	er0,	-4[fp]
+??:048A 46-F0                    1786   	add	er0,	er4
+??:048C 05-F2                    1787   	mov	er2,	er0
+??:048E A0-80                    1788   	mov	r0,	r10
+??:0490 00 01                    1789   	mov	r1,	#00h
+??:0492 66-F0                    1790   	add	er0,	er6
+??:0494 00-94                    1791   	l	r4,	[er0]
+??:0496 20-92                    1792   	l	r2,	[er2]
+??:0498 21-84                    1793   	add	r4,	r2
+??:049A 01-94                    1794   	st	r4,	[er0]
+                                 1795   
+                                 1796   ;;            derefw(PC) += 2;
+                                 1797   CLINEA 0000H 0001H 013CH 000DH 001CH
+??:049C 7E BC                    1798   	l	bp,	-2[fp]
+??:049E C2-90                    1799   	l	er0,	[bp]
+??:04A0 82 E0                    1800   	add	er0,	#2 
+??:04A2 C3-90                    1801   	st	er0,	[bp]
+                                 1802   
+                                 1803   ;;            break;
+                                 1804   CLINEA 0000H 0001H 013DH 000DH 0012H
+??:04A4 00-F0'00-00'             1805   	b	_$L68
+                                 1806   
+                                 1807   ;;        case 0x32:
+                                 1808   CLINEA 0000H 0001H 013EH 0009H 0012H
+??:04A8                          1809   _$S123 :
+                                 1810   
+                                 1811   ;;            deref(regs + reg1) -= deref(code + cpc);
+                                 1812   CLINEA 0000H 0001H 0140H 000DH 0034H
+??:04A8 7C B0                    1813   	l	er0,	-4[fp]
+??:04AA 46-F0                    1814   	add	er0,	er4
+??:04AC 05-F2                    1815   	mov	er2,	er0
+??:04AE A0-80                    1816   	mov	r0,	r10
+??:04B0 00 01                    1817   	mov	r1,	#00h
+??:04B2 66-F0                    1818   	add	er0,	er6
+??:04B4 00-94                    1819   	l	r4,	[er0]
+??:04B6 20-92                    1820   	l	r2,	[er2]
+??:04B8 28-84                    1821   	sub	r4,	r2
+??:04BA 01-94                    1822   	st	r4,	[er0]
+                                 1823   
+                                 1824   ;;            derefw(PC) += 2;
+                                 1825   CLINEA 0000H 0001H 0141H 000DH 001CH
+??:04BC 7E BC                    1826   	l	bp,	-2[fp]
+??:04BE C2-90                    1827   	l	er0,	[bp]
+??:04C0 82 E0                    1828   	add	er0,	#2 
+??:04C2 C3-90                    1829   	st	er0,	[bp]
+                                 1830   
+                                 1831   ;;            break;
+                                 1832   CLINEA 0000H 0001H 0142H 000DH 0012H
+??:04C4 00-F0'00-00'             1833   	b	_$L68
+                                 1834   
+                                 1835   ;;        case 0x33:
+                                 1836   CLINEA 0000H 0001H 0143H 0009H 0012H
+??:04C8                          1837   _$S124 :
+                                 1838   
+                                 1839   ;;            deref(regs + reg1) *= deref(code + cpc);
+                                 1840   CLINEA 0000H 0001H 0145H 000DH 0034H
+??:04C8 7C B0                    1841   	l	er0,	-4[fp]
+??:04CA 46-F0                    1842   	add	er0,	er4
+??:04CC 05-F2                    1843   	mov	er2,	er0
+??:04CE A0-80                    1844   	mov	r0,	r10
+??:04D0 00 01                    1845   	mov	r1,	#00h
+??:04D2 65-F4                    1846   	mov	er4,	er6
+??:04D4 66-F0                    1847   	add	er0,	er6
+??:04D6 00-94                    1848   	l	r4,	[er0]
+??:04D8 20-92                    1849   	l	r2,	[er2]
+??:04DA 24-F4                    1850   	mul	er4,	r2
+??:04DC 01-94                    1851   	st	r4,	[er0]
+                                 1852   
+                                 1853   ;;            derefw(PC) += 2;
+                                 1854   CLINEA 0000H 0001H 0146H 000DH 001CH
+??:04DE 7E BC                    1855   	l	bp,	-2[fp]
+??:04E0 C2-90                    1856   	l	er0,	[bp]
+??:04E2 82 E0                    1857   	add	er0,	#2 
+??:04E4 C3-90                    1858   	st	er0,	[bp]
+                                 1859   
+                                 1860   ;;            break;
+                                 1861   CLINEA 0000H 0001H 0147H 000DH 0012H
+??:04E6 00-F0'00-00'             1862   	b	_$L68
+                                 1863   
+                                 1864   ;;        case 0x34:
+                                 1865   CLINEA 0000H 0001H 0148H 0009H 0012H
+??:04EA                          1866   _$S125 :
+                                 1867   
+                                 1868   ;;            deref(regs + reg1) /= deref(code + cpc);
+                                 1869   CLINEA 0000H 0001H 014AH 000DH 0034H
+??:04EA 7C B0                    1870   	l	er0,	-4[fp]
+??:04EC 46-F0                    1871   	add	er0,	er4
+??:04EE 05-F2                    1872   	mov	er2,	er0
+??:04F0 A0-80                    1873   	mov	r0,	r10
+??:04F2 00 01                    1874   	mov	r1,	#00h
+??:04F4 66-F0                    1875   	add	er0,	er6
+??:04F6 00-94                    1876   	l	r4,	[er0]
+??:04F8 00 05                    1877   	mov	r5,	#00h
+??:04FA 20-92                    1878   	l	r2,	[er2]
+??:04FC 29-F4                    1879   	div	er4,	r2
+??:04FE 01-94                    1880   	st	r4,	[er0]
+                                 1881   
+                                 1882   ;;            derefw(PC) += 2;
+                                 1883   CLINEA 0000H 0001H 014BH 000DH 001CH
+??:0500 7E BC                    1884   	l	bp,	-2[fp]
+??:0502 C2-90                    1885   	l	er0,	[bp]
+??:0504 82 E0                    1886   	add	er0,	#2 
+??:0506 C3-90                    1887   	st	er0,	[bp]
+                                 1888   
+                                 1889   ;;            break;
+                                 1890   CLINEA 0000H 0001H 014CH 000DH 0012H
+??:0508 00-F0'00-00'             1891   	b	_$L68
+                                 1892   
+                                 1893   ;;        case 0x35:
+                                 1894   CLINEA 0000H 0001H 014DH 0009H 0012H
+??:050C                          1895   _$S126 :
+                                 1896   
+                                 1897   ;;            deref(regs + reg1) = deref(regs + reg1) << deref(code + cpc);
+                                 1898   CLINEA 0000H 0001H 014FH 000DH 0049H
+??:050C 7C B0                    1899   	l	er0,	-4[fp]
+??:050E 46-F0                    1900   	add	er0,	er4
+??:0510 05-F2                    1901   	mov	er2,	er0
+??:0512 A0-80                    1902   	mov	r0,	r10
+??:0514 00 01                    1903   	mov	r1,	#00h
+??:0516 66-F0                    1904   	add	er0,	er6
+??:0518 00-90                    1905   	l	r0,	[er0]
+??:051A 20-91                    1906   	l	r1,	[er2]
+??:051C 07 71                    1907   	cmp	r1,	#07h
+??:051E 03 C2                    1908   	bgt	_$M28
+??:0520 1A-80                    1909   	sll	r0,	r1
+??:0522 00-F0'00-00'             1910   	b	_$M29
+??:0526                          1911   _$M28 :
+??:0526 00 00                    1912   	mov	r0,	#00h
+??:0528                          1913   _$M29 :
+??:0528 A0-82                    1914   	mov	r2,	r10
+??:052A 00 03                    1915   	mov	r3,	#00h
+??:052C 66-F2                    1916   	add	er2,	er6
+??:052E 21-90                    1917   	st	r0,	[er2]
+                                 1918   
+                                 1919   ;;            derefw(PC) += 2;
+                                 1920   CLINEA 0000H 0001H 0150H 000DH 001CH
+??:0530 7E BC                    1921   	l	bp,	-2[fp]
+??:0532 C2-90                    1922   	l	er0,	[bp]
+??:0534 82 E0                    1923   	add	er0,	#2 
+??:0536 C3-90                    1924   	st	er0,	[bp]
+                                 1925   
+                                 1926   ;;            break;
+                                 1927   CLINEA 0000H 0001H 0151H 000DH 0012H
+??:0538 00-F0'00-00'             1928   	b	_$L68
+                                 1929   
+                                 1930   ;;        case 0x36:
+                                 1931   CLINEA 0000H 0001H 0152H 0009H 0012H
+??:053C                          1932   _$S127 :
+                                 1933   
+                                 1934   ;;            deref(regs + reg1) = deref(regs + reg1) >> deref(code + cpc);
+                                 1935   CLINEA 0000H 0001H 0154H 000DH 0049H
+??:053C 7C B0                    1936   	l	er0,	-4[fp]
+??:053E 46-F0                    1937   	add	er0,	er4
+??:0540 05-F2                    1938   	mov	er2,	er0
+??:0542 A0-80                    1939   	mov	r0,	r10
+??:0544 00 01                    1940   	mov	r1,	#00h
+??:0546 66-F0                    1941   	add	er0,	er6
+??:0548 00-90                    1942   	l	r0,	[er0]
+??:054A 20-91                    1943   	l	r1,	[er2]
+??:054C 07 71                    1944   	cmp	r1,	#07h
+??:054E 03 C2                    1945   	bgt	_$M30
+??:0550 1C-80                    1946   	srl	r0,	r1
+??:0552 00-F0'00-00'             1947   	b	_$M31
+??:0556                          1948   _$M30 :
+??:0556 00 00                    1949   	mov	r0,	#00h
+??:0558                          1950   _$M31 :
+??:0558 A0-82                    1951   	mov	r2,	r10
+??:055A 00 03                    1952   	mov	r3,	#00h
+??:055C 66-F2                    1953   	add	er2,	er6
+??:055E 21-90                    1954   	st	r0,	[er2]
+                                 1955   
+                                 1956   ;;            derefw(PC) += 2;
+                                 1957   CLINEA 0000H 0001H 0155H 000DH 001CH
+??:0560 7E BC                    1958   	l	bp,	-2[fp]
+??:0562 C2-90                    1959   	l	er0,	[bp]
+??:0564 82 E0                    1960   	add	er0,	#2 
+??:0566 C3-90                    1961   	st	er0,	[bp]
+                                 1962   
+                                 1963   ;;            break;
+                                 1964   CLINEA 0000H 0001H 0156H 000DH 0012H
+??:0568 00-F0'00-00'             1965   	b	_$L68
+                                 1966   
+                                 1967   ;;        case 0x37:
+                                 1968   CLINEA 0000H 0001H 0157H 0009H 0012H
+??:056C                          1969   _$S128 :
+                                 1970   
+                                 1971   ;;            deref(regs + reg1) = lread_byte(PID, derefw(code + cpc));
+                                 1972   CLINEA 0000H 0000H 0159H 000DH 0045H
+??:056C 7C B0                    1973   	l	er0,	-4[fp]
+??:056E 46-F0                    1974   	add	er0,	er4
+??:0570 02-92                    1975   	l	er2,	[er0]
+??:0572 85-F0                    1976   	mov	er0,	er8
+??:0574 01-F0'00-00'             1977   	bl	_lread_byte
+??:0578 00-84                    1978   	mov	r4,	r0
+??:057A A0-80                    1979   	mov	r0,	r10
+??:057C 00 01                    1980   	mov	r1,	#00h
+??:057E 66-F0                    1981   	add	er0,	er6
+??:0580 01-94                    1982   	st	r4,	[er0]
+                                 1983   
+                                 1984   ;;            derefw(PC) += 2;
+                                 1985   CLINEA 0000H 0001H 015AH 000DH 001CH
+??:0582 7E BC                    1986   	l	bp,	-2[fp]
+??:0584 C2-90                    1987   	l	er0,	[bp]
+??:0586 82 E0                    1988   	add	er0,	#2 
+??:0588 C3-90                    1989   	st	er0,	[bp]
+                                 1990   
+                                 1991   ;;            break;
+                                 1992   CLINEA 0000H 0001H 015BH 000DH 0012H
+??:058A 00-F0'00-00'             1993   	b	_$L68
+                                 1994   
+                                 1995   ;;        case 0x38:
+                                 1996   CLINEA 0000H 0001H 015CH 0009H 0012H
+??:058E                          1997   _$S129 :
+                                 1998   
+                                 1999   ;;            lwrite_byte(PID, derefw(code + cpc), deref(regs + reg1));
+                                 2000   CLINEA 0000H 0001H 015EH 000DH 0045H
+??:058E A0-80                    2001   	mov	r0,	r10
+??:0590 00 01                    2002   	mov	r1,	#00h
+??:0592 66-F0                    2003   	add	er0,	er6
+??:0594 00-90                    2004   	l	r0,	[er0]
+??:0596 4E-F0                    2005   	push	r0
+??:0598 7C B0                    2006   	l	er0,	-4[fp]
+??:059A 46-F0                    2007   	add	er0,	er4
+??:059C 02-92                    2008   	l	er2,	[er0]
+??:059E 85-F0                    2009   	mov	er0,	er8
+??:05A0 01-F0'00-00'             2010   	bl	_lwrite_byte
+??:05A4 02 E1                    2011   	add	sp,	#2 
+                                 2012   
+                                 2013   ;;            derefw(PC) += 2;
+                                 2014   CLINEA 0000H 0001H 015FH 000DH 001CH
+??:05A6 7E BC                    2015   	l	bp,	-2[fp]
+??:05A8 C2-90                    2016   	l	er0,	[bp]
+??:05AA 82 E0                    2017   	add	er0,	#2 
+??:05AC C3-90                    2018   	st	er0,	[bp]
+                                 2019   
+                                 2020   ;;            break;
+                                 2021   CLINEA 0000H 0001H 0160H 000DH 0012H
+??:05AE 00-F0'00-00'             2022   	b	_$L68
+                                 2023   
+                                 2024   ;;        case 0x39:
+                                 2025   CLINEA 0000H 0001H 0161H 0009H 0012H
+??:05B2                          2026   _$S130 :
+                                 2027   
+                                 2028   ;;            deref(regs + reg1) &= deref(code + cpc);
+                                 2029   CLINEA 0000H 0001H 0163H 000DH 0034H
+??:05B2 7C B0                    2030   	l	er0,	-4[fp]
+??:05B4 46-F0                    2031   	add	er0,	er4
+??:05B6 05-F2                    2032   	mov	er2,	er0
+??:05B8 A0-80                    2033   	mov	r0,	r10
+??:05BA 00 01                    2034   	mov	r1,	#00h
+??:05BC 66-F0                    2035   	add	er0,	er6
+??:05BE 00-94                    2036   	l	r4,	[er0]
+??:05C0 20-92                    2037   	l	r2,	[er2]
+??:05C2 22-84                    2038   	and	r4,	r2
+??:05C4 01-94                    2039   	st	r4,	[er0]
+                                 2040   
+                                 2041   ;;            derefw(PC) += 2;
+                                 2042   CLINEA 0000H 0001H 0164H 000DH 001CH
+??:05C6 7E BC                    2043   	l	bp,	-2[fp]
+??:05C8 C2-90                    2044   	l	er0,	[bp]
+??:05CA 82 E0                    2045   	add	er0,	#2 
+??:05CC C3-90                    2046   	st	er0,	[bp]
+                                 2047   
+                                 2048   ;;            break;
+                                 2049   CLINEA 0000H 0001H 0165H 000DH 0012H
+??:05CE 00-F0'00-00'             2050   	b	_$L68
+                                 2051   
+                                 2052   ;;        case 0x3A:
+                                 2053   CLINEA 0000H 0001H 0166H 0009H 0012H
+??:05D2                          2054   _$S131 :
+                                 2055   
+                                 2056   ;;            deref(regs + reg1) |= deref(code + cpc);
+                                 2057   CLINEA 0000H 0001H 0168H 000DH 0034H
+??:05D2 7C B0                    2058   	l	er0,	-4[fp]
+??:05D4 46-F0                    2059   	add	er0,	er4
+??:05D6 05-F2                    2060   	mov	er2,	er0
+??:05D8 A0-80                    2061   	mov	r0,	r10
+??:05DA 00 01                    2062   	mov	r1,	#00h
+??:05DC 66-F0                    2063   	add	er0,	er6
+??:05DE 00-94                    2064   	l	r4,	[er0]
+??:05E0 20-92                    2065   	l	r2,	[er2]
+??:05E2 23-84                    2066   	or	r4,	r2
+??:05E4 01-94                    2067   	st	r4,	[er0]
+                                 2068   
+                                 2069   ;;            derefw(PC) += 2;
+                                 2070   CLINEA 0000H 0001H 0169H 000DH 001CH
+??:05E6 7E BC                    2071   	l	bp,	-2[fp]
+??:05E8 C2-90                    2072   	l	er0,	[bp]
+??:05EA 82 E0                    2073   	add	er0,	#2 
+??:05EC C3-90                    2074   	st	er0,	[bp]
+                                 2075   
+                                 2076   ;;            break;
+                                 2077   CLINEA 0000H 0001H 016AH 000DH 0012H
+??:05EE 00-F0'00-00'             2078   	b	_$L68
+                                 2079   
+                                 2080   ;;        case 0x3B:
+                                 2081   CLINEA 0000H 0001H 016BH 0009H 0012H
+??:05F2                          2082   _$S132 :
+                                 2083   
+                                 2084   ;;            deref(regs + reg1) ^= deref(code + cpc);
+                                 2085   CLINEA 0000H 0001H 016DH 000DH 0034H
+??:05F2 7C B0                    2086   	l	er0,	-4[fp]
+??:05F4 46-F0                    2087   	add	er0,	er4
+??:05F6 05-F2                    2088   	mov	er2,	er0
+??:05F8 A0-80                    2089   	mov	r0,	r10
+??:05FA 00 01                    2090   	mov	r1,	#00h
+??:05FC 66-F0                    2091   	add	er0,	er6
+??:05FE 00-94                    2092   	l	r4,	[er0]
+??:0600 20-92                    2093   	l	r2,	[er2]
+??:0602 24-84                    2094   	xor	r4,	r2
+??:0604 01-94                    2095   	st	r4,	[er0]
+                                 2096   
+                                 2097   ;;            derefw(PC) += 2;
+                                 2098   CLINEA 0000H 0001H 016EH 000DH 001CH
+??:0606 7E BC                    2099   	l	bp,	-2[fp]
+??:0608 C2-90                    2100   	l	er0,	[bp]
+??:060A 82 E0                    2101   	add	er0,	#2 
+??:060C C3-90                    2102   	st	er0,	[bp]
+                                 2103   
+                                 2104   ;;            break;
+                                 2105   CLINEA 0000H 0001H 016FH 000DH 0012H
+??:060E 00-F0'00-00'             2106   	b	_$L68
+                                 2107   
+                                 2108   ;;        case 0x3C:
+                                 2109   CLINEA 0000H 0001H 0170H 0009H 0012H
+??:0612                          2110   _$S133 :
+                                 2111   
+                                 2112   ;;            deref(regs + reg1)++;
+                                 2113   CLINEA 0000H 0000H 0172H 000DH 0021H
+??:0612 A0-80                    2114   	mov	r0,	r10
+??:0614 00 01                    2115   	mov	r1,	#00h
+??:0616 66-F0                    2116   	add	er0,	er6
+??:0618 0A-F0                    2117   	lea	[er0]
+??:061A 2F-FE                    2118   	inc	[ea]
+                                 2119   
+                                 2120   ;;            break;
+                                 2121   CLINEA 0000H 0001H 0173H 000DH 0012H
+??:061C 00-F0'00-00'             2122   	b	_$L68
+                                 2123   
+                                 2124   ;;        case 0x3D:
+                                 2125   CLINEA 0000H 0001H 0174H 0009H 0012H
+??:0620                          2126   _$S134 :
+                                 2127   
+                                 2128   ;;            deref(regs + reg1)--;
+                                 2129   CLINEA 0000H 0000H 0176H 000DH 0021H
+??:0620 A0-80                    2130   	mov	r0,	r10
+??:0622 00 01                    2131   	mov	r1,	#00h
+??:0624 66-F0                    2132   	add	er0,	er6
+??:0626 0A-F0                    2133   	lea	[er0]
+??:0628 3F-FE                    2134   	dec	[ea]
+                                 2135   
+                                 2136   ;;            break;
+                                 2137   CLINEA 0000H 0001H 0177H 000DH 0012H
+??:062A 00-F0'00-00'             2138   	b	_$L68
+                                 2139   
+                                 2140   ;;        case 0x3E:
+                                 2141   CLINEA 0000H 0001H 0178H 0009H 0012H
+??:062E                          2142   _$S135 :
+                                 2143   
+                                 2144   ;;            lcmp_flags_byte(deref(regs + reg1), deref(cpc + code), FLAGS);
+                                 2145   CLINEA 0000H 0001H 017AH 000DH 004AH
+??:062E 7A B2                    2146   	l	er2,	-6[fp]
+??:0630 7C B0                    2147   	l	er0,	-4[fp]
+??:0632 46-F0                    2148   	add	er0,	er4
+??:0634 00-91                    2149   	l	r1,	[er0]
+??:0636 A0-84                    2150   	mov	r4,	r10
+??:0638 00 05                    2151   	mov	r5,	#00h
+??:063A 66-F4                    2152   	add	er4,	er6
+??:063C 40-90                    2153   	l	r0,	[er4]
+??:063E 01-F0'00-00'             2154   	bl	_lcmp_flags_byte
+                                 2155   
+                                 2156   ;;            derefw(PC) += 2;
+                                 2157   CLINEA 0000H 0001H 017BH 000DH 001CH
+??:0642 7E BC                    2158   	l	bp,	-2[fp]
+??:0644 C2-90                    2159   	l	er0,	[bp]
+??:0646 82 E0                    2160   	add	er0,	#2 
+??:0648 C3-90                    2161   	st	er0,	[bp]
+                                 2162   
+                                 2163   ;;            break;
+                                 2164   CLINEA 0000H 0001H 017CH 000DH 0012H
+??:064A 00-F0'00-00'             2165   	b	_$L68
+                                 2166   
+                                 2167   ;;        case 0x40:
+                                 2168   CLINEA 0000H 0001H 017EH 0009H 0012H
+??:064E                          2169   _$S136 :
+                                 2170   
+                                 2171   ;;            derefw(regs + reg1) = derefw(code + cpc);
+                                 2172   CLINEA 0000H 0001H 0180H 000DH 0035H
+??:064E 7C B0                    2173   	l	er0,	-4[fp]
+??:0650 46-F0                    2174   	add	er0,	er4
+??:0652 05-F2                    2175   	mov	er2,	er0
+??:0654 A0-80                    2176   	mov	r0,	r10
+??:0656 00 01                    2177   	mov	r1,	#00h
+??:0658 66-F0                    2178   	add	er0,	er6
+??:065A 22-92                    2179   	l	er2,	[er2]
+??:065C 03-92                    2180   	st	er2,	[er0]
+                                 2181   
+                                 2182   ;;            derefw(PC) += 2;
+                                 2183   CLINEA 0000H 0001H 0181H 000DH 001CH
+??:065E 7E BC                    2184   	l	bp,	-2[fp]
+??:0660 C2-90                    2185   	l	er0,	[bp]
+??:0662 82 E0                    2186   	add	er0,	#2 
+??:0664 C3-90                    2187   	st	er0,	[bp]
+                                 2188   
+                                 2189   ;;            break;
+                                 2190   CLINEA 0000H 0001H 0182H 000DH 0012H
+??:0666 00-F0'00-00'             2191   	b	_$L68
+                                 2192   
+                                 2193   ;;        case 0x41:
+                                 2194   CLINEA 0000H 0001H 0183H 0009H 0012H
+??:066A                          2195   _$S137 :
+                                 2196   
+                                 2197   ;;            derefw(regs + reg1) += derefw(code + cpc);
+                                 2198   CLINEA 0000H 0001H 0185H 000DH 0036H
+??:066A 7C B0                    2199   	l	er0,	-4[fp]
+??:066C 46-F0                    2200   	add	er0,	er4
+??:066E 05-F2                    2201   	mov	er2,	er0
+??:0670 A0-80                    2202   	mov	r0,	r10
+??:0672 00 01                    2203   	mov	r1,	#00h
+??:0674 66-F0                    2204   	add	er0,	er6
+??:0676 02-94                    2205   	l	er4,	[er0]
+??:0678 22-92                    2206   	l	er2,	[er2]
+??:067A 26-F4                    2207   	add	er4,	er2
+??:067C 03-94                    2208   	st	er4,	[er0]
+                                 2209   
+                                 2210   ;;            derefw(PC) += 2;
+                                 2211   CLINEA 0000H 0001H 0186H 000DH 001CH
+??:067E 7E BC                    2212   	l	bp,	-2[fp]
+??:0680 C2-90                    2213   	l	er0,	[bp]
+??:0682 82 E0                    2214   	add	er0,	#2 
+??:0684 C3-90                    2215   	st	er0,	[bp]
+                                 2216   
+                                 2217   ;;            break;
+                                 2218   CLINEA 0000H 0001H 0187H 000DH 0012H
+??:0686 00-F0'00-00'             2219   	b	_$L68
+                                 2220   
+                                 2221   ;;        case 0x42:
+                                 2222   CLINEA 0000H 0001H 0188H 0009H 0012H
+??:068A                          2223   _$S138 :
+                                 2224   
+                                 2225   ;;            derefw(regs + reg1) -= derefw(code + cpc);
+                                 2226   CLINEA 0000H 0001H 018AH 000DH 0036H
+??:068A 7C B0                    2227   	l	er0,	-4[fp]
+??:068C 46-F0                    2228   	add	er0,	er4
+??:068E 05-F2                    2229   	mov	er2,	er0
+??:0690 A0-80                    2230   	mov	r0,	r10
+??:0692 00 01                    2231   	mov	r1,	#00h
+??:0694 66-F0                    2232   	add	er0,	er6
+??:0696 02-94                    2233   	l	er4,	[er0]
+??:0698 22-92                    2234   	l	er2,	[er2]
+??:069A 28-84                    2235   	sub	r4,	r2
+??:069C 39-85                    2236   	subc	r5,	r3
+??:069E 03-94                    2237   	st	er4,	[er0]
+                                 2238   
+                                 2239   ;;            derefw(PC) += 2;
+                                 2240   CLINEA 0000H 0001H 018BH 000DH 001CH
+??:06A0 7E BC                    2241   	l	bp,	-2[fp]
+??:06A2 C2-90                    2242   	l	er0,	[bp]
+??:06A4 82 E0                    2243   	add	er0,	#2 
+??:06A6 C3-90                    2244   	st	er0,	[bp]
+                                 2245   
+                                 2246   ;;            break;
+                                 2247   CLINEA 0000H 0001H 018CH 000DH 0012H
+??:06A8 00-F0'00-00'             2248   	b	_$L68
+                                 2249   
+                                 2250   ;;        case 0x43:
+                                 2251   CLINEA 0000H 0001H 018DH 0009H 0012H
+??:06AC                          2252   _$S139 :
+                                 2253   
+                                 2254   ;;            derefw(regs + reg1) *= derefw(code + cpc);
+                                 2255   CLINEA 0000H 0001H 018FH 000DH 0036H
+??:06AC 7C B0                    2256   	l	er0,	-4[fp]
+??:06AE 46-F0                    2257   	add	er0,	er4
+??:06B0 05-F2                    2258   	mov	er2,	er0
+??:06B2 A0-84                    2259   	mov	r4,	r10
+??:06B4 00 05                    2260   	mov	r5,	#00h
+??:06B6 66-F4                    2261   	add	er4,	er6
+??:06B8 42-90                    2262   	l	er0,	[er4]
+??:06BA 22-92                    2263   	l	er2,	[er2]
+??:06BC 01-F0'00-00'             2264   	bl	__imulu8lw
+??:06C0 43-90                    2265   	st	er0,	[er4]
+                                 2266   
+                                 2267   ;;            derefw(PC) += 2;
+                                 2268   CLINEA 0000H 0001H 0190H 000DH 001CH
+??:06C2 7E BC                    2269   	l	bp,	-2[fp]
+??:06C4 C2-90                    2270   	l	er0,	[bp]
+??:06C6 82 E0                    2271   	add	er0,	#2 
+??:06C8 C3-90                    2272   	st	er0,	[bp]
+                                 2273   
+                                 2274   ;;            break;
+                                 2275   CLINEA 0000H 0001H 0191H 000DH 0012H
+??:06CA 00-F0'00-00'             2276   	b	_$L68
+                                 2277   
+                                 2278   ;;        case 0x44:
+                                 2279   CLINEA 0000H 0001H 0192H 0009H 0012H
+??:06CE                          2280   _$S140 :
+                                 2281   
+                                 2282   ;;            derefw(regs + reg1) /= derefw(code + cpc);
+                                 2283   CLINEA 0000H 0001H 0194H 000DH 0036H
+??:06CE 7C B0                    2284   	l	er0,	-4[fp]
+??:06D0 46-F0                    2285   	add	er0,	er4
+??:06D2 05-F2                    2286   	mov	er2,	er0
+??:06D4 A0-84                    2287   	mov	r4,	r10
+??:06D6 00 05                    2288   	mov	r5,	#00h
+??:06D8 66-F4                    2289   	add	er4,	er6
+??:06DA 42-90                    2290   	l	er0,	[er4]
+??:06DC 22-92                    2291   	l	er2,	[er2]
+??:06DE 01-F0'00-00'             2292   	bl	__uidivu8lw
+??:06E2 43-90                    2293   	st	er0,	[er4]
+                                 2294   
+                                 2295   ;;            derefw(PC) += 2;
+                                 2296   CLINEA 0000H 0001H 0195H 000DH 001CH
+??:06E4 7E BC                    2297   	l	bp,	-2[fp]
+??:06E6 C2-90                    2298   	l	er0,	[bp]
+??:06E8 82 E0                    2299   	add	er0,	#2 
+??:06EA C3-90                    2300   	st	er0,	[bp]
+                                 2301   
+                                 2302   ;;            break;
+                                 2303   CLINEA 0000H 0001H 0196H 000DH 0012H
+??:06EC 00-F0'00-00'             2304   	b	_$L68
+                                 2305   
+                                 2306   ;;        case 0x45:
+                                 2307   CLINEA 0000H 0001H 0197H 0009H 0012H
+??:06F0                          2308   _$S141 :
+                                 2309   
+                                 2310   ;;            derefw(regs + reg1) = derefw(regs + reg1) << derefw(code + cpc);
+                                 2311   CLINEA 0000H 0001H 0199H 000DH 004CH
+??:06F0 7C B0                    2312   	l	er0,	-4[fp]
+??:06F2 46-F0                    2313   	add	er0,	er4
+??:06F4 05-F2                    2314   	mov	er2,	er0
+??:06F6 A0-80                    2315   	mov	r0,	r10
+??:06F8 00 01                    2316   	mov	r1,	#00h
+??:06FA 66-F0                    2317   	add	er0,	er6
+??:06FC 02-90                    2318   	l	er0,	[er0]
+??:06FE 22-92                    2319   	l	er2,	[er2]
+??:0700                          2320   _$M33 :
+??:0700 07 72                    2321   	cmp	r2,	#07h
+??:0702 00 53                    2322   	cmpc	r3,	#00h
+??:0704 04 C3                    2323   	ble	_$M32
+??:0706 7B-91                    2324   	sllc	r1,	#07h
+??:0708 7A-90                    2325   	sll	r0,	#07h
+??:070A F9 E2                    2326   	add	er2,	#-7
+??:070C F9 C8                    2327   	bne	_$M33
+??:070E                          2328   _$M32 :
+??:070E 2B-81                    2329   	sllc	r1,	r2
+??:0710 2A-80                    2330   	sll	r0,	r2
+??:0712 A0-82                    2331   	mov	r2,	r10
+??:0714 00 03                    2332   	mov	r3,	#00h
+??:0716 66-F2                    2333   	add	er2,	er6
+??:0718 23-90                    2334   	st	er0,	[er2]
+                                 2335   
+                                 2336   ;;            derefw(PC) += 2;
+                                 2337   CLINEA 0000H 0001H 019AH 000DH 001CH
+??:071A 7E BC                    2338   	l	bp,	-2[fp]
+??:071C C2-90                    2339   	l	er0,	[bp]
+??:071E 82 E0                    2340   	add	er0,	#2 
+??:0720 C3-90                    2341   	st	er0,	[bp]
+                                 2342   
+                                 2343   ;;            break;
+                                 2344   CLINEA 0000H 0001H 019BH 000DH 0012H
+??:0722 00-F0'00-00'             2345   	b	_$L68
+                                 2346   
+                                 2347   ;;        case 0x46:
+                                 2348   CLINEA 0000H 0001H 019CH 0009H 0012H
+??:0726                          2349   _$S142 :
+                                 2350   
+                                 2351   ;;            derefw(regs + reg1) = derefw(regs + reg1) >> derefw(code + cpc);
+                                 2352   CLINEA 0000H 0001H 019EH 000DH 004CH
+??:0726 7C B0                    2353   	l	er0,	-4[fp]
+??:0728 46-F0                    2354   	add	er0,	er4
+??:072A 05-F2                    2355   	mov	er2,	er0
+??:072C A0-80                    2356   	mov	r0,	r10
+??:072E 00 01                    2357   	mov	r1,	#00h
+??:0730 66-F0                    2358   	add	er0,	er6
+??:0732 02-90                    2359   	l	er0,	[er0]
+??:0734 22-92                    2360   	l	er2,	[er2]
+??:0736                          2361   _$M35 :
+??:0736 07 72                    2362   	cmp	r2,	#07h
+??:0738 00 53                    2363   	cmpc	r3,	#00h
+??:073A 04 C3                    2364   	ble	_$M34
+??:073C 7D-90                    2365   	srlc	r0,	#07h
+??:073E 7C-91                    2366   	srl	r1,	#07h
+??:0740 F9 E2                    2367   	add	er2,	#-7
+??:0742 F9 C8                    2368   	bne	_$M35
+??:0744                          2369   _$M34 :
+??:0744 2D-80                    2370   	srlc	r0,	r2
+??:0746 2C-81                    2371   	srl	r1,	r2
+??:0748 A0-82                    2372   	mov	r2,	r10
+??:074A 00 03                    2373   	mov	r3,	#00h
+??:074C 66-F2                    2374   	add	er2,	er6
+??:074E 23-90                    2375   	st	er0,	[er2]
+                                 2376   
+                                 2377   ;;            derefw(PC) += 2;
+                                 2378   CLINEA 0000H 0001H 019FH 000DH 001CH
+??:0750 7E BC                    2379   	l	bp,	-2[fp]
+??:0752 C2-90                    2380   	l	er0,	[bp]
+??:0754 82 E0                    2381   	add	er0,	#2 
+??:0756 C3-90                    2382   	st	er0,	[bp]
+                                 2383   
+                                 2384   ;;            break;
+                                 2385   CLINEA 0000H 0001H 01A0H 000DH 0012H
+??:0758 00-F0'00-00'             2386   	b	_$L68
+                                 2387   
+                                 2388   ;;        case 0x47:
+                                 2389   CLINEA 0000H 0001H 01A1H 0009H 0012H
+??:075C                          2390   _$S143 :
+                                 2391   
+                                 2392   ;;            derefw(regs + reg1) = lread_word(PID, derefw(code + cpc));
+                                 2393   CLINEA 0000H 0000H 01A3H 000DH 0046H
+??:075C 7C B0                    2394   	l	er0,	-4[fp]
+??:075E 46-F0                    2395   	add	er0,	er4
+??:0760 02-92                    2396   	l	er2,	[er0]
+??:0762 85-F0                    2397   	mov	er0,	er8
+??:0764 01-F0'00-00'             2398   	bl	_lread_word
+??:0768 05-F4                    2399   	mov	er4,	er0
+??:076A A0-80                    2400   	mov	r0,	r10
+??:076C 00 01                    2401   	mov	r1,	#00h
+??:076E 66-F0                    2402   	add	er0,	er6
+??:0770 03-94                    2403   	st	er4,	[er0]
+                                 2404   
+                                 2405   ;;            derefw(PC) += 2;
+                                 2406   CLINEA 0000H 0001H 01A4H 000DH 001CH
+??:0772 7E BC                    2407   	l	bp,	-2[fp]
+??:0774 C2-90                    2408   	l	er0,	[bp]
+??:0776 82 E0                    2409   	add	er0,	#2 
+??:0778 C3-90                    2410   	st	er0,	[bp]
+                                 2411   
+                                 2412   ;;            break;
+                                 2413   CLINEA 0000H 0001H 01A5H 000DH 0012H
+??:077A 00-F0'00-00'             2414   	b	_$L68
+                                 2415   
+                                 2416   ;;        case 0x48:
+                                 2417   CLINEA 0000H 0001H 01A6H 0009H 0012H
+??:077E                          2418   _$S144 :
+                                 2419   
+                                 2420   ;;            lwrite_word(PID, derefw(code + cpc), derefw(regs + reg1));
+                                 2421   CLINEA 0000H 0001H 01A8H 000DH 0046H
+??:077E A0-80                    2422   	mov	r0,	r10
+??:0780 00 01                    2423   	mov	r1,	#00h
+??:0782 66-F0                    2424   	add	er0,	er6
+??:0784 02-90                    2425   	l	er0,	[er0]
+??:0786 5E-F0                    2426   	push	er0
+??:0788 7C B0                    2427   	l	er0,	-4[fp]
+??:078A 46-F0                    2428   	add	er0,	er4
+??:078C 02-92                    2429   	l	er2,	[er0]
+??:078E 85-F0                    2430   	mov	er0,	er8
+??:0790 01-F0'00-00'             2431   	bl	_lwrite_word
+??:0794 02 E1                    2432   	add	sp,	#2 
+                                 2433   
+                                 2434   ;;            derefw(PC) += 2;
+                                 2435   CLINEA 0000H 0001H 01A9H 000DH 001CH
+??:0796 7E BC                    2436   	l	bp,	-2[fp]
+??:0798 C2-90                    2437   	l	er0,	[bp]
+??:079A 82 E0                    2438   	add	er0,	#2 
+??:079C C3-90                    2439   	st	er0,	[bp]
+                                 2440   
+                                 2441   ;;            break;
+                                 2442   CLINEA 0000H 0001H 01AAH 000DH 0012H
+??:079E 00-F0'00-00'             2443   	b	_$L68
+                                 2444   
+                                 2445   ;;        case 0x49:
+                                 2446   CLINEA 0000H 0001H 01ABH 0009H 0012H
+??:07A2                          2447   _$S145 :
+                                 2448   
+                                 2449   ;;            derefw(regs + reg1) &= derefw(code + cpc);
+                                 2450   CLINEA 0000H 0001H 01ADH 000DH 0036H
+??:07A2 7C B0                    2451   	l	er0,	-4[fp]
+??:07A4 46-F0                    2452   	add	er0,	er4
+??:07A6 05-F2                    2453   	mov	er2,	er0
+??:07A8 A0-80                    2454   	mov	r0,	r10
+??:07AA 00 01                    2455   	mov	r1,	#00h
+??:07AC 66-F0                    2456   	add	er0,	er6
+??:07AE 02-94                    2457   	l	er4,	[er0]
+??:07B0 22-92                    2458   	l	er2,	[er2]
+??:07B2 22-84                    2459   	and	r4,	r2
+??:07B4 32-85                    2460   	and	r5,	r3
+??:07B6 03-94                    2461   	st	er4,	[er0]
+                                 2462   
+                                 2463   ;;            derefw(PC) += 2;
+                                 2464   CLINEA 0000H 0001H 01AEH 000DH 001CH
+??:07B8 7E BC                    2465   	l	bp,	-2[fp]
+??:07BA C2-90                    2466   	l	er0,	[bp]
+??:07BC 82 E0                    2467   	add	er0,	#2 
+??:07BE C3-90                    2468   	st	er0,	[bp]
+                                 2469   
+                                 2470   ;;            break;
+                                 2471   CLINEA 0000H 0001H 01AFH 000DH 0012H
+??:07C0 00-F0'00-00'             2472   	b	_$L68
+                                 2473   
+                                 2474   ;;        case 0x4A:
+                                 2475   CLINEA 0000H 0001H 01B0H 0009H 0012H
+??:07C4                          2476   _$S146 :
+                                 2477   
+                                 2478   ;;            derefw(regs + reg1) |= derefw(code + cpc);
+                                 2479   CLINEA 0000H 0001H 01B2H 000DH 0036H
+??:07C4 7C B0                    2480   	l	er0,	-4[fp]
+??:07C6 46-F0                    2481   	add	er0,	er4
+??:07C8 05-F2                    2482   	mov	er2,	er0
+??:07CA A0-80                    2483   	mov	r0,	r10
+??:07CC 00 01                    2484   	mov	r1,	#00h
+??:07CE 66-F0                    2485   	add	er0,	er6
+??:07D0 02-94                    2486   	l	er4,	[er0]
+??:07D2 22-92                    2487   	l	er2,	[er2]
+??:07D4 23-84                    2488   	or	r4,	r2
+??:07D6 33-85                    2489   	or	r5,	r3
+??:07D8 03-94                    2490   	st	er4,	[er0]
+                                 2491   
+                                 2492   ;;            derefw(PC) += 2;
+                                 2493   CLINEA 0000H 0001H 01B3H 000DH 001CH
+??:07DA 7E BC                    2494   	l	bp,	-2[fp]
+??:07DC C2-90                    2495   	l	er0,	[bp]
+??:07DE 82 E0                    2496   	add	er0,	#2 
+??:07E0 C3-90                    2497   	st	er0,	[bp]
+                                 2498   
+                                 2499   ;;            break;
+                                 2500   CLINEA 0000H 0001H 01B4H 000DH 0012H
+??:07E2 00-F0'00-00'             2501   	b	_$L68
+                                 2502   
+                                 2503   ;;        case 0x4B:
+                                 2504   CLINEA 0000H 0001H 01B5H 0009H 0012H
+??:07E6                          2505   _$S147 :
+                                 2506   
+                                 2507   ;;            derefw(regs + reg1) ^= derefw(code + cpc);
+                                 2508   CLINEA 0000H 0001H 01B7H 000DH 0036H
+??:07E6 7C B0                    2509   	l	er0,	-4[fp]
+??:07E8 46-F0                    2510   	add	er0,	er4
+??:07EA 05-F2                    2511   	mov	er2,	er0
+??:07EC A0-80                    2512   	mov	r0,	r10
+??:07EE 00 01                    2513   	mov	r1,	#00h
+??:07F0 66-F0                    2514   	add	er0,	er6
+??:07F2 02-94                    2515   	l	er4,	[er0]
+??:07F4 22-92                    2516   	l	er2,	[er2]
+??:07F6 24-84                    2517   	xor	r4,	r2
+??:07F8 34-85                    2518   	xor	r5,	r3
+??:07FA 03-94                    2519   	st	er4,	[er0]
+                                 2520   
+                                 2521   ;;            derefw(PC) += 2;
+                                 2522   CLINEA 0000H 0001H 01B8H 000DH 001CH
+??:07FC 7E BC                    2523   	l	bp,	-2[fp]
+??:07FE C2-90                    2524   	l	er0,	[bp]
+??:0800 82 E0                    2525   	add	er0,	#2 
+??:0802 C3-90                    2526   	st	er0,	[bp]
+                                 2527   
+                                 2528   ;;            break;
+                                 2529   CLINEA 0000H 0001H 01B9H 000DH 0012H
+??:0804 00-F0'00-00'             2530   	b	_$L68
+                                 2531   
+                                 2532   ;;        case 0x4C:
+                                 2533   CLINEA 0000H 0001H 01BAH 0009H 0012H
+??:0808                          2534   _$S148 :
+                                 2535   
+                                 2536   ;;            derefw(regs + reg1)++;
+                                 2537   CLINEA 0000H 0000H 01BCH 000DH 0022H
+??:0808 A0-80                    2538   	mov	r0,	r10
+??:080A 00 01                    2539   	mov	r1,	#00h
+??:080C 66-F0                    2540   	add	er0,	er6
+??:080E 02-92                    2541   	l	er2,	[er0]
+??:0810 81 E2                    2542   	add	er2,	#1 
+??:0812 03-92                    2543   	st	er2,	[er0]
+                                 2544   
+                                 2545   ;;            break;
+                                 2546   CLINEA 0000H 0001H 01BDH 000DH 0012H
+??:0814 00-F0'00-00'             2547   	b	_$L68
+                                 2548   
+                                 2549   ;;        case 0x4D:
+                                 2550   CLINEA 0000H 0001H 01BEH 0009H 0012H
+??:0818                          2551   _$S149 :
+                                 2552   
+                                 2553   ;;            derefw(regs + reg1)--;
+                                 2554   CLINEA 0000H 0000H 01C0H 000DH 0022H
+??:0818 A0-80                    2555   	mov	r0,	r10
+??:081A 00 01                    2556   	mov	r1,	#00h
+??:081C 66-F0                    2557   	add	er0,	er6
+??:081E 02-92                    2558   	l	er2,	[er0]
+??:0820 FF E2                    2559   	add	er2,	#-1
+??:0822 03-92                    2560   	st	er2,	[er0]
+                                 2561   
+                                 2562   ;;            break;
+                                 2563   CLINEA 0000H 0001H 01C1H 000DH 0012H
+??:0824 00-F0'00-00'             2564   	b	_$L68
+                                 2565   
+                                 2566   ;;        case 0x4E:
+                                 2567   CLINEA 0000H 0001H 01C2H 0009H 0012H
+??:0828                          2568   _$S150 :
+                                 2569   
+                                 2570   ;;            lcmp_flags_word(derefw(regs + reg1), derefw(cpc + code), FLAGS);
+                                 2571   CLINEA 0000H 0001H 01C4H 000DH 004CH
+??:0828 7A B0                    2572   	l	er0,	-6[fp]
+??:082A 5E-F0                    2573   	push	er0
+??:082C 7C B0                    2574   	l	er0,	-4[fp]
+??:082E 46-F0                    2575   	add	er0,	er4
+??:0830 02-92                    2576   	l	er2,	[er0]
+??:0832 A0-80                    2577   	mov	r0,	r10
+??:0834 00 01                    2578   	mov	r1,	#00h
+??:0836 66-F0                    2579   	add	er0,	er6
+??:0838 02-90                    2580   	l	er0,	[er0]
+??:083A 01-F0'00-00'             2581   	bl	_lcmp_flags_word
+??:083E 02 E1                    2582   	add	sp,	#2 
+                                 2583   
+                                 2584   ;;            derefw(PC) += 2;
+                                 2585   CLINEA 0000H 0001H 01C5H 000DH 001CH
+??:0840 7E BC                    2586   	l	bp,	-2[fp]
+??:0842 C2-90                    2587   	l	er0,	[bp]
+??:0844 82 E0                    2588   	add	er0,	#2 
+??:0846 C3-90                    2589   	st	er0,	[bp]
+                                 2590   
+                                 2591   ;;            break;
+                                 2592   CLINEA 0000H 0001H 01C6H 000DH 0012H
+??:0848 00-F0'00-00'             2593   	b	_$L68
+                                 2594   
+                                 2595   ;;        case 0x50:
+                                 2596   CLINEA 0000H 0001H 01C8H 0009H 0012H
+??:084C                          2597   _$S151 :
+                                 2598   
+                                 2599   ;;            derefw(SP) -= 2;
+                                 2600   CLINEA 0000H 0001H 01CAH 000DH 001CH
+??:084C 78 BC                    2601   	l	bp,	-8[fp]
+??:084E C2-90                    2602   	l	er0,	[bp]
+??:0850 FE E0                    2603   	add	er0,	#-2
+??:0852 C3-90                    2604   	st	er0,	[bp]
+                                 2605   
+                                 2606   ;;            lwrite_word(PID, derefw(SP), derefw(regs + reg1));
+                                 2607   CLINEA 0000H 0001H 01CBH 000DH 003EH
+??:0854 A0-80                    2608   	mov	r0,	r10
+??:0856 00 01                    2609   	mov	r1,	#00h
+??:0858 66-F0                    2610   	add	er0,	er6
+??:085A 02-90                    2611   	l	er0,	[er0]
+??:085C 5E-F0                    2612   	push	er0
+??:085E 78 BC                    2613   	l	bp,	-8[fp]
+??:0860 C2-92                    2614   	l	er2,	[bp]
+??:0862 85-F0                    2615   	mov	er0,	er8
+??:0864 01-F0'00-00'             2616   	bl	_lwrite_word
+??:0868 02 E1                    2617   	add	sp,	#2 
+                                 2618   
+                                 2619   ;;            break;
+                                 2620   CLINEA 0000H 0001H 01CCH 000DH 0012H
+??:086A 00-F0'00-00'             2621   	b	_$L68
+                                 2622   
+                                 2623   ;;        case 0x51:
+                                 2624   CLINEA 0000H 0001H 01CDH 0009H 0012H
+??:086E                          2625   _$S152 :
+                                 2626   
+                                 2627   ;;            derefw(regs + reg1) = lread_word(PID, derefw(SP));
+                                 2628   CLINEA 0000H 0000H 01CFH 000DH 003EH
+??:086E 78 BC                    2629   	l	bp,	-8[fp]
+??:0870 C2-92                    2630   	l	er2,	[bp]
+??:0872 85-F0                    2631   	mov	er0,	er8
+??:0874 01-F0'00-00'             2632   	bl	_lread_word
+??:0878 05-F4                    2633   	mov	er4,	er0
+??:087A A0-80                    2634   	mov	r0,	r10
+??:087C 00 01                    2635   	mov	r1,	#00h
+??:087E 66-F0                    2636   	add	er0,	er6
+??:0880 03-94                    2637   	st	er4,	[er0]
+                                 2638   
+                                 2639   ;;            derefw(SP) += 2;
+                                 2640   CLINEA 0000H 0001H 01D0H 000DH 001CH
+??:0882 78 BC                    2641   	l	bp,	-8[fp]
+??:0884 C2-90                    2642   	l	er0,	[bp]
+??:0886 82 E0                    2643   	add	er0,	#2 
+??:0888 C3-90                    2644   	st	er0,	[bp]
+                                 2645   
+                                 2646   ;;            break;
+                                 2647   CLINEA 0000H 0001H 01D1H 000DH 0012H
+??:088A 00-F0'00-00'             2648   	b	_$L68
+                                 2649   
+                                 2650   ;;        case 0x52:
+                                 2651   CLINEA 0000H 0001H 01D2H 0009H 0012H
+??:088E                          2652   _$S153 :
+                                 2653   
+                                 2654   ;;            derefw(SP) -= 2;
+                                 2655   CLINEA 0000H 0001H 01D4H 000DH 001CH
+??:088E 78 BC                    2656   	l	bp,	-8[fp]
+??:0890 C2-90                    2657   	l	er0,	[bp]
+??:0892 FE E0                    2658   	add	er0,	#-2
+??:0894 C3-90                    2659   	st	er0,	[bp]
+                                 2660   
+                                 2661   ;;            lwrite_word(PID, derefw(SP), derefw(regs + reg1));
+                                 2662   CLINEA 0000H 0001H 01D5H 000DH 003EH
+??:0896 A0-80                    2663   	mov	r0,	r10
+??:0898 00 01                    2664   	mov	r1,	#00h
+??:089A 66-F0                    2665   	add	er0,	er6
+??:089C 02-90                    2666   	l	er0,	[er0]
+??:089E 5E-F0                    2667   	push	er0
+??:08A0 78 BC                    2668   	l	bp,	-8[fp]
+??:08A2 C2-92                    2669   	l	er2,	[bp]
+??:08A4 85-F0                    2670   	mov	er0,	er8
+??:08A6 01-F0'00-00'             2671   	bl	_lwrite_word
+??:08AA 02 E1                    2672   	add	sp,	#2 
+                                 2673   
+                                 2674   ;;        case 0x53:
+                                 2675   CLINEA 0000H 0001H 01D6H 0009H 0012H
+??:08AC                          2676   _$S154 :
+                                 2677   
+                                 2678   ;;            derefw(regs + reg1) = lread_word(PID, derefw(SP));
+                                 2679   CLINEA 0000H 0000H 01D8H 000DH 003EH
+??:08AC 78 BC                    2680   	l	bp,	-8[fp]
+??:08AE C2-92                    2681   	l	er2,	[bp]
+??:08B0 85-F0                    2682   	mov	er0,	er8
+??:08B2 01-F0'00-00'             2683   	bl	_lread_word
+??:08B6 05-F4                    2684   	mov	er4,	er0
+??:08B8 A0-80                    2685   	mov	r0,	r10
+??:08BA 00 01                    2686   	mov	r1,	#00h
+??:08BC 66-F0                    2687   	add	er0,	er6
+??:08BE 03-94                    2688   	st	er4,	[er0]
+                                 2689   
+                                 2690   ;;            derefw(SP) += 2;
+                                 2691   CLINEA 0000H 0001H 01D9H 000DH 001CH
+??:08C0 78 BC                    2692   	l	bp,	-8[fp]
+??:08C2 C2-90                    2693   	l	er0,	[bp]
+??:08C4 82 E0                    2694   	add	er0,	#2 
+??:08C6 C3-90                    2695   	st	er0,	[bp]
+                                 2696   
+                                 2697   ;;            break;
+                                 2698   CLINEA 0000H 0001H 01DAH 000DH 0012H
+??:08C8 00-F0'00-00'             2699   	b	_$L68
+                                 2700   
+                                 2701   ;;        case 0x60:
+                                 2702   CLINEA 0000H 0001H 01DCH 0009H 0012H
+??:08CC                          2703   _$S155 :
+                                 2704   
+                                 2705   ;;            derefw(PC) = derefw(regs + reg1);
+                                 2706   CLINEA 0000H 0001H 01DEH 000DH 002DH
+??:08CC A0-80                    2707   	mov	r0,	r10
+??:08CE 00 01                    2708   	mov	r1,	#00h
+??:08D0 66-F0                    2709   	add	er0,	er6
+??:08D2 7E BC                    2710   	l	bp,	-2[fp]
+??:08D4 02-90                    2711   	l	er0,	[er0]
+??:08D6 C3-90                    2712   	st	er0,	[bp]
+                                 2713   
+                                 2714   ;;            break;
+                                 2715   CLINEA 0000H 0001H 01DFH 000DH 0012H
+??:08D8 00-F0'00-00'             2716   	b	_$L68
+                                 2717   
+                                 2718   ;;        case 0x61:
+                                 2719   CLINEA 0000H 0001H 01E0H 0009H 0012H
+??:08DC                          2720   _$S156 :
+                                 2721   
+                                 2722   ;;            derefw(LR) = cpc;
+                                 2723   CLINEA 0000H 0001H 01E2H 000DH 001DH
+??:08DC 76 BC                    2724   	l	bp,	-10[fp]
+??:08DE C3-94                    2725   	st	er4,	[bp]
+                                 2726   
+                                 2727   ;;            derefw(PC) = derefw(regs + reg1);
+                                 2728   CLINEA 0000H 0001H 01E3H 000DH 002DH
+??:08E0 A0-80                    2729   	mov	r0,	r10
+??:08E2 00 01                    2730   	mov	r1,	#00h
+??:08E4 66-F0                    2731   	add	er0,	er6
+??:08E6 7E BC                    2732   	l	bp,	-2[fp]
+??:08E8 02-90                    2733   	l	er0,	[er0]
+??:08EA C3-90                    2734   	st	er0,	[bp]
+                                 2735   
+                                 2736   ;;            break;
+                                 2737   CLINEA 0000H 0001H 01E4H 000DH 0012H
+??:08EC 00-F0'00-00'             2738   	b	_$L68
+                                 2739   
+                                 2740   ;;        case 0x62:
+                                 2741   CLINEA 0000H 0001H 01E5H 0009H 0012H
+??:08F0                          2742   _$S157 :
+                                 2743   
+                                 2744   ;;            derefw(PC) = derefw(LR);
+                                 2745   CLINEA 0000H 0001H 01E7H 000DH 0024H
+??:08F0 76 BC                    2746   	l	bp,	-10[fp]
+??:08F2 7E B0                    2747   	l	er0,	-2[fp]
+??:08F4 C2-92                    2748   	l	er2,	[bp]
+??:08F6 03-92                    2749   	st	er2,	[er0]
+                                 2750   
+                                 2751   ;;            break;
+                                 2752   CLINEA 0000H 0001H 01E8H 000DH 0012H
+??:08F8 00-F0'00-00'             2753   	b	_$L68
+                                 2754   
+                                 2755   ;;        case 0x70:
+                                 2756   CLINEA 0000H 0001H 01E9H 0009H 0012H
+??:08FC                          2757   _$S158 :
+                                 2758   
+                                 2759   ;;            if(operand == 0)
+                                 2760   CLINEA 0000H 0001H 01EBH 000DH 001CH
+??:08FC 00 73                    2761   	cmp	r3,	#00h
+??:08FE 14 C8                    2762   	bne	_$L159
+                                 2763   CBLOCK 7 10 492
+                                 2764   
+                                 2765   ;;                print((const byte*)derefw(regs + 0)+code+derefw(PC), deref(regs + 2), deref(regs + 3), deref(regs + 4));
+                                 2766   CLINEA 0000H 0001H 01EEH 0011H 0078H
+??:0900 68-90 04-00              2767   	l	r0,	04h[er6]
+??:0904 00 01                    2768   	mov	r1,	#00h
+??:0906 5E-F0                    2769   	push	er0
+??:0908 68-90 03-00              2770   	l	r0,	03h[er6]
+??:090C 5E-F0                    2771   	push	er0
+??:090E 68-92 02-00              2772   	l	r2,	02h[er6]
+??:0912 00 03                    2773   	mov	r3,	#00h
+??:0914 62-90                    2774   	l	er0,	[er6]
+??:0916 7C B4                    2775   	l	er4,	-4[fp]
+??:0918 46-F0                    2776   	add	er0,	er4
+??:091A 7E BC                    2777   	l	bp,	-2[fp]
+??:091C C2-94                    2778   	l	er4,	[bp]
+??:091E 46-F0                    2779   	add	er0,	er4
+??:0920 01-F0'00-00'             2780   	bl	_print
+??:0924 04 E1                    2781   	add	sp,	#4 
+                                 2782   CBLOCKEND 7 10 495
+??:0926 2E CE                    2783   	bal	_$L171
+??:0928                          2784   _$L159 :
+                                 2785   
+                                 2786   ;;            else if(operand == 1)
+                                 2787   CLINEA 0000H 0000H 01F0H 000DH 0021H
+??:0928 01 73                    2788   	cmp	r3,	#01h
+??:092A 0C C8                    2789   	bne	_$L162
+                                 2790   CBLOCK 7 11 497
+                                 2791   
+                                 2792   ;;                set_pixel(deref(regs + 0), deref(regs + 1), deref(regs + 2));
+                                 2793   CLINEA 0000H 0001H 01F3H 0011H 004DH
+??:092C 68-90 02-00              2794   	l	r0,	02h[er6]
+??:0930 00 01                    2795   	mov	r1,	#00h
+??:0932 5E-F0                    2796   	push	er0
+??:0934 68-92 01-00              2797   	l	r2,	01h[er6]
+??:0938 00 03                    2798   	mov	r3,	#00h
+??:093A 60-90                    2799   	l	r0,	[er6]
+??:093C 01-F0'00-00'             2800   	bl	_set_pixel
+??:0940 02 E1                    2801   	add	sp,	#2 
+                                 2802   CBLOCKEND 7 11 501
+??:0942 20 CE                    2803   	bal	_$L171
+??:0944                          2804   _$L162 :
+                                 2805   
+                                 2806   ;;            else if(operand == 2)
+                                 2807   CLINEA 0000H 0000H 01F6H 000DH 0021H
+??:0944 02 73                    2808   	cmp	r3,	#02h
+??:0946 12 C8                    2809   	bne	_$L165
+                                 2810   CBLOCK 7 12 503
+                                 2811   
+                                 2812   ;;                plot_line(deref(regs + 0), deref(regs + 1), deref(regs + 2), deref(regs + 3), deref(regs + 4));
+                                 2813   CLINEA 0000H 0001H 01F9H 0011H 006FH
+??:0948 68-90 04-00              2814   	l	r0,	04h[er6]
+??:094C 00 01                    2815   	mov	r1,	#00h
+??:094E 5E-F0                    2816   	push	er0
+??:0950 68-90 03-00              2817   	l	r0,	03h[er6]
+??:0954 5E-F0                    2818   	push	er0
+??:0956 68-90 02-00              2819   	l	r0,	02h[er6]
+??:095A 5E-F0                    2820   	push	er0
+??:095C 68-92 01-00              2821   	l	r2,	01h[er6]
+??:0960 00 03                    2822   	mov	r3,	#00h
+??:0962 60-90                    2823   	l	r0,	[er6]
+??:0964 01-F0'00-00'             2824   	bl	_plot_line
+??:0968 06 E1                    2825   	add	sp,	#6 
+                                 2826   CBLOCKEND 7 12 506
+??:096A 0C CE                    2827   	bal	_$L171
+??:096C                          2828   _$L165 :
+                                 2829   
+                                 2830   ;;            else if(operand == 5)
+                                 2831   CLINEA 0000H 0000H 0205H 000DH 0021H
+??:096C 05 73                    2832   	cmp	r3,	#05h
+??:096E 04 C8                    2833   	bne	_$L168
+                                 2834   CBLOCK 7 13 518
+                                 2835   
+                                 2836   ;;                deref(regs + 0) = CheckButtons();
+                                 2837   CLINEA 0000H 0000H 0208H 0011H 0031H
+??:0970 01-F0'00-00'             2838   	bl	_CheckButtons
+??:0974 61-90                    2839   	st	r0,	[er6]
+                                 2840   CBLOCKEND 7 13 521
+??:0976 06 CE                    2841   	bal	_$L171
+??:0978                          2842   _$L168 :
+                                 2843   
+                                 2844   ;;            else if(operand == 6)
+                                 2845   CLINEA 0000H 0000H 020AH 000DH 0021H
+??:0978 06 73                    2846   	cmp	r3,	#06h
+??:097A 04 C8                    2847   	bne	_$L171
+                                 2848   CBLOCK 7 14 523
+                                 2849   
+                                 2850   ;;                render(vram1);
+                                 2851   CLINEA 0000H 0001H 020DH 0011H 001EH
+??:097C 02 00                    2852   	mov	r0,	#02h
+??:097E 90 01                    2853   	mov	r1,	#090h
+??:0980 01-F0'00-00'             2854   	bl	_render
+                                 2855   CBLOCKEND 7 14 526
+                                 2856   
+                                 2857   ;;            }
+                                 2858   CLINEA 0000H 0000H 020EH 000DH 000DH
+??:0984                          2859   _$L171 :
+                                 2860   
+                                 2861   ;;            break;
+                                 2862   CLINEA 0000H 0001H 020FH 000DH 0012H
+??:0984 00-F0'00-00'             2863   	b	_$L68
+                                 2864   
+                                 2865   ;;        case 0x80:
+                                 2866   CLINEA 0000H 0001H 0211H 0009H 0012H
+??:0988                          2867   _$S173 :
+                                 2868   
+                                 2869   ;;            derefw(PC) = derefw(code + cpc);
+                                 2870   CLINEA 0000H 0001H 0213H 000DH 002CH
+??:0988 7C B0                    2871   	l	er0,	-4[fp]
+??:098A 46-F0                    2872   	add	er0,	er4
+??:098C 7E BC                    2873   	l	bp,	-2[fp]
+??:098E 02-90                    2874   	l	er0,	[er0]
+??:0990 C3-90                    2875   	st	er0,	[bp]
+                                 2876   
+                                 2877   ;;            break;
+                                 2878   CLINEA 0000H 0001H 0214H 000DH 0012H
+??:0992 00-F0'00-00'             2879   	b	_$L68
+                                 2880   
+                                 2881   ;;        case 0x81:
+                                 2882   CLINEA 0000H 0001H 0215H 0009H 0012H
+??:0996                          2883   _$S174 :
+                                 2884   
+                                 2885   ;;            if(deref(FLAGS) & 0x01)
+                                 2886   CLINEA 0000H 0001H 0217H 000DH 0023H
+??:0996 7A BC                    2887   	l	bp,	-6[fp]
+??:0998 C0-90                    2888   	l	r0,	[bp]
+??:099A 01-A0                    2889   	tb	r0.0
+??:099C 02 C8                    2890   	bne	_$M43
+??:099E 00-F0'00-00'             2891   	b	_$L68
+??:09A2                          2892   _$M43 :
+                                 2893   CBLOCK 7 15 536
+                                 2894   
+                                 2895   ;;                derefw(PC) = derefw(code + cpc);
+                                 2896   CLINEA 0000H 0001H 0219H 0011H 0030H
+??:09A2 7C B0                    2897   	l	er0,	-4[fp]
+??:09A4 46-F0                    2898   	add	er0,	er4
+??:09A6 7E BC                    2899   	l	bp,	-2[fp]
+??:09A8 02-90                    2900   	l	er0,	[er0]
+??:09AA C3-90                    2901   	st	er0,	[bp]
+                                 2902   CBLOCKEND 7 15 538
+                                 2903   
+                                 2904   ;;            break;
+                                 2905   CLINEA 0000H 0001H 021BH 000DH 0012H
+??:09AC 00-F0'00-00'             2906   	b	_$L68
+                                 2907   
+                                 2908   ;;        case 0x82:
+                                 2909   CLINEA 0000H 0001H 021CH 0009H 0012H
+??:09B0                          2910   _$S177 :
+                                 2911   
+                                 2912   ;;            if(!(deref(FLAGS) & 0x01))
+                                 2913   CLINEA 0000H 0000H 021EH 000DH 0026H
+??:09B0 7A BC                    2914   	l	bp,	-6[fp]
+??:09B2 C0-90                    2915   	l	r0,	[bp]
+??:09B4 01-A0                    2916   	tb	r0.0
+??:09B6 02 C9                    2917   	beq	_$M44
+??:09B8 00-F0'00-00'             2918   	b	_$L68
+??:09BC                          2919   _$M44 :
+                                 2920   CBLOCK 7 16 543
+                                 2921   
+                                 2922   ;;                derefw(PC) = derefw(code + cpc);
+                                 2923   CLINEA 0000H 0001H 0220H 0011H 0030H
+??:09BC 7C B0                    2924   	l	er0,	-4[fp]
+??:09BE 46-F0                    2925   	add	er0,	er4
+??:09C0 7E BC                    2926   	l	bp,	-2[fp]
+??:09C2 02-90                    2927   	l	er0,	[er0]
+??:09C4 C3-90                    2928   	st	er0,	[bp]
+                                 2929   CBLOCKEND 7 16 545
+                                 2930   
+                                 2931   ;;            break;
+                                 2932   CLINEA 0000H 0001H 0222H 000DH 0012H
+??:09C6 00-F0'00-00'             2933   	b	_$L68
+                                 2934   
+                                 2935   ;;        case 0x83:
+                                 2936   CLINEA 0000H 0001H 0223H 0009H 0012H
+??:09CA                          2937   _$S182 :
+                                 2938   
+                                 2939   ;;            if(deref(FLAGS) & 0x02)
+                                 2940   CLINEA 0000H 0001H 0225H 000DH 0023H
+??:09CA 7A BC                    2941   	l	bp,	-6[fp]
+??:09CC C0-90                    2942   	l	r0,	[bp]
+??:09CE 11-A0                    2943   	tb	r0.1
+??:09D0 02 C8                    2944   	bne	_$M45
+??:09D2 00-F0'00-00'             2945   	b	_$L68
+??:09D6                          2946   _$M45 :
+                                 2947   CBLOCK 7 17 550
+                                 2948   
+                                 2949   ;;                derefw(PC) = derefw(code + cpc);
+                                 2950   CLINEA 0000H 0001H 0227H 0011H 0030H
+??:09D6 7C B0                    2951   	l	er0,	-4[fp]
+??:09D8 46-F0                    2952   	add	er0,	er4
+??:09DA 7E BC                    2953   	l	bp,	-2[fp]
+??:09DC 02-90                    2954   	l	er0,	[er0]
+??:09DE C3-90                    2955   	st	er0,	[bp]
+                                 2956   CBLOCKEND 7 17 552
+                                 2957   
+                                 2958   ;;            break;
+                                 2959   CLINEA 0000H 0001H 0229H 000DH 0012H
+??:09E0 00-F0'00-00'             2960   	b	_$L68
+                                 2961   
+                                 2962   ;;        case 0x84:
+                                 2963   CLINEA 0000H 0001H 022AH 0009H 0012H
+??:09E4                          2964   _$S185 :
+                                 2965   
+                                 2966   ;;            if(deref(FLAGS) & 0x04)
+                                 2967   CLINEA 0000H 0001H 022CH 000DH 0023H
+??:09E4 7A BC                    2968   	l	bp,	-6[fp]
+??:09E6 C0-90                    2969   	l	r0,	[bp]
+??:09E8 21-A0                    2970   	tb	r0.2
+??:09EA 02 C8                    2971   	bne	_$M46
+??:09EC 00-F0'00-00'             2972   	b	_$L68
+??:09F0                          2973   _$M46 :
+                                 2974   CBLOCK 7 18 557
+                                 2975   
+                                 2976   ;;                derefw(PC) = derefw(code + cpc);
+                                 2977   CLINEA 0000H 0001H 022EH 0011H 0030H
+??:09F0 7C B0                    2978   	l	er0,	-4[fp]
+??:09F2 46-F0                    2979   	add	er0,	er4
+??:09F4 7E BC                    2980   	l	bp,	-2[fp]
+??:09F6 02-90                    2981   	l	er0,	[er0]
+??:09F8 C3-90                    2982   	st	er0,	[bp]
+                                 2983   CBLOCKEND 7 18 559
+                                 2984   
+                                 2985   ;;            break;
+                                 2986   CLINEA 0000H 0001H 0230H 000DH 0012H
+??:09FA 00-F0'00-00'             2987   	b	_$L68
+                                 2988   
+                                 2989   ;;        case 0x85:
+                                 2990   CLINEA 0000H 0001H 0231H 0009H 0012H
+??:09FE                          2991   _$S188 :
+                                 2992   
+                                 2993   ;;            if(deref(FLAGS) & 0x08)
+                                 2994   CLINEA 0000H 0001H 0233H 000DH 0023H
+??:09FE 7A BC                    2995   	l	bp,	-6[fp]
+??:0A00 C0-90                    2996   	l	r0,	[bp]
+??:0A02 31-A0                    2997   	tb	r0.3
+??:0A04 02 C8                    2998   	bne	_$M47
+??:0A06 00-F0'00-00'             2999   	b	_$L68
+??:0A0A                          3000   _$M47 :
+                                 3001   CBLOCK 7 19 564
+                                 3002   
+                                 3003   ;;                derefw(PC) = derefw(code + cpc);
+                                 3004   CLINEA 0000H 0001H 0235H 0011H 0030H
+??:0A0A 7C B0                    3005   	l	er0,	-4[fp]
+??:0A0C 46-F0                    3006   	add	er0,	er4
+??:0A0E 7E BC                    3007   	l	bp,	-2[fp]
+??:0A10 02-90                    3008   	l	er0,	[er0]
+??:0A12 C3-90                    3009   	st	er0,	[bp]
+                                 3010   CBLOCKEND 7 19 566
+                                 3011   
+                                 3012   ;;            break;
+                                 3013   CLINEA 0000H 0001H 0237H 000DH 0012H
+??:0A14 00-F0'00-00'             3014   	b	_$L68
+                                 3015   
+                                 3016   ;;        case 0x86:
+                                 3017   CLINEA 0000H 0001H 0238H 0009H 0012H
+??:0A18                          3018   _$S191 :
+                                 3019   
+                                 3020   ;;            if(deref(FLAGS) & 0x10)
+                                 3021   CLINEA 0000H 0001H 023AH 000DH 0023H
+??:0A18 7A BC                    3022   	l	bp,	-6[fp]
+??:0A1A C0-90                    3023   	l	r0,	[bp]
+??:0A1C 41-A0                    3024   	tb	r0.4
+??:0A1E 02 C8                    3025   	bne	_$M48
+??:0A20 00-F0'00-00'             3026   	b	_$L68
+??:0A24                          3027   _$M48 :
+                                 3028   CBLOCK 7 20 571
+                                 3029   
+                                 3030   ;;                derefw(PC) = derefw(code + cpc);
+                                 3031   CLINEA 0000H 0001H 023CH 0011H 0030H
+??:0A24 7C B0                    3032   	l	er0,	-4[fp]
+??:0A26 46-F0                    3033   	add	er0,	er4
+??:0A28 7E BC                    3034   	l	bp,	-2[fp]
+??:0A2A 02-90                    3035   	l	er0,	[er0]
+??:0A2C C3-90                    3036   	st	er0,	[bp]
+                                 3037   CBLOCKEND 7 20 573
+                                 3038   
+                                 3039   ;;            break;
+                                 3040   CLINEA 0000H 0001H 023EH 000DH 0012H
+??:0A2E 00-F0'00-00'             3041   	b	_$L68
+                                 3042   
+                                 3043   ;;        case 0x87:
+                                 3044   CLINEA 0000H 0001H 023FH 0009H 0012H
+??:0A32                          3045   _$S194 :
+                                 3046   
+                                 3047   ;;            derefw(PC) = derefw(code + cpc);
+                                 3048   CLINEA 0000H 0001H 0241H 000DH 002CH
+??:0A32 7C B0                    3049   	l	er0,	-4[fp]
+??:0A34 46-F0                    3050   	add	er0,	er4
+??:0A36 7E BC                    3051   	l	bp,	-2[fp]
+??:0A38 02-90                    3052   	l	er0,	[er0]
+??:0A3A C3-90                    3053   	st	er0,	[bp]
+                                 3054   
+                                 3055   ;;            break;
+                                 3056   CLINEA 0000H 0001H 0242H 000DH 0012H
+??:0A3C 00-F0'00-00'             3057   	b	_$L68
+                                 3058   
+                                 3059   ;;        case 0x88:
+                                 3060   CLINEA 0000H 0001H 0243H 0009H 0012H
+??:0A40                          3061   _$S195 :
+                                 3062   
+                                 3063   ;;            derefw(LR) = cpc;
+                                 3064   CLINEA 0000H 0001H 0245H 000DH 001DH
+??:0A40 76 BC                    3065   	l	bp,	-10[fp]
+??:0A42 C3-94                    3066   	st	er4,	[bp]
+                                 3067   
+                                 3068   ;;            derefw(PC) = derefw(code + cpc);
+                                 3069   CLINEA 0000H 0001H 0246H 000DH 002CH
+??:0A44 7C B0                    3070   	l	er0,	-4[fp]
+??:0A46 46-F0                    3071   	add	er0,	er4
+??:0A48 7E BC                    3072   	l	bp,	-2[fp]
+??:0A4A 02-90                    3073   	l	er0,	[er0]
+??:0A4C C3-90                    3074   	st	er0,	[bp]
+                                 3075   
+                                 3076   ;;            break;
+                                 3077   CLINEA 0000H 0001H 0247H 000DH 0012H
+??:0A4E 00-F0'00-00'             3078   	b	_$L68
+                                 3079   
+                                 3080   ;;        case 0xFF:
+                                 3081   CLINEA 0000H 0001H 0249H 0009H 0012H
+??:0A52                          3082   _$L196 :
+??:0A52                          3083   _$S196 :
+                                 3084   
+                                 3085   ;;            while (1)
+                                 3086   CLINEA 0000H 0000H 024BH 0000H 0000H
+??:0A52 FF CE                    3087   	bal	_$L196
+??:0A54                          3088   _$L198 :
+                                 3089   
+                                 3090   ;;            invalid_instruction(instruction);
+                                 3091   CLINEA 0000H 0001H 0251H 000DH 002DH
+??:0A54 72 B0                    3092   	l	er0,	-14[fp]
+??:0A56 01-F0'00-00'             3093   	bl	_invalid_instruction
+                                 3094   
+                                 3095   ;;            break;
+                                 3096   CLINEA 0000H 0001H 0252H 000DH 0012H
+??:0A5A 00-F0'00-00'             3097   	b	_$L68
+                                 3098   CBLOCKEND 7 3 595
+                                 3099   CBLOCKEND 7 1 596
+                                 3100   CFUNCTIONEND 7
+                                 3101   
+                                 3102   	extrn code far : _init_prog
+                                 3103   	extrn code far : _memcpy
+                                 3104   	extrn code far : _custom_break
+                                 3105   	extrn code far : _print
+                                 3106   	extrn code far : _set_pixel
+                                 3107   	extrn code far : _plot_line
+                                 3108   	extrn code far : _CheckButtons
+                                 3109   	extrn code far : _render
+                                 3110   	extrn code far : _invalid_instruction
+                                 3111   	public _lexc_instruction
+                                 3112   	public _lread_word
+                                 3113   	public _linit_prog
+                                 3114   	public _lcmp_flags_word
+                                 3115   	public _lwrite_byte
+                                 3116   	public _lwrite_word
+                                 3117   	public _lcmp_flags_byte
+                                 3118   	public _lmemcpy
+                                 3119   	public _lread_byte
+                                 3120   	public _lload_from_rom
+                                 3121   	public _lkill
+                                 3122   	extrn code far : _main
+                                 3123   
+  --------------------------     3124   	rseg $$NTABlexc_instruction$legacy_vm
+00:0000                          3125   _$M19 :
+00:0000 00-00'                   3126   	dw	_$S70
+00:0002 00-00'                   3127   	dw	_$S71
+00:0004 00-00'                   3128   	dw	_$S72
+00:0006 00-00'                   3129   	dw	_$S73
+00:0008 00-00'                   3130   	dw	_$S74
+00:000A 00-00'                   3131   	dw	_$S75
+00:000C 00-00'                   3132   	dw	_$S76
+00:000E 00-00'                   3133   	dw	_$S77
+00:0010 00-00'                   3134   	dw	_$S78
+00:0012 00-00'                   3135   	dw	_$S79
+00:0014 00-00'                   3136   	dw	_$S80
+00:0016 00-00'                   3137   	dw	_$S81
+00:0018 00-00'                   3138   	dw	_$S82
+00:001A 00-00'                   3139   	dw	_$S83
+00:001C 00-00'                   3140   	dw	_$S84
+00:001E 00-00'                   3141   	dw	_$S85
+00:0020 00-00'                   3142   	dw	_$S86
+00:0022 00-00'                   3143   	dw	_$S89
+00:0024 00-00'                   3144   	dw	_$S94
+00:0026 00-00'                   3145   	dw	_$S97
+00:0028 00-00'                   3146   	dw	_$S100
+00:002A 00-00'                   3147   	dw	_$S103
+00:002C 00-00'                   3148   	dw	_$S106
+00:002E 00-00'                   3149   	dw	_$S107
+00:0030 00-00'                   3150   	dw	_$S108
+00:0032 00-00'                   3151   	dw	_$S109
+00:0034 00-00'                   3152   	dw	_$S110
+00:0036 00-00'                   3153   	dw	_$S111
+00:0038 00-00'                   3154   	dw	_$S112
+00:003A 00-00'                   3155   	dw	_$S113
+00:003C 00-00'                   3156   	dw	_$S114
+00:003E 00-00'                   3157   	dw	_$S115
+00:0040 00-00'                   3158   	dw	_$S116
+00:0042 00-00'                   3159   	dw	_$S117
+00:0044 00-00'                   3160   	dw	_$S118
+00:0046 00-00'                   3161   	dw	_$S119
+00:0048 00-00'                   3162   	dw	_$S120
+00:004A 00-00'                   3163   	dw	_$L198
+00:004C 00-00'                   3164   	dw	_$L198
+00:004E 00-00'                   3165   	dw	_$L198
+00:0050 00-00'                   3166   	dw	_$L198
+00:0052 00-00'                   3167   	dw	_$L198
+00:0054 00-00'                   3168   	dw	_$L198
+00:0056 00-00'                   3169   	dw	_$L198
+00:0058 00-00'                   3170   	dw	_$L198
+00:005A 00-00'                   3171   	dw	_$L198
+00:005C 00-00'                   3172   	dw	_$L198
+00:005E 00-00'                   3173   	dw	_$L198
+00:0060 00-00'                   3174   	dw	_$S121
+00:0062 00-00'                   3175   	dw	_$S122
+00:0064 00-00'                   3176   	dw	_$S123
+00:0066 00-00'                   3177   	dw	_$S124
+00:0068 00-00'                   3178   	dw	_$S125
+00:006A 00-00'                   3179   	dw	_$S126
+00:006C 00-00'                   3180   	dw	_$S127
+00:006E 00-00'                   3181   	dw	_$S128
+00:0070 00-00'                   3182   	dw	_$S129
+00:0072 00-00'                   3183   	dw	_$S130
+00:0074 00-00'                   3184   	dw	_$S131
+00:0076 00-00'                   3185   	dw	_$S132
+00:0078 00-00'                   3186   	dw	_$S133
+00:007A 00-00'                   3187   	dw	_$S134
+00:007C 00-00'                   3188   	dw	_$S135
+00:007E 00-00'                   3189   	dw	_$L198
+00:0080 00-00'                   3190   	dw	_$S136
+00:0082 00-00'                   3191   	dw	_$S137
+00:0084 00-00'                   3192   	dw	_$S138
+00:0086 00-00'                   3193   	dw	_$S139
+00:0088 00-00'                   3194   	dw	_$S140
+00:008A 00-00'                   3195   	dw	_$S141
+00:008C 00-00'                   3196   	dw	_$S142
+00:008E 00-00'                   3197   	dw	_$S143
+00:0090 00-00'                   3198   	dw	_$S144
+00:0092 00-00'                   3199   	dw	_$S145
+00:0094 00-00'                   3200   	dw	_$S146
+00:0096 00-00'                   3201   	dw	_$S147
+00:0098 00-00'                   3202   	dw	_$S148
+00:009A 00-00'                   3203   	dw	_$S149
+00:009C 00-00'                   3204   	dw	_$S150
+00:009E 00-00'                   3205   	dw	_$L198
+00:00A0 00-00'                   3206   	dw	_$S151
+00:00A2 00-00'                   3207   	dw	_$S152
+00:00A4 00-00'                   3208   	dw	_$S153
+00:00A6 00-00'                   3209   	dw	_$S154
+00:00A8 00-00'                   3210   	dw	_$L198
+00:00AA 00-00'                   3211   	dw	_$L198
+00:00AC 00-00'                   3212   	dw	_$L198
+00:00AE 00-00'                   3213   	dw	_$L198
+00:00B0 00-00'                   3214   	dw	_$L198
+00:00B2 00-00'                   3215   	dw	_$L198
+00:00B4 00-00'                   3216   	dw	_$L198
+00:00B6 00-00'                   3217   	dw	_$L198
+00:00B8 00-00'                   3218   	dw	_$L198
+00:00BA 00-00'                   3219   	dw	_$L198
+00:00BC 00-00'                   3220   	dw	_$L198
+00:00BE 00-00'                   3221   	dw	_$L198
+00:00C0 00-00'                   3222   	dw	_$S155
+00:00C2 00-00'                   3223   	dw	_$S156
+00:00C4 00-00'                   3224   	dw	_$S157
+00:00C6 00-00'                   3225   	dw	_$L198
+00:00C8 00-00'                   3226   	dw	_$L198
+00:00CA 00-00'                   3227   	dw	_$L198
+00:00CC 00-00'                   3228   	dw	_$L198
+00:00CE 00-00'                   3229   	dw	_$L198
+00:00D0 00-00'                   3230   	dw	_$L198
+00:00D2 00-00'                   3231   	dw	_$L198
+00:00D4 00-00'                   3232   	dw	_$L198
+00:00D6 00-00'                   3233   	dw	_$L198
+00:00D8 00-00'                   3234   	dw	_$L198
+00:00DA 00-00'                   3235   	dw	_$L198
+00:00DC 00-00'                   3236   	dw	_$L198
+00:00DE 00-00'                   3237   	dw	_$L198
+00:00E0 00-00'                   3238   	dw	_$S158
+00:00E2 00-00'                   3239   	dw	_$L198
+00:00E4 00-00'                   3240   	dw	_$L198
+00:00E6 00-00'                   3241   	dw	_$L198
+00:00E8 00-00'                   3242   	dw	_$L198
+00:00EA 00-00'                   3243   	dw	_$L198
+00:00EC 00-00'                   3244   	dw	_$L198
+00:00EE 00-00'                   3245   	dw	_$L198
+00:00F0 00-00'                   3246   	dw	_$L198
+00:00F2 00-00'                   3247   	dw	_$L198
+00:00F4 00-00'                   3248   	dw	_$L198
+00:00F6 00-00'                   3249   	dw	_$L198
+00:00F8 00-00'                   3250   	dw	_$L198
+00:00FA 00-00'                   3251   	dw	_$L198
+00:00FC 00-00'                   3252   	dw	_$L198
+00:00FE 00-00'                   3253   	dw	_$L198
+00:0100 00-00'                   3254   	dw	_$S173
+00:0102 00-00'                   3255   	dw	_$S174
+00:0104 00-00'                   3256   	dw	_$S177
+00:0106 00-00'                   3257   	dw	_$S182
+00:0108 00-00'                   3258   	dw	_$S185
+00:010A 00-00'                   3259   	dw	_$S188
+00:010C 00-00'                   3260   	dw	_$S191
+00:010E 00-00'                   3261   	dw	_$S194
+00:0110 00-00'                   3262   	dw	_$S195
+00:0112 00-00'                   3263   	dw	_$L198
+00:0114 00-00'                   3264   	dw	_$L198
+00:0116 00-00'                   3265   	dw	_$L198
+00:0118 00-00'                   3266   	dw	_$L198
+00:011A 00-00'                   3267   	dw	_$L198
+00:011C 00-00'                   3268   	dw	_$L198
+00:011E 00-00'                   3269   	dw	_$L198
+00:0120 00-00'                   3270   	dw	_$L198
+00:0122 00-00'                   3271   	dw	_$L198
+00:0124 00-00'                   3272   	dw	_$L198
+00:0126 00-00'                   3273   	dw	_$L198
+00:0128 00-00'                   3274   	dw	_$L198
+00:012A 00-00'                   3275   	dw	_$L198
+00:012C 00-00'                   3276   	dw	_$L198
+00:012E 00-00'                   3277   	dw	_$L198
+00:0130 00-00'                   3278   	dw	_$L198
+00:0132 00-00'                   3279   	dw	_$L198
+00:0134 00-00'                   3280   	dw	_$L198
+00:0136 00-00'                   3281   	dw	_$L198
+00:0138 00-00'                   3282   	dw	_$L198
+00:013A 00-00'                   3283   	dw	_$L198
+00:013C 00-00'                   3284   	dw	_$L198
+00:013E 00-00'                   3285   	dw	_$L198
+00:0140 00-00'                   3286   	dw	_$L198
+00:0142 00-00'                   3287   	dw	_$L198
+00:0144 00-00'                   3288   	dw	_$L198
+00:0146 00-00'                   3289   	dw	_$L198
+00:0148 00-00'                   3290   	dw	_$L198
+00:014A 00-00'                   3291   	dw	_$L198
+00:014C 00-00'                   3292   	dw	_$L198
+00:014E 00-00'                   3293   	dw	_$L198
+00:0150 00-00'                   3294   	dw	_$L198
+00:0152 00-00'                   3295   	dw	_$L198
+00:0154 00-00'                   3296   	dw	_$L198
+00:0156 00-00'                   3297   	dw	_$L198
+00:0158 00-00'                   3298   	dw	_$L198
+00:015A 00-00'                   3299   	dw	_$L198
+00:015C 00-00'                   3300   	dw	_$L198
+00:015E 00-00'                   3301   	dw	_$L198
+00:0160 00-00'                   3302   	dw	_$L198
+00:0162 00-00'                   3303   	dw	_$L198
+00:0164 00-00'                   3304   	dw	_$L198
+00:0166 00-00'                   3305   	dw	_$L198
+00:0168 00-00'                   3306   	dw	_$L198
+00:016A 00-00'                   3307   	dw	_$L198
+00:016C 00-00'                   3308   	dw	_$L198
+00:016E 00-00'                   3309   	dw	_$L198
+00:0170 00-00'                   3310   	dw	_$L198
+00:0172 00-00'                   3311   	dw	_$L198
+00:0174 00-00'                   3312   	dw	_$L198
+00:0176 00-00'                   3313   	dw	_$L198
+00:0178 00-00'                   3314   	dw	_$L198
+00:017A 00-00'                   3315   	dw	_$L198
+00:017C 00-00'                   3316   	dw	_$L198
+00:017E 00-00'                   3317   	dw	_$L198
+00:0180 00-00'                   3318   	dw	_$L198
+00:0182 00-00'                   3319   	dw	_$L198
+00:0184 00-00'                   3320   	dw	_$L198
+00:0186 00-00'                   3321   	dw	_$L198
+00:0188 00-00'                   3322   	dw	_$L198
+00:018A 00-00'                   3323   	dw	_$L198
+00:018C 00-00'                   3324   	dw	_$L198
+00:018E 00-00'                   3325   	dw	_$L198
+00:0190 00-00'                   3326   	dw	_$L198
+00:0192 00-00'                   3327   	dw	_$L198
+00:0194 00-00'                   3328   	dw	_$L198
+00:0196 00-00'                   3329   	dw	_$L198
+00:0198 00-00'                   3330   	dw	_$L198
+00:019A 00-00'                   3331   	dw	_$L198
+00:019C 00-00'                   3332   	dw	_$L198
+00:019E 00-00'                   3333   	dw	_$L198
+00:01A0 00-00'                   3334   	dw	_$L198
+00:01A2 00-00'                   3335   	dw	_$L198
+00:01A4 00-00'                   3336   	dw	_$L198
+00:01A6 00-00'                   3337   	dw	_$L198
+00:01A8 00-00'                   3338   	dw	_$L198
+00:01AA 00-00'                   3339   	dw	_$L198
+00:01AC 00-00'                   3340   	dw	_$L198
+00:01AE 00-00'                   3341   	dw	_$L198
+00:01B0 00-00'                   3342   	dw	_$L198
+00:01B2 00-00'                   3343   	dw	_$L198
+00:01B4 00-00'                   3344   	dw	_$L198
+00:01B6 00-00'                   3345   	dw	_$L198
+00:01B8 00-00'                   3346   	dw	_$L198
+00:01BA 00-00'                   3347   	dw	_$L198
+00:01BC 00-00'                   3348   	dw	_$L198
+00:01BE 00-00'                   3349   	dw	_$L198
+00:01C0 00-00'                   3350   	dw	_$L198
+00:01C2 00-00'                   3351   	dw	_$L198
+00:01C4 00-00'                   3352   	dw	_$L198
+00:01C6 00-00'                   3353   	dw	_$L198
+00:01C8 00-00'                   3354   	dw	_$L198
+00:01CA 00-00'                   3355   	dw	_$L198
+00:01CC 00-00'                   3356   	dw	_$L198
+00:01CE 00-00'                   3357   	dw	_$L198
+00:01D0 00-00'                   3358   	dw	_$L198
+00:01D2 00-00'                   3359   	dw	_$L198
+00:01D4 00-00'                   3360   	dw	_$L198
+00:01D6 00-00'                   3361   	dw	_$L198
+00:01D8 00-00'                   3362   	dw	_$L198
+00:01DA 00-00'                   3363   	dw	_$L198
+00:01DC 00-00'                   3364   	dw	_$L198
+00:01DE 00-00'                   3365   	dw	_$L198
+00:01E0 00-00'                   3366   	dw	_$L198
+00:01E2 00-00'                   3367   	dw	_$L198
+00:01E4 00-00'                   3368   	dw	_$L198
+00:01E6 00-00'                   3369   	dw	_$L198
+00:01E8 00-00'                   3370   	dw	_$L198
+00:01EA 00-00'                   3371   	dw	_$L198
+00:01EC 00-00'                   3372   	dw	_$L198
+00:01EE 00-00'                   3373   	dw	_$L198
+00:01F0 00-00'                   3374   	dw	_$L198
+00:01F2 00-00'                   3375   	dw	_$L198
+00:01F4 00-00'                   3376   	dw	_$L198
+00:01F6 00-00'                   3377   	dw	_$L198
+00:01F8 00-00'                   3378   	dw	_$L198
+00:01FA 00-00'                   3379   	dw	_$L198
+00:01FC 00-00'                   3380   	dw	_$L198
+00:01FE 00-00'                   3381   	dw	_$S196
+                                 3382   	extrn code : __imulu8lw
+                                 3383   	extrn code : __uidivu8lw
+                                 3384   
+                                 3385   	end
+
+
+
+  Target       : ML620909 (nX-U8/100)
+  Memory Model : LARGE
+  Data   Model : NEAR
+  ROM WINDOW   :    0H to 8FFFH
+  Internal RAM : 9000H to EFFFH
+
+  Errors   : 0
+  Warnings : 0  (/Wrpeast)
+  Lines    : 3385
