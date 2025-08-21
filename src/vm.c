@@ -41,6 +41,16 @@ void bubble_sortw(word arr[], byte size)
     }
 }
 
+word get_last(word arr[], byte size)
+{
+    byte i;
+    for(i = size - 1; i > 0; i--)
+    {
+        if(arr[i] != 0) return arr[i];
+    }
+    return 0; //if all are zero
+}
+
 void del_index(word arr[], byte size, byte index)
 {
     byte i;
