@@ -1,5 +1,0 @@
-C:/users/harma/desktop/github/tangent2/tangentsdk/build/CMakeFiles/TangentSDK.dir
-C:/users/harma/desktop/github/tangent2/tangentsdk/build/CMakeFiles/edit_cache.dir
-C:/users/harma/desktop/github/tangent2/tangentsdk/build/CMakeFiles/rebuild_cache.dir
-C:/users/harma/desktop/github/tangent2/tangentsdk/build/CMakeFiles/TangentSDK_autogen_timestamp_deps.dir
-C:/users/harma/desktop/github/tangent2/tangentsdk/build/CMakeFiles/TangentSDK_autogen.dir
