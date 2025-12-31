@@ -1,0 +1,83 @@
+/*
+ * graphics.h
+ *
+ *  Created on: Nov 11, 2025
+ *      Author: harma
+ */
+
+#ifndef GRAPHICS_H_
+#define GRAPHICS_H_
+
+#include "base.h"
+
+#define VRAM 0x9000
+#define Write2RealScreen *((volatile __near byte *)0x9C00)
+#define BufSelSFR *((volatile __near byte *)0xF037)
+
+enum colour {
+	COLOUR_WHITE,
+	COLOUR_LIGHT_GREY,
+	COLOUR_DARK_GREY,
+	COLOUR_BLACK,
+	COLOUR_IMAGE
+};
+
+enum style {
+	STYLE_NONE,
+	STYLE_SOLID,
+	STYLE_DOTTED,
+	STYLE_DASHED,
+	STYLE_DOUBLE
+};
+
+enum line_style {
+	LINE_STYLE_NONE,
+	LINE_STYLE_SOLID = 0xFF,
+	LINE_STYLE_DOTTED = 0xAA,
+	LINE_STYLE_DASHED = 0xF8,
+};
+
+enum font_size {
+	FONT_SIZE_6x7,
+	FONT_SIZE_6x8,
+	FONT_SIZE_6x10,
+	FONT_SIZE_7x10,
+	FONT_SIZE_8x8,
+	FONT_SIZE_8x12,
+	FONT_SIZE_12x16,
+};
+
+enum fill_style {
+	FILL_STYLE_NONE,
+	FILL_STYLE_SOLID,
+	FILL_STYLE_CHECKERED,
+	FILL_STYLE_GRADIENT,
+	FILL_STYLE_DITHER,
+};
+
+void __clear_screen_real_buf_1_i_hate_lcc_u16();
+void __clear_screen_real_buf_2_i_hate_lcc_u16();
+void rotate_point(byte ax, byte ay, byte px, byte py, word angle, byte *out_x, byte *out_y);
+void simple_line(byte x0, byte y0, byte x1, byte y1, byte colour);
+void advanced_draw_line(byte* data, byte bit_length, byte x0, byte y0, byte x1, byte y1, byte colour, byte thickness);
+void pattern_draw_line(byte pattern, byte x0, byte y0, byte x1, byte y1, byte colour, byte thickness);
+void render_buffer();
+void clear_screen();
+byte get_pixel_b(byte x, byte y, byte buf);
+byte get_pixel(byte x, byte y);
+void __set_pixel_real(byte x, byte y, byte colour);
+void __set_pixel(byte x, byte y, byte colour);
+void set_pixel(byte x, byte y, byte colour, byte size);
+void circle(byte centerX, byte centerY, byte radius, byte c);
+void draw_line(byte x0, byte y0, byte x1, byte y1, byte colour, byte thickness, byte style);
+void draw_rectangle(byte x, byte y, byte width, byte height, sbyte ax, sbyte ay, word rotation, byte colour, byte thickness, byte style);
+void draw_points(byte cx, byte cy, byte x, byte y, byte thickness, byte colour);
+void draw_circle(byte cx, byte cy, byte radius, sbyte ax, sbyte ay, byte thickness, byte colour);
+void get_font_size(byte font_size, byte* width, byte* height);
+void get_text_size(byte font_size, const char* text, byte* width, byte* height);
+void draw_text(byte x, byte y, const char* text, byte font_size, sbyte ax, sbyte ay, word rotation, byte colour);
+void draw_byte(byte x, byte y, byte data, byte data2, byte mask);
+void draw_image(byte x, byte y, byte width, byte height, const byte* bitmap, sbyte ax, sbyte ay, word rotation, byte colour);
+void draw_char(byte x, byte y, char c, byte font_size, sbyte ax, sbyte ay, word rotation, byte colour);
+
+#endif /* GRAPHICS_H_ */

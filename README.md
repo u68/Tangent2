@@ -1,29 +1,140 @@
-Sup twin tangent2 is tangent but 2, yeah ik great name 🥀 tangent is operating system for calculator but 2 is newer and better and faster and actually planned fr this time so you don't get bs shi and actually be able to print text to the screen 🤑🤑🤑
+<div align="center">
 
-Super big thanks to these absolute legends who helped me in some way and started this trend and got me interested in computers in a cool way.
+# Tangent2
 
-telecomadm1145
+**A custom operating system built from scratch for calculators**
 
-user202729
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Platform](https://img.shields.io/badge/platform-ML620909-orange.svg)]()
+[![Built with](https://img.shields.io/badge/SDK-Qt6-green.svg)]()
 
-wav3
+---
 
-xyzst
+*Because not everyone can say they built an OS from scratch for a calculator.*
 
-steveyboi
+</div>
 
-Arnekj
+## Overview
 
-And anyone else who I missed.
+Tangent2 is a complete ground-up rewrite of the original Tangent OS experiment. The goal is to create a functional, usable operating system targeting calculator hardware, complete with a custom development toolkit.
 
-I know it's kinda a mess but lexide omega complains about folders
+## ✦ Features
 
-# How to build ts
+### Tangent UI System (Tui)
 
-## Download and install LEXIDE omega ide [here](https://rohmfs-rohm-com-cn.oss-cn-shanghai.aliyuncs.com/lapis/support/lpmcu/DL_DATA/DEV_TOOL/soft_tool/U8_Development_Tools/LAPIS_LEXIDE_V2_0_0.zip)
+An element-based UI framework with a human-readable markup language that compiles directly to pixels.
 
-Dowload this repo and put it in your workspace folder
+| Component | Status |
+|-----------|--------|
+| Buttons | Visual |
+| Text | Complete |
+| Boxes | Complete |
+| Lines | Complete |
+| Checkboxes | Complete |
+| Radio buttons | Complete |
+| Multiple font sizes | Complete |
 
-I think it should just pop up ill test it later but then click the hammer button 🔨🔨🔨 and then use hex2bin to convert the hex file into a binary to ~~flash~~ emulate... I SWEAR U CAN __**NOT**__ FLASH A CASIO CALC (100% trust me fr)
+Tui operates as a standalone rendering system with hooks for external interaction, designed for seamless integration with Tangent2.
 
+### Operating System
 
+| Feature | Description |
+|---------|-------------|
+| **Desktop Environment** | Icons, taskbar, clock, backgrounds — fully customizable |
+| **Custom Filesystem** | Optimized for maximum storage capacity on limited hardware |
+| **Process Virtualization** | Unlimited concurrent processes via VM emulation |
+| **Native Applications** | Performance-critical apps written in C (video playback, file management) |
+
+## ✦ Tangent SDK
+
+A purpose-built IDE for Tangent development featuring:
+
+- **Syntax Highlighting** — Full support for `.tasm` (assembly) and `.tml` (markup) files
+- **Code Completion** — Context-aware suggestions for keywords, registers, and labels
+- **Project Management** — Workspace explorer with file/folder creation
+- **Build Integration** — One-click compilation with integrated console output
+- **Discord Rich Presence** — Show off what you're working on
+- **Theming** — Customizable editor colors
+
+### Supported Languages
+
+**TASM** (Tangent Assembly)
+```asm
+lewp:
+    syscall get_element_field "smth" "x" r0
+    inc r0
+    syscall set_element_field "smth" "x" r0
+    syscall render_element "smth"
+    b lewp
+```
+
+**TML** (Tangent Markup Language)
+```
+root {
+    id: "tml_root"
+    text {
+        id: "smth"
+        x: 10
+        y: 20
+        colour: black
+        text: "Hello, World!" 
+    }
+}
+```
+
+## ✦ Building
+
+### Prerequisites
+
+- **MinGW64** (or compatible toolchain)
+- **Qt6** (Widgets module)
+- **DMD** (D compiler, for build tools)
+- **CMake** + **Ninja**
+
+### Build Steps
+
+```bash
+cd TangentSDK
+./build.sh
+```
+
+The build script will:
+1. Compile the assembler, linker, and ML compiler
+2. Build the Qt-based IDE using CMake/Ninja
+3. Launch the SDK
+
+> **Note:** The OS itself has some compiler-specific dependencies that make standalone builds tricky. The SDK includes prebuilt OS binaries and will eventually support building the OS directly inside the SDK, allowing you to modify it to your needs.
+
+### Having Issues?
+
+If the build doesn't work on your setup — fork it, fix it, and open a pull request. Contributions are welcome.
+
+## ✦ Project Structure
+
+```
+Tangent2/
+├── Tangent2/
+│   └── Lapis/           # Target hardware definitions
+│   └── src/Tui/         # UI system source
+├── TangentSDK/
+│   └── src/
+│       ├── app/         # Application context & Discord RPC
+│       ├── editor/      # Syntax highlighting & completion
+│       ├── theme/       # Theming system
+│       ├── ui/          # Qt widgets (MainWindow, Editor, Console)
+│       ├── buildtools/  # Assembler, compiler, linker (D source)
+│       └── resources/   # Icons, themes, templates
+└── README.md
+```
+
+## ✦ License
+
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
+
+---
+
+<div align="center">
+
+**[Report Bug](../../issues) · [Request Feature](../../issues)**
+
+</div>

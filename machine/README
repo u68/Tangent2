@@ -1,1 +1,0 @@
-place ml620909.dcl into your lexide dcl folder (default is `C:\lapis\LEXIDE\Dcl`) and place ml620909.trg into your trg folder (default is `C:\lapis\LEXIDE\Trg`) for it to build.
