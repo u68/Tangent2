@@ -23,8 +23,11 @@ add_executable(TangentSDK
     src/ui/SettingsDialog.cpp
     src/editor/SyntaxHighlighter.cpp
     src/editor/CompletionPopup.cpp
+    src/editor/SyntaxDefinition.cpp
     src/app/DiscordRPCManager.cpp
-    src/theme/SyntaxTheme.cpp
 )
 
 target_link_libraries(TangentSDK Qt6::Widgets ${DISCORD_RPC_LIB})
+
+# Copy syntax definitions to build output
+file(COPY ${CMAKE_SOURCE_DIR}/src/resources/syntax DESTINATION ${CMAKE_BINARY_DIR})

@@ -14,7 +14,17 @@
 #include <QSpinBox>
 #include <QMap>
 #include <QButtonGroup>
-#include "../theme/SyntaxTheme.h"
+#include <QListWidget>
+#include <QInputDialog>
+#include "../editor/SyntaxDefinition.h"
+
+// Struct to track color settings in the UI
+struct ColorSetting {
+    QString langKey;    // e.g., "tasm", "tml", "common", "console"
+    QString ruleKey;    // e.g., "keyword", "comment", etc.
+    QColor color;
+    bool bold;
+};
 
 class SettingsDialog : public QDialog {
     Q_OBJECT
@@ -24,6 +34,10 @@ public:
     // Getters for settings
     QString workspacePath() const;
     bool autoSaveEnabled() const;
+    
+    // Completion settings
+    bool completionEnabled() const;
+    int completionMinChars() const;
     
     // Discord settings
     bool discordEnabled() const;
@@ -51,6 +65,16 @@ private slots:
     void onBrowseRP2EasePath();
     void onApply();
     void onOk();
+    
+    // Extension management slots
+    void onAddExtension();
+    void onCreateExtension();
+    void onEditDefaultJson();
+    void onExtensionMoveUp();
+    void onExtensionMoveDown();
+    void onExtensionToggle(QTreeWidgetItem* item, int column);
+    void onExtensionContextMenu(const QPoint& pos);
+    void onExtensionDelete();
 
 private:
     void setupGeneralTab(QWidget* tab);
@@ -62,17 +86,28 @@ private:
     void updateColorPreview(QTreeWidgetItem* item, const QColor& color, bool bold);
     QString getPasswordHexString() const;
     QString getClockspeedHexString() const;
+    void refreshExtensionList();
+    bool checkExtensionOrderWarning(int fromIndex, int toIndex);
     
     // General settings
     QLineEdit* m_workspaceEdit;
     QCheckBox* m_autoSaveCheck;
+    
+    // Completion settings
+    QCheckBox* m_completionEnabledCheck;
+    QSpinBox* m_completionMinCharsSpinBox;
     
     // Editor settings
     QComboBox* m_fontCombo;
     QSpinBox* m_fontSizeSpinBox;
     QWidget* m_fontWidget;
     QTreeWidget* m_colorTree;
-    QMap<QString, SyntaxTheme::ColorEntry> m_colors;
+    QMap<QString, ColorSetting> m_colorSettings;  // key -> color setting
+    
+    // Extension management
+    QTreeWidget* m_extensionTree;
+    QPushButton* m_extMoveUpBtn;
+    QPushButton* m_extMoveDownBtn;
     
     // Discord settings
     QCheckBox* m_discordEnabledCheck;

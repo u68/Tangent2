@@ -392,15 +392,15 @@
 			null
 		],
 		[
-			"C:/Users/harma/Desktop/GitHub/Tangent2/TangentSDK/src/editor/SyntaxHighlighter.h",
+			"C:/Users/harma/Desktop/GitHub/Tangent2/TangentSDK/src/editor/SyntaxDefinition.h",
 			"MU",
-			"W4MZGBQALC/moc_SyntaxHighlighter.cpp",
+			"W4MZGBQALC/moc_SyntaxDefinition.cpp",
 			null
 		],
 		[
-			"C:/Users/harma/Desktop/GitHub/Tangent2/TangentSDK/src/theme/SyntaxTheme.h",
+			"C:/Users/harma/Desktop/GitHub/Tangent2/TangentSDK/src/editor/SyntaxHighlighter.h",
 			"MU",
-			"YLADOPUWMF/moc_SyntaxTheme.cpp",
+			"W4MZGBQALC/moc_SyntaxHighlighter.cpp",
 			null
 		],
 		[
@@ -530,17 +530,17 @@
 			null
 		],
 		[
+			"C:/Users/harma/Desktop/GitHub/Tangent2/TangentSDK/src/editor/SyntaxDefinition.cpp",
+			"MU",
+			null
+		],
+		[
 			"C:/Users/harma/Desktop/GitHub/Tangent2/TangentSDK/src/editor/SyntaxHighlighter.cpp",
 			"MU",
 			null
 		],
 		[
 			"C:/Users/harma/Desktop/GitHub/Tangent2/TangentSDK/src/main.cpp",
-			"MU",
-			null
-		],
-		[
-			"C:/Users/harma/Desktop/GitHub/Tangent2/TangentSDK/src/theme/SyntaxTheme.cpp",
 			"MU",
 			null
 		],

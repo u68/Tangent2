@@ -4,11 +4,11 @@ TangentSDK_autogen/timestamp: \
 	C:/Users/harma/Desktop/GitHub/Tangent2/TangentSDK/src/app/DiscordRPCManager.h \
 	C:/Users/harma/Desktop/GitHub/Tangent2/TangentSDK/src/editor/CompletionPopup.cpp \
 	C:/Users/harma/Desktop/GitHub/Tangent2/TangentSDK/src/editor/CompletionPopup.h \
+	C:/Users/harma/Desktop/GitHub/Tangent2/TangentSDK/src/editor/SyntaxDefinition.cpp \
+	C:/Users/harma/Desktop/GitHub/Tangent2/TangentSDK/src/editor/SyntaxDefinition.h \
 	C:/Users/harma/Desktop/GitHub/Tangent2/TangentSDK/src/editor/SyntaxHighlighter.cpp \
 	C:/Users/harma/Desktop/GitHub/Tangent2/TangentSDK/src/editor/SyntaxHighlighter.h \
 	C:/Users/harma/Desktop/GitHub/Tangent2/TangentSDK/src/main.cpp \
-	C:/Users/harma/Desktop/GitHub/Tangent2/TangentSDK/src/theme/SyntaxTheme.cpp \
-	C:/Users/harma/Desktop/GitHub/Tangent2/TangentSDK/src/theme/SyntaxTheme.h \
 	C:/Users/harma/Desktop/GitHub/Tangent2/TangentSDK/src/ui/ConsoleWidget.cpp \
 	C:/Users/harma/Desktop/GitHub/Tangent2/TangentSDK/src/ui/ConsoleWidget.h \
 	C:/Users/harma/Desktop/GitHub/Tangent2/TangentSDK/src/ui/EditorWidget.cpp \
@@ -257,11 +257,15 @@ TangentSDK_autogen/timestamp: \
 	C:/msys64/mingw64/include/pthread_time.h \
 	C:/msys64/mingw64/include/pthread_unistd.h \
 	C:/msys64/mingw64/include/qt6/QtCore/QDateTime \
+	C:/msys64/mingw64/include/qt6/QtCore/QJsonArray \
+	C:/msys64/mingw64/include/qt6/QtCore/QJsonDocument \
+	C:/msys64/mingw64/include/qt6/QtCore/QJsonObject \
 	C:/msys64/mingw64/include/qt6/QtCore/QList \
 	C:/msys64/mingw64/include/qt6/QtCore/QMap \
 	C:/msys64/mingw64/include/qt6/QtCore/QObject \
 	C:/msys64/mingw64/include/qt6/QtCore/QPoint \
 	C:/msys64/mingw64/include/qt6/QtCore/QRect \
+	C:/msys64/mingw64/include/qt6/QtCore/QRegularExpression \
 	C:/msys64/mingw64/include/qt6/QtCore/QSettings \
 	C:/msys64/mingw64/include/qt6/QtCore/QSize \
 	C:/msys64/mingw64/include/qt6/QtCore/QSizeF \
@@ -295,6 +299,8 @@ TangentSDK_autogen/timestamp: \
 	C:/msys64/mingw64/include/qt6/QtCore/qbytearraylist.h \
 	C:/msys64/mingw64/include/qt6/QtCore/qbytearrayview.h \
 	C:/msys64/mingw64/include/qt6/QtCore/qcalendar.h \
+	C:/msys64/mingw64/include/qt6/QtCore/qcborcommon.h \
+	C:/msys64/mingw64/include/qt6/QtCore/qcborvalue.h \
 	C:/msys64/mingw64/include/qt6/QtCore/qchar.h \
 	C:/msys64/mingw64/include/qt6/QtCore/qcheckedint_impl.h \
 	C:/msys64/mingw64/include/qt6/QtCore/qcompare.h \
@@ -333,6 +339,11 @@ TangentSDK_autogen/timestamp: \
 	C:/msys64/mingw64/include/qt6/QtCore/qitemselectionmodel.h \
 	C:/msys64/mingw64/include/qt6/QtCore/qiterable.h \
 	C:/msys64/mingw64/include/qt6/QtCore/qiterator.h \
+	C:/msys64/mingw64/include/qt6/QtCore/qjsonarray.h \
+	C:/msys64/mingw64/include/qt6/QtCore/qjsondocument.h \
+	C:/msys64/mingw64/include/qt6/QtCore/qjsonobject.h \
+	C:/msys64/mingw64/include/qt6/QtCore/qjsonparseerror.h \
+	C:/msys64/mingw64/include/qt6/QtCore/qjsonvalue.h \
 	C:/msys64/mingw64/include/qt6/QtCore/qlatin1stringview.h \
 	C:/msys64/mingw64/include/qt6/QtCore/qline.h \
 	C:/msys64/mingw64/include/qt6/QtCore/qlist.h \
@@ -408,6 +419,7 @@ TangentSDK_autogen/timestamp: \
 	C:/msys64/mingw64/include/qt6/QtCore/qtypes.h \
 	C:/msys64/mingw64/include/qt6/QtCore/qurl.h \
 	C:/msys64/mingw64/include/qt6/QtCore/qutf8stringview.h \
+	C:/msys64/mingw64/include/qt6/QtCore/quuid.h \
 	C:/msys64/mingw64/include/qt6/QtCore/qvariant.h \
 	C:/msys64/mingw64/include/qt6/QtCore/qvarlengtharray.h \
 	C:/msys64/mingw64/include/qt6/QtCore/qversiontagging.h \
@@ -415,7 +427,6 @@ TangentSDK_autogen/timestamp: \
 	C:/msys64/mingw64/include/qt6/QtCore/qyieldcpu.h \
 	C:/msys64/mingw64/include/qt6/QtGui/QCloseEvent \
 	C:/msys64/mingw64/include/qt6/QtGui/QColor \
-	C:/msys64/mingw64/include/qt6/QtGui/QFont \
 	C:/msys64/mingw64/include/qt6/QtGui/QMouseEvent \
 	C:/msys64/mingw64/include/qt6/QtGui/QSyntaxHighlighter \
 	C:/msys64/mingw64/include/qt6/QtGui/QTextCharFormat \
@@ -478,6 +489,7 @@ TangentSDK_autogen/timestamp: \
 	C:/msys64/mingw64/include/qt6/QtWidgets/QDialog \
 	C:/msys64/mingw64/include/qt6/QtWidgets/QGroupBox \
 	C:/msys64/mingw64/include/qt6/QtWidgets/QHBoxLayout \
+	C:/msys64/mingw64/include/qt6/QtWidgets/QInputDialog \
 	C:/msys64/mingw64/include/qt6/QtWidgets/QLabel \
 	C:/msys64/mingw64/include/qt6/QtWidgets/QLineEdit \
 	C:/msys64/mingw64/include/qt6/QtWidgets/QListWidget \
@@ -508,6 +520,7 @@ TangentSDK_autogen/timestamp: \
 	C:/msys64/mingw64/include/qt6/QtWidgets/qframe.h \
 	C:/msys64/mingw64/include/qt6/QtWidgets/qgridlayout.h \
 	C:/msys64/mingw64/include/qt6/QtWidgets/qgroupbox.h \
+	C:/msys64/mingw64/include/qt6/QtWidgets/qinputdialog.h \
 	C:/msys64/mingw64/include/qt6/QtWidgets/qlabel.h \
 	C:/msys64/mingw64/include/qt6/QtWidgets/qlayout.h \
 	C:/msys64/mingw64/include/qt6/QtWidgets/qlayoutitem.h \

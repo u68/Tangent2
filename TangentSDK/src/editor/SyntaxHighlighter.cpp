@@ -1,52 +1,117 @@
 #include "SyntaxHighlighter.h"
-#include "TangentKeywords.h"
-#include "../theme/SyntaxTheme.h"
+#include "SyntaxDefinition.h"
 #include <QRegularExpression>
 #include <QFileInfo>
+#include <QDir>
+#include <QDirIterator>
+#include <QFile>
+#include <QTextStream>
 
 SyntaxHighlighter::SyntaxHighlighter(QTextDocument* doc)
     : QSyntaxHighlighter(doc) {
-    setupFormats();
-}
-
-void SyntaxHighlighter::applyFormat(QTextCharFormat& format, const QString& key) {
-    SyntaxTheme::ColorEntry entry = SyntaxTheme::instance().getColor(key);
-    format.setForeground(entry.color);
-    format.setFontWeight(entry.bold ? QFont::Bold : QFont::Normal);
 }
 
 void SyntaxHighlighter::setupFormats() {
-    // TASM formats - load from SyntaxTheme
-    applyFormat(tasmKeyword, "syntax.tasm.keyword");
-    applyFormat(tasmRegister, "syntax.tasm.register");
-    applyFormat(tasmLabel, "syntax.tasm.label");
-    applyFormat(tasmComment, "syntax.tasm.comment");
-    applyFormat(tasmAddress, "syntax.tasm.address");
-    applyFormat(tasmDirective, "syntax.tasm.directive");
+    m_formats.clear();
+    SyntaxDefinition& def = SyntaxDefinition::instance();
     
-    // TML formats
-    applyFormat(tmlKeyword, "syntax.tml.keyword");
-    applyFormat(tmlBracket[0], "syntax.tml.bracket0");
-    applyFormat(tmlBracket[1], "syntax.tml.bracket1");
-    applyFormat(tmlBracket[2], "syntax.tml.bracket2");
-    applyFormat(tmlField, "syntax.tml.field");
-    applyFormat(tmlLabelRef, "syntax.tml.labelRef");
+    // Get language key from extension
+    QString langKey = m_fileExtension;
     
-    // Common formats
-    applyFormat(numberFormat, "syntax.number");
-    applyFormat(stringFormat, "syntax.string");
+    // Load formats for language-specific rules
+    for (const QString& ruleKey : def.getRuleKeys(langKey)) {
+        SyntaxRule rule = def.getRule(langKey, ruleKey);
+        QTextCharFormat format;
+        format.setForeground(rule.color);
+        format.setFontWeight(rule.bold ? QFont::Bold : QFont::Normal);
+        m_formats[langKey + "." + ruleKey] = format;
+    }
+    
+    // Load common formats
+    for (const QString& ruleKey : def.getCommonRuleKeys()) {
+        SyntaxRule rule = def.getCommonRule(ruleKey);
+        QTextCharFormat format;
+        format.setForeground(rule.color);
+        format.setFontWeight(rule.bold ? QFont::Bold : QFont::Normal);
+        m_formats["common." + ruleKey] = format;
+    }
+    
+    // Setup bracket formats for TML
+    for (int i = 0; i < 3; i++) {
+        SyntaxRule rule = def.getRule("tml", QString("bracket%1").arg(i));
+        m_bracketFormats[i].setForeground(rule.color);
+        m_bracketFormats[i].setFontWeight(rule.bold ? QFont::Bold : QFont::Normal);
+    }
+    
+    buildHighlightRules();
+}
+
+void SyntaxHighlighter::buildHighlightRules() {
+    m_rules.clear();
+    SyntaxDefinition& def = SyntaxDefinition::instance();
+    QString langKey = m_fileExtension;
+    
+    // Build rules for each syntax rule in the language
+    for (const QString& ruleKey : def.getRuleKeys(langKey)) {
+        SyntaxRule rule = def.getRule(langKey, ruleKey);
+        QString formatKey = langKey + "." + ruleKey;
+        
+        // Skip dynamic rules (like labelRef) - handled separately
+        if (rule.dynamic) continue;
+        
+        // Skip bracket rules for TML - handled specially
+        if (langKey == "tml" && ruleKey.startsWith("bracket")) continue;
+        
+        if (!rule.pattern.isEmpty()) {
+            HighlightRule hr;
+            hr.pattern = QRegularExpression(rule.pattern);
+            hr.formatKey = formatKey;
+            m_rules.append(hr);
+        }
+        
+        if (!rule.patterns.isEmpty()) {
+            for (const QString& pattern : rule.patterns) {
+                HighlightRule hr;
+                hr.pattern = QRegularExpression(pattern, QRegularExpression::CaseInsensitiveOption);
+                hr.formatKey = formatKey;
+                m_rules.append(hr);
+            }
+        }
+        
+        if (!rule.keywords.isEmpty()) {
+            QString pattern = SyntaxDefinition::buildKeywordPattern(rule.keywords);
+            HighlightRule hr;
+            hr.pattern = QRegularExpression(pattern, QRegularExpression::CaseInsensitiveOption);
+            hr.formatKey = formatKey;
+            m_rules.append(hr);
+        }
+    }
+    
+    // Add common rules (numbers, strings)
+    for (const QString& ruleKey : def.getCommonRuleKeys()) {
+        SyntaxRule rule = def.getCommonRule(ruleKey);
+        if (!rule.pattern.isEmpty()) {
+            HighlightRule hr;
+            hr.pattern = QRegularExpression(rule.pattern);
+            hr.formatKey = "common." + ruleKey;
+            m_rules.append(hr);
+        }
+    }
 }
 
 void SyntaxHighlighter::reloadColorsFromSettings() {
     setupFormats();
     rehighlight();
 }
+
 void SyntaxHighlighter::setFileType(const QString& filePath) {
     QFileInfo info(filePath);
     setFileTypeFromExtension(info.suffix().toLower());
 }
 
 void SyntaxHighlighter::setFileTypeFromExtension(const QString& extension) {
+    m_fileExtension = extension;
+    
     if (extension == "tasm") {
         m_fileType = TASM;
     } else if (extension == "tml") {
@@ -54,6 +119,8 @@ void SyntaxHighlighter::setFileTypeFromExtension(const QString& extension) {
     } else {
         m_fileType = Unknown;
     }
+    
+    setupFormats();
     rehighlight();
 }
 
@@ -63,7 +130,40 @@ void SyntaxHighlighter::setProjectPath(const QString& projectPath) {
 }
 
 void SyntaxHighlighter::refreshProjectLabels() {
-    m_projectLabels = TangentKeywords::getProjectLabels(m_projectPath);
+    m_projectLabels.clear();
+    
+    if (m_projectPath.isEmpty()) {
+        rehighlight();
+        return;
+    }
+    
+    // Extract labels from all .tasm files in the project
+    QDirIterator it(m_projectPath, QStringList() << "*.tasm", 
+                    QDir::Files, QDirIterator::Subdirectories);
+    QRegularExpression labelExpr("^\\s*([a-zA-Z_][a-zA-Z0-9_]*):");
+    
+    while (it.hasNext()) {
+        QString filePath = it.next();
+        // Skip files in build folder
+        if (filePath.contains("/build/") || filePath.contains("\\build\\")) continue;
+        
+        QFile file(filePath);
+        if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            QTextStream in(&file);
+            while (!in.atEnd()) {
+                QString line = in.readLine();
+                QRegularExpressionMatch match = labelExpr.match(line);
+                if (match.hasMatch()) {
+                    QString label = match.captured(1);
+                    if (!m_projectLabels.contains(label)) {
+                        m_projectLabels.append(label);
+                    }
+                }
+            }
+            file.close();
+        }
+    }
+    
     rehighlight();
 }
 
@@ -81,161 +181,66 @@ void SyntaxHighlighter::highlightBlock(const QString& text) {
 }
 
 void SyntaxHighlighter::highlightTASM(const QString& text) {
-    // Comments (everything after ;) - do first so other rules don't override
-    QRegularExpression commentExpr(";.*$");
-    QRegularExpressionMatchIterator commentIt = commentExpr.globalMatch(text);
+    // Find comment start first (everything after ; is a comment)
     int commentStart = -1;
-    while (commentIt.hasNext()) {
-        QRegularExpressionMatch match = commentIt.next();
-        setFormat(match.capturedStart(), match.capturedLength(), tasmComment);
-        commentStart = match.capturedStart();
+    QRegularExpression commentExpr(";.*$");
+    QRegularExpressionMatch commentMatch = commentExpr.match(text);
+    if (commentMatch.hasMatch()) {
+        commentStart = commentMatch.capturedStart();
+        setFormat(commentStart, commentMatch.capturedLength(), m_formats["tasm.comment"]);
     }
     
     // Only highlight non-comment portions
     QString activeText = (commentStart >= 0) ? text.left(commentStart) : text;
     
-    // Directives (@import, @define, etc. at start of line)
-    QRegularExpression directiveExpr("^\\s*(@[a-zA-Z_][a-zA-Z0-9_]*)");
-    QRegularExpressionMatch directiveMatch = directiveExpr.match(activeText);
-    if (directiveMatch.hasMatch()) {
-        setFormat(directiveMatch.capturedStart(1), directiveMatch.capturedLength(1), tasmDirective);
-    }
-    
-    // Labels (word followed by :)
-    QRegularExpression labelExpr("\\b([a-zA-Z_][a-zA-Z0-9_]*):");
-    QRegularExpressionMatchIterator labelIt = labelExpr.globalMatch(activeText);
-    while (labelIt.hasNext()) {
-        QRegularExpressionMatch match = labelIt.next();
-        setFormat(match.capturedStart(), match.capturedLength(), tasmLabel);
-    }
-    
-    // TASM keywords/instructions using shared keywords
-    QString keywordPattern = TangentKeywords::buildKeywordPattern(TangentKeywords::tasmKeywords());
-    QRegularExpression keywordExpr(keywordPattern, QRegularExpression::CaseInsensitiveOption);
-    QRegularExpressionMatchIterator keywordIt = keywordExpr.globalMatch(activeText);
-    while (keywordIt.hasNext()) {
-        QRegularExpressionMatch match = keywordIt.next();
-        setFormat(match.capturedStart(), match.capturedLength(), tasmKeyword);
-    }
-    
-    // Registers: r0-r15
-    QRegularExpression regExpr("\\b(r(1[0-5]|[0-9]))\\b", QRegularExpression::CaseInsensitiveOption);
-    QRegularExpressionMatchIterator regIt = regExpr.globalMatch(activeText);
-    while (regIt.hasNext()) {
-        QRegularExpressionMatch match = regIt.next();
-        setFormat(match.capturedStart(), match.capturedLength(), tasmRegister);
-    }
-    
-    // Extended registers: er0, er2, er4, er6, er8, er10, er12, er14
-    QRegularExpression erExpr("\\b(er(14|12|10|[02468]))\\b", QRegularExpression::CaseInsensitiveOption);
-    QRegularExpressionMatchIterator erIt = erExpr.globalMatch(activeText);
-    while (erIt.hasNext()) {
-        QRegularExpressionMatch match = erIt.next();
-        setFormat(match.capturedStart(), match.capturedLength(), tasmRegister);
-    }
-    
-    // XR registers: xr0, xr4, xr8, xr12
-    QRegularExpression xrExpr("\\b(xr(12|[048]))\\b", QRegularExpression::CaseInsensitiveOption);
-    QRegularExpressionMatchIterator xrIt = xrExpr.globalMatch(activeText);
-    while (xrIt.hasNext()) {
-        QRegularExpressionMatch match = xrIt.next();
-        setFormat(match.capturedStart(), match.capturedLength(), tasmRegister);
-    }
-    
-    // QR registers: qr0, qr8
-    QRegularExpression qrExpr("\\b(qr[08])\\b", QRegularExpression::CaseInsensitiveOption);
-    QRegularExpressionMatchIterator qrIt = qrExpr.globalMatch(activeText);
-    while (qrIt.hasNext()) {
-        QRegularExpressionMatch match = qrIt.next();
-        setFormat(match.capturedStart(), match.capturedLength(), tasmRegister);
-    }
-    
-    // Addresses (starting with #)
-    QRegularExpression addrExpr("#[a-zA-Z0-9_]+");
-    QRegularExpressionMatchIterator addrIt = addrExpr.globalMatch(activeText);
-    while (addrIt.hasNext()) {
-        QRegularExpressionMatch match = addrIt.next();
-        setFormat(match.capturedStart(), match.capturedLength(), tasmAddress);
-    }
-    
-    // Numbers (decimal and hex)
-    QRegularExpression numExpr("\\b(0x[0-9a-fA-F]+|[0-9]+)\\b");
-    QRegularExpressionMatchIterator numIt = numExpr.globalMatch(activeText);
-    while (numIt.hasNext()) {
-        QRegularExpressionMatch match = numIt.next();
-        setFormat(match.capturedStart(), match.capturedLength(), numberFormat);
-    }
-    
-    // Strings
-    QRegularExpression strExpr("\"[^\"]*\"");
-    QRegularExpressionMatchIterator strIt = strExpr.globalMatch(activeText);
-    while (strIt.hasNext()) {
-        QRegularExpressionMatch match = strIt.next();
-        setFormat(match.capturedStart(), match.capturedLength(), stringFormat);
+    // Apply all rules
+    for (const HighlightRule& rule : m_rules) {
+        QRegularExpressionMatchIterator it = rule.pattern.globalMatch(activeText);
+        while (it.hasNext()) {
+            QRegularExpressionMatch match = it.next();
+            if (m_formats.contains(rule.formatKey)) {
+                setFormat(match.capturedStart(), match.capturedLength(), m_formats[rule.formatKey]);
+            }
+        }
     }
 }
 
 void SyntaxHighlighter::highlightTML(const QString& text) {
-    // TML keywords/elements using shared keywords
-    QString keywordPattern = TangentKeywords::buildKeywordPattern(TangentKeywords::tmlKeywords());
-    QRegularExpression keywordExpr(keywordPattern, QRegularExpression::CaseInsensitiveOption);
-    QRegularExpressionMatchIterator keywordIt = keywordExpr.globalMatch(text);
-    while (keywordIt.hasNext()) {
-        QRegularExpressionMatch match = keywordIt.next();
-        setFormat(match.capturedStart(), match.capturedLength(), tmlKeyword);
+    // Apply all non-bracket rules
+    for (const HighlightRule& rule : m_rules) {
+        QRegularExpressionMatchIterator it = rule.pattern.globalMatch(text);
+        while (it.hasNext()) {
+            QRegularExpressionMatch match = it.next();
+            if (m_formats.contains(rule.formatKey)) {
+                setFormat(match.capturedStart(), match.capturedLength(), m_formats[rule.formatKey]);
+            }
+        }
     }
     
-    // Curly brackets with nesting colors
-    // Get the bracket depth from the previous block
+    // Handle bracket nesting with colors
     int bracketDepth = previousBlockState();
     if (bracketDepth < 0) bracketDepth = 0;
     
     for (int i = 0; i < text.length(); i++) {
         if (text[i] == '{') {
-            setFormat(i, 1, tmlBracket[bracketDepth % 3]);
+            setFormat(i, 1, m_bracketFormats[bracketDepth % 3]);
             bracketDepth++;
         } else if (text[i] == '}') {
             if (bracketDepth > 0) bracketDepth--;
-            setFormat(i, 1, tmlBracket[bracketDepth % 3]);
+            setFormat(i, 1, m_bracketFormats[bracketDepth % 3]);
         }
     }
     
-    // Store the bracket depth for the next block
     setCurrentBlockState(bracketDepth);
-    
-    // TML fields/properties using shared keywords
-    QString fieldPattern = TangentKeywords::buildKeywordPattern(TangentKeywords::tmlFields());
-    QRegularExpression fieldExpr(fieldPattern, QRegularExpression::CaseInsensitiveOption);
-    QRegularExpressionMatchIterator fieldIt = fieldExpr.globalMatch(text);
-    while (fieldIt.hasNext()) {
-        QRegularExpressionMatch match = fieldIt.next();
-        setFormat(match.capturedStart(), match.capturedLength(), tmlField);
-    }
     
     // Highlight project labels (from .tasm files)
     if (!m_projectLabels.isEmpty()) {
-        QString labelPattern = TangentKeywords::buildKeywordPattern(m_projectLabels);
+        QString labelPattern = SyntaxDefinition::buildKeywordPattern(m_projectLabels);
         QRegularExpression labelExpr(labelPattern);
         QRegularExpressionMatchIterator labelIt = labelExpr.globalMatch(text);
         while (labelIt.hasNext()) {
             QRegularExpressionMatch match = labelIt.next();
-            setFormat(match.capturedStart(), match.capturedLength(), tmlLabelRef);
+            setFormat(match.capturedStart(), match.capturedLength(), m_formats["tml.labelRef"]);
         }
-    }
-    
-    // Numbers
-    QRegularExpression numExpr("\\b(0x[0-9a-fA-F]+|[0-9]+\\.?[0-9]*)\\b");
-    QRegularExpressionMatchIterator numIt = numExpr.globalMatch(text);
-    while (numIt.hasNext()) {
-        QRegularExpressionMatch match = numIt.next();
-        setFormat(match.capturedStart(), match.capturedLength(), numberFormat);
-    }
-    
-    // Strings (both single and double quotes)
-    QRegularExpression strExpr("(\"[^\"]*\"|'[^']*')");
-    QRegularExpressionMatchIterator strIt = strExpr.globalMatch(text);
-    while (strIt.hasNext()) {
-        QRegularExpressionMatch match = strIt.next();
-        setFormat(match.capturedStart(), match.capturedLength(), stringFormat);
     }
 }

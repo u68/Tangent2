@@ -5,6 +5,7 @@
 #include <QStringList>
 #include <QMap>
 #include <QColor>
+#include <QRegularExpression>
 
 class SyntaxHighlighter : public QSyntaxHighlighter {
     Q_OBJECT
@@ -26,29 +27,25 @@ protected:
 
 private:
     FileType m_fileType = Unknown;
+    QString m_fileExtension;
     QString m_projectPath;
     QStringList m_projectLabels;
     
-    // TASM formats
-    QTextCharFormat tasmKeyword;      // mov, add, sub, etc
-    QTextCharFormat tasmRegister;     // r0-r15, er0-er14, etc
-    QTextCharFormat tasmLabel;        // word:
-    QTextCharFormat tasmComment;      // ; comment
-    QTextCharFormat tasmAddress;      // #address
-    QTextCharFormat tasmDirective;    // @import, @define, etc
+    // Cached formats for current language
+    QMap<QString, QTextCharFormat> m_formats;
     
-    // TML formats
-    QTextCharFormat tmlKeyword;       // root, text, button, etc
-    QTextCharFormat tmlBracket[3];    // { } with nesting colors
-    QTextCharFormat tmlField;         // x, width, colour, etc
-    QTextCharFormat tmlLabelRef;      // references to TASM labels
+    // Cached compiled patterns
+    struct HighlightRule {
+        QRegularExpression pattern;
+        QString formatKey;
+    };
+    QList<HighlightRule> m_rules;
     
-    // Common formats
-    QTextCharFormat numberFormat;     // 123
-    QTextCharFormat stringFormat;     // "string"
+    // Bracket formats for TML
+    QTextCharFormat m_bracketFormats[3];
     
     void highlightTASM(const QString& text);
     void highlightTML(const QString& text);
     void setupFormats();
-    void applyFormat(QTextCharFormat& format, const QString& key);
+    void buildHighlightRules();
 };

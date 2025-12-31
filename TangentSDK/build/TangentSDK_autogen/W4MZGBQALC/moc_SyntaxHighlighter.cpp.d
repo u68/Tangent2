@@ -237,6 +237,7 @@ C:/users/harma/desktop/github/tangent2/tangentsdk/build/TangentSDK_autogen/W4MZG
   C:/msys64/mingw64/include/qt6/QtCore/QMap \
   C:/msys64/mingw64/include/qt6/QtCore/QObject \
   C:/msys64/mingw64/include/qt6/QtCore/QRect \
+  C:/msys64/mingw64/include/qt6/QtCore/QRegularExpression \
   C:/msys64/mingw64/include/qt6/QtCore/QSize \
   C:/msys64/mingw64/include/qt6/QtCore/QSizeF \
   C:/msys64/mingw64/include/qt6/QtCore/QString \
@@ -327,6 +328,7 @@ C:/users/harma/desktop/github/tangent2/tangentsdk/build/TangentSDK_autogen/W4MZG
   C:/msys64/mingw64/include/qt6/QtCore/qprocessordetection.h \
   C:/msys64/mingw64/include/qt6/QtCore/qrect.h \
   C:/msys64/mingw64/include/qt6/QtCore/qrefcount.h \
+  C:/msys64/mingw64/include/qt6/QtCore/qregularexpression.h \
   C:/msys64/mingw64/include/qt6/QtCore/qscopedpointer.h \
   C:/msys64/mingw64/include/qt6/QtCore/qscopeguard.h \
   C:/msys64/mingw64/include/qt6/QtCore/qset.h \

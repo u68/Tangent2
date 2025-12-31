@@ -62,7 +62,15 @@ template <> constexpr inline auto SettingsDialog::qt_create_metaobjectdata<qt_me
         "onBrowseModelFolder",
         "onBrowseRP2EasePath",
         "onApply",
-        "onOk"
+        "onOk",
+        "onAddExtension",
+        "onCreateExtension",
+        "onEditDefaultJson",
+        "onExtensionMoveUp",
+        "onExtensionMoveDown",
+        "onExtensionToggle",
+        "onExtensionContextMenu",
+        "onExtensionDelete"
     };
 
     QtMocHelpers::UintData qt_methods {
@@ -108,6 +116,26 @@ template <> constexpr inline auto SettingsDialog::qt_create_metaobjectdata<qt_me
         QtMocHelpers::SlotData<void()>(22, 2, QMC::AccessPrivate, QMetaType::Void),
         // Slot 'onOk'
         QtMocHelpers::SlotData<void()>(23, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'onAddExtension'
+        QtMocHelpers::SlotData<void()>(24, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'onCreateExtension'
+        QtMocHelpers::SlotData<void()>(25, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'onEditDefaultJson'
+        QtMocHelpers::SlotData<void()>(26, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'onExtensionMoveUp'
+        QtMocHelpers::SlotData<void()>(27, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'onExtensionMoveDown'
+        QtMocHelpers::SlotData<void()>(28, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'onExtensionToggle'
+        QtMocHelpers::SlotData<void(QTreeWidgetItem *, int)>(29, 2, QMC::AccessPrivate, QMetaType::Void, {{
+            { 0x80000000 | 9, 10 }, { QMetaType::Int, 11 },
+        }}),
+        // Slot 'onExtensionContextMenu'
+        QtMocHelpers::SlotData<void(const QPoint &)>(30, 2, QMC::AccessPrivate, QMetaType::Void, {{
+            { 0x80000000 | 13, 14 },
+        }}),
+        // Slot 'onExtensionDelete'
+        QtMocHelpers::SlotData<void()>(31, 2, QMC::AccessPrivate, QMetaType::Void),
     };
     QtMocHelpers::UintData qt_properties {
     };
@@ -147,6 +175,14 @@ void SettingsDialog::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _
         case 13: _t->onBrowseRP2EasePath(); break;
         case 14: _t->onApply(); break;
         case 15: _t->onOk(); break;
+        case 16: _t->onAddExtension(); break;
+        case 17: _t->onCreateExtension(); break;
+        case 18: _t->onEditDefaultJson(); break;
+        case 19: _t->onExtensionMoveUp(); break;
+        case 20: _t->onExtensionMoveDown(); break;
+        case 21: _t->onExtensionToggle((*reinterpret_cast<std::add_pointer_t<QTreeWidgetItem*>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<int>>(_a[2]))); break;
+        case 22: _t->onExtensionContextMenu((*reinterpret_cast<std::add_pointer_t<QPoint>>(_a[1]))); break;
+        case 23: _t->onExtensionDelete(); break;
         default: ;
         }
     }
@@ -181,14 +217,14 @@ int SettingsDialog::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 16)
+        if (_id < 24)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 16;
+        _id -= 24;
     }
     if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 16)
+        if (_id < 24)
             *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType();
-        _id -= 16;
+        _id -= 24;
     }
     return _id;
 }

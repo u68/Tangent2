@@ -1,7 +1,6 @@
 #include "EditorWidget.h"
 #include "../editor/SyntaxHighlighter.h"
 #include "../editor/CompletionPopup.h"
-#include "../theme/SyntaxTheme.h"
 
 #include <QKeyEvent>
 #include <QFile>
@@ -13,13 +12,17 @@
 #include <QTextBlock>
 #include <QRegularExpression>
 #include <QTimer>
+#include <QSettings>
 
 EditorWidget::EditorWidget(QWidget* parent)
     : QPlainTextEdit(parent) {
 
-    // Set font from SyntaxTheme
-    SyntaxTheme& theme = SyntaxTheme::instance();
-    QFont editorFont(theme.fontFamily(), theme.fontSize());
+    // Set font from settings
+    QSettings settings("TangentSDK", "TangentSDK");
+    QFont defaultFont = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+    QString fontFamily = settings.value("editor/fontFamily", defaultFont.family()).toString();
+    int fontSize = settings.value("editor/fontSize", 11).toInt();
+    QFont editorFont(fontFamily, fontSize);
     setFont(editorFont);
 
     setTabStopDistance(4 * fontMetrics().horizontalAdvance(' '));
@@ -48,8 +51,11 @@ int EditorWidget::lineNumberAreaWidth() {
         ++digits;
     }
     // Use the themed font for line number width calculation
-    SyntaxTheme& theme = SyntaxTheme::instance();
-    QFont lineNumberFont(theme.fontFamily(), theme.fontSize());
+    QSettings settings("TangentSDK", "TangentSDK");
+    QFont defaultFont = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+    QString fontFamily = settings.value("editor/fontFamily", defaultFont.family()).toString();
+    int fontSize = settings.value("editor/fontSize", 11).toInt();
+    QFont lineNumberFont(fontFamily, fontSize);
     QFontMetrics fm(lineNumberFont);
     int space = 10 + fm.horizontalAdvance(QLatin1Char('9')) * digits;
     return space;
@@ -96,8 +102,11 @@ void EditorWidget::lineNumberAreaPaintEvent(QPaintEvent* event) {
     painter.fillRect(event->rect(), QColor("#1e1e1e"));
 
     // Use the same font as the editor for line numbers
-    SyntaxTheme& theme = SyntaxTheme::instance();
-    QFont lineNumberFont(theme.fontFamily(), theme.fontSize());
+    QSettings settings("TangentSDK", "TangentSDK");
+    QFont defaultFont = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+    QString fontFamily = settings.value("editor/fontFamily", defaultFont.family()).toString();
+    int fontSize = settings.value("editor/fontSize", 11).toInt();
+    QFont lineNumberFont(fontFamily, fontSize);
     painter.setFont(lineNumberFont);
 
     QTextBlock block = firstVisibleBlock();
@@ -133,9 +142,12 @@ void EditorWidget::refreshHighlighting() {
 }
 
 void EditorWidget::reloadSyntaxColors() {
-    // Reload font from theme
-    SyntaxTheme& theme = SyntaxTheme::instance();
-    QFont editorFont(theme.fontFamily(), theme.fontSize());
+    // Reload font from settings
+    QSettings settings("TangentSDK", "TangentSDK");
+    QFont defaultFont = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+    QString fontFamily = settings.value("editor/fontFamily", defaultFont.family()).toString();
+    int fontSize = settings.value("editor/fontSize", 11).toInt();
+    QFont editorFont(fontFamily, fontSize);
     setFont(editorFont);
     setTabStopDistance(4 * fontMetrics().horizontalAdvance(' '));
     
@@ -426,13 +438,20 @@ void EditorWidget::showCompletionPopup() {
 void EditorWidget::maybeShowCompletion() {
     if (!completion || m_fileType == Unknown) return;
     
+    // Check if completion is enabled in settings
+    QSettings settings("TangentSDK", "TangentSDK");
+    bool completionEnabled = settings.value("completion/enabled", true).toBool();
+    if (!completionEnabled) return;
+    
+    int minChars = settings.value("completion/minChars", 1).toInt();
+    
     // Get current word prefix
     QTextCursor cursor = textCursor();
     cursor.movePosition(QTextCursor::StartOfWord, QTextCursor::KeepAnchor);
     QString prefix = cursor.selectedText();
     
-    // Only show completion if we have at least 2 characters
-    if (prefix.length() >= 2) {
+    // Only show completion if we have at least minChars characters
+    if (prefix.length() >= minChars) {
         completion->showAtCursor(cursorRect());
     }
 }

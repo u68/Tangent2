@@ -1,5 +1,5 @@
 #include "CompletionPopup.h"
-#include "TangentKeywords.h"
+#include "SyntaxDefinition.h"
 #include <QPlainTextEdit>
 #include <QKeyEvent>
 #include <QScrollBar>
@@ -120,17 +120,17 @@ void CompletionPopup::buildCompletionList() {
     m_allCompletions.clear();
     m_labelFileMap.clear();
     
+    SyntaxDefinition& def = SyntaxDefinition::instance();
+    
     if (m_fileType == TASM) {
-        m_allCompletions << TangentKeywords::tasmKeywords();
-        m_allCompletions << TangentKeywords::tasmRegisters();
+        m_allCompletions << def.getAllCompletions("tasm");
         // Add project labels with file info
-        m_labelFileMap = TangentKeywords::getProjectLabelsWithFiles(m_projectPath);
+        m_labelFileMap = SyntaxDefinition::getProjectLabelsWithFiles(m_projectPath);
         m_allCompletions << m_labelFileMap.keys();
     } else if (m_fileType == TML) {
-        m_allCompletions << TangentKeywords::tmlKeywords();
-        m_allCompletions << TangentKeywords::tmlFields();
+        m_allCompletions << def.getAllCompletions("tml");
         // Add project labels from TASM files with file info
-        m_labelFileMap = TangentKeywords::getProjectLabelsWithFiles(m_projectPath);
+        m_labelFileMap = SyntaxDefinition::getProjectLabelsWithFiles(m_projectPath);
         m_allCompletions << m_labelFileMap.keys();
     }
     

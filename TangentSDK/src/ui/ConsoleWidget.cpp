@@ -1,9 +1,10 @@
 #include "ConsoleWidget.h"
-#include "../theme/SyntaxTheme.h"
+#include "../editor/SyntaxDefinition.h"
 #include <QScrollBar>
 #include <QFont>
 #include <QFontDatabase>
 #include <QTextCursor>
+#include <QSettings>
 
 ConsoleWidget::ConsoleWidget(QWidget* parent)
     : QPlainTextEdit(parent) {
@@ -18,28 +19,32 @@ ConsoleWidget::ConsoleWidget(QWidget* parent)
 }
 
 void ConsoleWidget::reloadFromTheme() {
-    SyntaxTheme& theme = SyntaxTheme::instance();
+    SyntaxDefinition& def = SyntaxDefinition::instance();
     
-    // Set font
-    QFont font(theme.fontFamily(), theme.fontSize());
+    // Set font from settings
+    QSettings settings("TangentSDK", "TangentSDK");
+    QFont defaultFont = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+    QString fontFamily = settings.value("editor/fontFamily", defaultFont.family()).toString();
+    int fontSize = settings.value("editor/fontSize", 11).toInt();
+    QFont font(fontFamily, fontSize);
     setFont(font);
     
-    // Setup text formats for different output types from theme
-    SyntaxTheme::ColorEntry normalEntry = theme.getColor("console.normal");
-    m_normalFormat.setForeground(normalEntry.color);
-    m_normalFormat.setFontWeight(normalEntry.bold ? QFont::Bold : QFont::Normal);
+    // Setup text formats for different output types from SyntaxDefinition
+    SyntaxRule normalRule = def.getConsoleRule("normal");
+    m_normalFormat.setForeground(normalRule.color);
+    m_normalFormat.setFontWeight(normalRule.bold ? QFont::Bold : QFont::Normal);
     
-    SyntaxTheme::ColorEntry errorEntry = theme.getColor("console.error");
-    m_errorFormat.setForeground(errorEntry.color);
-    m_errorFormat.setFontWeight(errorEntry.bold ? QFont::Bold : QFont::Normal);
+    SyntaxRule errorRule = def.getConsoleRule("error");
+    m_errorFormat.setForeground(errorRule.color);
+    m_errorFormat.setFontWeight(errorRule.bold ? QFont::Bold : QFont::Normal);
     
-    SyntaxTheme::ColorEntry warningEntry = theme.getColor("console.warning");
-    m_warningFormat.setForeground(warningEntry.color);
-    m_warningFormat.setFontWeight(warningEntry.bold ? QFont::Bold : QFont::Normal);
+    SyntaxRule warningRule = def.getConsoleRule("warning");
+    m_warningFormat.setForeground(warningRule.color);
+    m_warningFormat.setFontWeight(warningRule.bold ? QFont::Bold : QFont::Normal);
     
-    SyntaxTheme::ColorEntry successEntry = theme.getColor("console.success");
-    m_successFormat.setForeground(successEntry.color);
-    m_successFormat.setFontWeight(successEntry.bold ? QFont::Bold : QFont::Normal);
+    SyntaxRule successRule = def.getConsoleRule("success");
+    m_successFormat.setForeground(successRule.color);
+    m_successFormat.setFontWeight(successRule.bold ? QFont::Bold : QFont::Normal);
 }
 
 void ConsoleWidget::appendColoredText(const QString& text, const QColor& color) {

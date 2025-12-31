@@ -1,5 +1,5 @@
 #include "SettingsDialog.h"
-#include "../theme/SyntaxTheme.h"
+#include "../editor/SyntaxDefinition.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -14,6 +14,7 @@
 #include <QPainter>
 #include <QMenu>
 #include <QFontDatabase>
+#include <QInputDialog>
 #include <functional>
 
 SettingsDialog::SettingsDialog(QWidget* parent)
@@ -92,7 +93,15 @@ void SettingsDialog::setupGeneralTab(QWidget* tab) {
 }
 
 void SettingsDialog::setupEditorTab(QWidget* tab) {
-    QVBoxLayout* layout = new QVBoxLayout(tab);
+    QVBoxLayout* tabLayout = new QVBoxLayout(tab);
+    tabLayout->setContentsMargins(0, 0, 0, 0);
+    
+    QScrollArea* scrollArea = new QScrollArea();
+    scrollArea->setWidgetResizable(true);
+    scrollArea->setFrameShape(QFrame::NoFrame);
+    
+    QWidget* scrollContent = new QWidget();
+    QVBoxLayout* layout = new QVBoxLayout(scrollContent);
     
     // Font section
     QGroupBox* fontGroup = new QGroupBox("Font");
@@ -127,6 +136,28 @@ void SettingsDialog::setupEditorTab(QWidget* tab) {
     
     layout->addWidget(fontGroup);
     
+    // Code Completion section
+    QGroupBox* completionGroup = new QGroupBox("Code Completion");
+    QVBoxLayout* completionLayout = new QVBoxLayout(completionGroup);
+    
+    m_completionEnabledCheck = new QCheckBox("Enable auto-completion popup");
+    completionLayout->addWidget(m_completionEnabledCheck);
+    
+    QHBoxLayout* minCharsLayout = new QHBoxLayout();
+    QLabel* minCharsLabel = new QLabel("Minimum characters to trigger:");
+    m_completionMinCharsSpinBox = new QSpinBox();
+    m_completionMinCharsSpinBox->setRange(1, 10);
+    m_completionMinCharsSpinBox->setValue(1);
+    minCharsLayout->addWidget(minCharsLabel);
+    minCharsLayout->addWidget(m_completionMinCharsSpinBox);
+    minCharsLayout->addStretch();
+    completionLayout->addLayout(minCharsLayout);
+    
+    // Enable/disable min chars spinbox based on checkbox
+    connect(m_completionEnabledCheck, &QCheckBox::toggled, m_completionMinCharsSpinBox, &QSpinBox::setEnabled);
+    
+    layout->addWidget(completionGroup);
+    
     // Syntax Colors section
     QGroupBox* colorsGroup = new QGroupBox("Syntax Highlighting Colors");
     QVBoxLayout* colorsLayout = new QVBoxLayout(colorsGroup);
@@ -145,20 +176,40 @@ void SettingsDialog::setupEditorTab(QWidget* tab) {
         "QTreeWidget { background-color: #2d2d2d; }"
         "QTreeWidget::item { padding: 4px; }"
         "QTreeWidget::item:hover { background-color: #3a3a3a; }"
+        "QTreeWidget::indicator:checked { background-color: #c42b1c; border: 1px solid #c42b1c; border-radius: 2px; }"
+        "QTreeWidget::indicator:unchecked { background-color: transparent; border: 1px solid #888888; border-radius: 2px; }"
     );
     m_colorTree->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(m_colorTree, &QTreeWidget::itemClicked, this, &SettingsDialog::onColorItemClicked);
     connect(m_colorTree, &QTreeWidget::itemChanged, this, &SettingsDialog::onBoldToggled);
     connect(m_colorTree, &QTreeWidget::customContextMenuRequested, this, &SettingsDialog::onColorContextMenu);
     
-    auto addColorItem = [this](QTreeWidgetItem* parent, const QString& key, const QString& displayName) {
-        QTreeWidgetItem* item = new QTreeWidgetItem(parent, {displayName});
+    SyntaxDefinition& def = SyntaxDefinition::instance();
+    
+    auto addColorItem = [this, &def](QTreeWidgetItem* parent, const QString& langKey, const QString& ruleKey) {
+        SyntaxRule rule;
+        QString key = langKey + "." + ruleKey;
+        
+        if (langKey == "common") {
+            rule = def.getCommonRule(ruleKey);
+        } else if (langKey == "console") {
+            rule = def.getConsoleRule(ruleKey);
+        } else {
+            rule = def.getRule(langKey, ruleKey);
+        }
+        
+        QTreeWidgetItem* item = new QTreeWidgetItem(parent, {rule.displayName});
         item->setData(0, Qt::UserRole, key);
         item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
         
-        SyntaxTheme::ColorEntry entry = SyntaxTheme::instance().getColor(key);
-        m_colors[key] = entry;
-        updateColorPreview(item, entry.color, entry.bold);
+        ColorSetting setting;
+        setting.langKey = langKey;
+        setting.ruleKey = ruleKey;
+        setting.color = rule.color;
+        setting.bold = rule.bold;
+        m_colorSettings[key] = setting;
+        
+        updateColorPreview(item, rule.color, rule.bold);
     };
     
     // TASM category
@@ -166,42 +217,42 @@ void SettingsDialog::setupEditorTab(QWidget* tab) {
     tasmCategory->setFlags(tasmCategory->flags() & ~Qt::ItemIsSelectable);
     tasmCategory->setExpanded(true);
     
-    addColorItem(tasmCategory, "syntax.tasm.keyword", "Keywords");
-    addColorItem(tasmCategory, "syntax.tasm.register", "Registers");
-    addColorItem(tasmCategory, "syntax.tasm.label", "Labels");
-    addColorItem(tasmCategory, "syntax.tasm.comment", "Comments");
-    addColorItem(tasmCategory, "syntax.tasm.address", "Addresses");
-    addColorItem(tasmCategory, "syntax.tasm.directive", "Directives (@)");
+    addColorItem(tasmCategory, "tasm", "keyword");
+    addColorItem(tasmCategory, "tasm", "register");
+    addColorItem(tasmCategory, "tasm", "label");
+    addColorItem(tasmCategory, "tasm", "comment");
+    addColorItem(tasmCategory, "tasm", "address");
+    addColorItem(tasmCategory, "tasm", "directive");
     
     // TML category
     QTreeWidgetItem* tmlCategory = new QTreeWidgetItem(m_colorTree, {"Tangent Markup (TML)"});
     tmlCategory->setFlags(tmlCategory->flags() & ~Qt::ItemIsSelectable);
     tmlCategory->setExpanded(true);
     
-    addColorItem(tmlCategory, "syntax.tml.keyword", "Keywords");
-    addColorItem(tmlCategory, "syntax.tml.field", "Fields");
-    addColorItem(tmlCategory, "syntax.tml.labelRef", "Label References");
-    addColorItem(tmlCategory, "syntax.tml.bracket0", "Brackets (Level 1)");
-    addColorItem(tmlCategory, "syntax.tml.bracket1", "Brackets (Level 2)");
-    addColorItem(tmlCategory, "syntax.tml.bracket2", "Brackets (Level 3)");
+    addColorItem(tmlCategory, "tml", "keyword");
+    addColorItem(tmlCategory, "tml", "field");
+    addColorItem(tmlCategory, "tml", "labelRef");
+    addColorItem(tmlCategory, "tml", "bracket0");
+    addColorItem(tmlCategory, "tml", "bracket1");
+    addColorItem(tmlCategory, "tml", "bracket2");
     
     // Common category
     QTreeWidgetItem* commonCategory = new QTreeWidgetItem(m_colorTree, {"Common"});
     commonCategory->setFlags(commonCategory->flags() & ~Qt::ItemIsSelectable);
     commonCategory->setExpanded(true);
     
-    addColorItem(commonCategory, "syntax.number", "Numbers");
-    addColorItem(commonCategory, "syntax.string", "Strings");
+    addColorItem(commonCategory, "common", "number");
+    addColorItem(commonCategory, "common", "string");
     
     // Console category
     QTreeWidgetItem* consoleCategory = new QTreeWidgetItem(m_colorTree, {"Console Output"});
     consoleCategory->setFlags(consoleCategory->flags() & ~Qt::ItemIsSelectable);
     consoleCategory->setExpanded(true);
     
-    addColorItem(consoleCategory, "console.error", "Error Text");
-    addColorItem(consoleCategory, "console.warning", "Warning Text");
-    addColorItem(consoleCategory, "console.success", "Success Text");
-    addColorItem(consoleCategory, "console.normal", "Normal Text");
+    addColorItem(consoleCategory, "console", "error");
+    addColorItem(consoleCategory, "console", "warning");
+    addColorItem(consoleCategory, "console", "success");
+    addColorItem(consoleCategory, "console", "normal");
     
     colorsLayout->addWidget(m_colorTree);
     
@@ -215,6 +266,88 @@ void SettingsDialog::setupEditorTab(QWidget* tab) {
     colorsLayout->addLayout(btnLayout);
     
     layout->addWidget(colorsGroup, 1);
+    
+    // Syntax Extensions section
+    QGroupBox* extensionsGroup = new QGroupBox("Syntax Extensions");
+    QVBoxLayout* extensionsLayout = new QVBoxLayout(extensionsGroup);
+    
+    QLabel* extInfoLabel = new QLabel(
+        "Extensions at the top override extensions below them. "
+        "Default should be at the bottom, your settings above it.");
+    extInfoLabel->setWordWrap(true);
+    extensionsLayout->addWidget(extInfoLabel);
+    
+    // Extension list with buttons
+    QHBoxLayout* extListLayout = new QHBoxLayout();
+    
+    m_extensionTree = new QTreeWidget();
+    m_extensionTree->setHeaderLabels({"Extension", "Enabled"});
+    m_extensionTree->setColumnWidth(0, 250);
+    m_extensionTree->setColumnWidth(1, 60);
+    m_extensionTree->setRootIsDecorated(false);
+    m_extensionTree->setContextMenuPolicy(Qt::CustomContextMenu);
+    m_extensionTree->setStyleSheet(
+        "QTreeWidget { background-color: #2d2d2d; }"
+        "QTreeWidget::item { padding: 4px; }"
+        "QTreeWidget::item:hover { background-color: #3a3a3a; }"
+        "QTreeWidget::indicator:checked { background-color: #c42b1c; border: 1px solid #c42b1c; border-radius: 2px; }"
+        "QTreeWidget::indicator:unchecked { background-color: transparent; border: 1px solid #888888; border-radius: 2px; }"
+    );
+    connect(m_extensionTree, &QTreeWidget::customContextMenuRequested, 
+            this, &SettingsDialog::onExtensionContextMenu);
+    connect(m_extensionTree, &QTreeWidget::itemChanged,
+            this, &SettingsDialog::onExtensionToggle);
+    extListLayout->addWidget(m_extensionTree, 1);
+    
+    // Move up/down buttons
+    QVBoxLayout* extBtnLayout = new QVBoxLayout();
+    m_extMoveUpBtn = new QPushButton("▲");
+    m_extMoveUpBtn->setFixedWidth(30);
+    m_extMoveUpBtn->setToolTip("Move Up (Higher Priority)");
+    connect(m_extMoveUpBtn, &QPushButton::clicked, this, &SettingsDialog::onExtensionMoveUp);
+    
+    m_extMoveDownBtn = new QPushButton("▼");
+    m_extMoveDownBtn->setFixedWidth(30);
+    m_extMoveDownBtn->setToolTip("Move Down (Lower Priority)");
+    connect(m_extMoveDownBtn, &QPushButton::clicked, this, &SettingsDialog::onExtensionMoveDown);
+    
+    extBtnLayout->addWidget(m_extMoveUpBtn);
+    extBtnLayout->addWidget(m_extMoveDownBtn);
+    extBtnLayout->addStretch();
+    extListLayout->addLayout(extBtnLayout);
+    
+    extensionsLayout->addLayout(extListLayout);
+    
+    // Extension action buttons
+    QHBoxLayout* extActionLayout = new QHBoxLayout();
+    
+    QPushButton* addExtBtn = new QPushButton("Import Extension...");
+    addExtBtn->setToolTip("Import a JSON extension file");
+    connect(addExtBtn, &QPushButton::clicked, this, &SettingsDialog::onAddExtension);
+    
+    QPushButton* createExtBtn = new QPushButton("Create Extension...");
+    createExtBtn->setToolTip("Create a new blank extension");
+    connect(createExtBtn, &QPushButton::clicked, this, &SettingsDialog::onCreateExtension);
+    
+    QPushButton* editDefaultBtn = new QPushButton("Edit Default JSON...");
+    editDefaultBtn->setToolTip("Open the default syntax definitions file");
+    connect(editDefaultBtn, &QPushButton::clicked, this, &SettingsDialog::onEditDefaultJson);
+    
+    extActionLayout->addWidget(addExtBtn);
+    extActionLayout->addWidget(createExtBtn);
+    extActionLayout->addWidget(editDefaultBtn);
+    extActionLayout->addStretch();
+    
+    extensionsLayout->addLayout(extActionLayout);
+    
+    layout->addWidget(extensionsGroup);
+    
+    // Finish scroll area setup
+    scrollArea->setWidget(scrollContent);
+    tabLayout->addWidget(scrollArea);
+    
+    // Load extensions into list
+    refreshExtensionList();
 }
 
 void SettingsDialog::setupDiscordTab(QWidget* tab) {
@@ -507,22 +640,28 @@ void SettingsDialog::loadSettings() {
     m_workspaceEdit->setText(settings.value("workspacePath").toString());
     m_autoSaveCheck->setChecked(settings.value("autoSave", false).toBool());
     
-    // Editor - Font
-    SyntaxTheme& theme = SyntaxTheme::instance();
-    int fontIndex = m_fontCombo->findText(theme.fontFamily());
+    // Completion
+    m_completionEnabledCheck->setChecked(settings.value("completion/enabled", true).toBool());
+    m_completionMinCharsSpinBox->setValue(settings.value("completion/minChars", 1).toInt());
+    m_completionMinCharsSpinBox->setEnabled(m_completionEnabledCheck->isChecked());
+    
+    // Editor - Font (load from QSettings)
+    QFont defaultFont = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+    QString fontFamily = settings.value("editor/fontFamily", defaultFont.family()).toString();
+    int fontSize = settings.value("editor/fontSize", 11).toInt();
+    
+    int fontIndex = m_fontCombo->findText(fontFamily);
     if (fontIndex >= 0) {
         m_fontCombo->setCurrentIndex(fontIndex);
     }
-    m_fontSizeSpinBox->setValue(theme.fontSize());
+    m_fontSizeSpinBox->setValue(fontSize);
     
-    // Editor - Colors (already loaded from SyntaxTheme in setupEditorTab)
-    m_colors = theme.allColors();
-    
-    // Update color tree
+    // Editor - Colors (already loaded from SyntaxDefinition in setupEditorTab)
+    // Update color tree with current values
     std::function<void(QTreeWidgetItem*)> updateTreeColors = [this, &updateTreeColors](QTreeWidgetItem* item) {
         QString key = item->data(0, Qt::UserRole).toString();
-        if (!key.isEmpty() && m_colors.contains(key)) {
-            updateColorPreview(item, m_colors[key].color, m_colors[key].bold);
+        if (!key.isEmpty() && m_colorSettings.contains(key)) {
+            updateColorPreview(item, m_colorSettings[key].color, m_colorSettings[key].bold);
         }
         for (int i = 0; i < item->childCount(); ++i) {
             updateTreeColors(item->child(i));
@@ -591,12 +730,30 @@ void SettingsDialog::saveSettings() {
     
     settings.setValue("autoSave", m_autoSaveCheck->isChecked());
     
-    // Editor - Font and Colors
-    SyntaxTheme& theme = SyntaxTheme::instance();
-    theme.setFontFamily(m_fontCombo->currentText());
-    theme.setFontSize(m_fontSizeSpinBox->value());
-    theme.setAllColors(m_colors);
-    theme.save();
+    // Completion
+    settings.setValue("completion/enabled", m_completionEnabledCheck->isChecked());
+    settings.setValue("completion/minChars", m_completionMinCharsSpinBox->value());
+    
+    // Editor - Font
+    settings.setValue("editor/fontFamily", m_fontCombo->currentText());
+    settings.setValue("editor/fontSize", m_fontSizeSpinBox->value());
+    
+    // Editor - Colors: save to SyntaxDefinition
+    SyntaxDefinition& def = SyntaxDefinition::instance();
+    for (auto it = m_colorSettings.begin(); it != m_colorSettings.end(); ++it) {
+        const ColorSetting& setting = it.value();
+        if (setting.langKey == "common") {
+            def.setCommonRuleColor(setting.ruleKey, setting.color);
+            def.setCommonRuleBold(setting.ruleKey, setting.bold);
+        } else if (setting.langKey == "console") {
+            def.setConsoleRuleColor(setting.ruleKey, setting.color);
+            def.setConsoleRuleBold(setting.ruleKey, setting.bold);
+        } else {
+            def.setRuleColor(setting.langKey, setting.ruleKey, setting.color);
+            def.setRuleBold(setting.langKey, setting.ruleKey, setting.bold);
+        }
+    }
+    def.save();
     
     // Discord
     settings.setValue("discord/enabled", m_discordEnabledCheck->isChecked());
@@ -665,13 +822,15 @@ void SettingsDialog::onColorItemClicked(QTreeWidgetItem* item, int column) {
     // Only handle color column clicks (column 1)
     if (column != 1) return;
     
-    QColor currentColor = m_colors.value(key).color;
+    if (!m_colorSettings.contains(key)) return;
+    
+    QColor currentColor = m_colorSettings[key].color;
     QColor newColor = QColorDialog::getColor(currentColor, this, "Select Color",
                                               QColorDialog::ShowAlphaChannel);
     
     if (newColor.isValid()) {
-        m_colors[key].color = newColor;
-        updateColorPreview(item, newColor, m_colors[key].bold);
+        m_colorSettings[key].color = newColor;
+        updateColorPreview(item, newColor, m_colorSettings[key].bold);
     }
 }
 
@@ -681,8 +840,10 @@ void SettingsDialog::onBoldToggled(QTreeWidgetItem* item, int column) {
     QString key = item->data(0, Qt::UserRole).toString();
     if (key.isEmpty()) return;
     
+    if (!m_colorSettings.contains(key)) return;
+    
     bool bold = (item->checkState(2) == Qt::Checked);
-    m_colors[key].bold = bold;
+    m_colorSettings[key].bold = bold;
 }
 
 void SettingsDialog::onColorContextMenu(const QPoint& pos) {
@@ -692,17 +853,36 @@ void SettingsDialog::onColorContextMenu(const QPoint& pos) {
     QString key = item->data(0, Qt::UserRole).toString();
     if (key.isEmpty()) return; // Category items don't have keys
     
+    if (!m_colorSettings.contains(key)) return;
+    
     QMenu contextMenu(this);
     QAction* resetAction = contextMenu.addAction("Reset Color");
     
     QAction* selectedAction = contextMenu.exec(m_colorTree->viewport()->mapToGlobal(pos));
     if (selectedAction == resetAction) {
-        QMap<QString, QColor> defaults = SyntaxTheme::defaultColors();
-        QMap<QString, bool> defaultBold = SyntaxTheme::defaultBold();
-        if (defaults.contains(key)) {
-            m_colors[key] = SyntaxTheme::ColorEntry(defaults[key], defaultBold.value(key, false));
-            updateColorPreview(item, m_colors[key].color, m_colors[key].bold);
+        // Reload defaults from SyntaxDefinition
+        ColorSetting& setting = m_colorSettings[key];
+        SyntaxDefinition& def = SyntaxDefinition::instance();
+        
+        // Reset in SyntaxDefinition
+        if (setting.langKey == "common") {
+            def.resetCommonRule(setting.ruleKey);
+            SyntaxRule rule = def.getCommonRule(setting.ruleKey);
+            setting.color = rule.color;
+            setting.bold = rule.bold;
+        } else if (setting.langKey == "console") {
+            def.resetConsoleRule(setting.ruleKey);
+            SyntaxRule rule = def.getConsoleRule(setting.ruleKey);
+            setting.color = rule.color;
+            setting.bold = rule.bold;
+        } else {
+            def.resetRule(setting.langKey, setting.ruleKey);
+            SyntaxRule rule = def.getRule(setting.langKey, setting.ruleKey);
+            setting.color = rule.color;
+            setting.bold = rule.bold;
         }
+        
+        updateColorPreview(item, setting.color, setting.bold);
     }
 }
 
@@ -713,20 +893,65 @@ void SettingsDialog::onResetDefaultColors() {
         QMessageBox::Yes | QMessageBox::No);
     
     if (reply == QMessageBox::Yes) {
-        // Reset colors from defaults
-        QMap<QString, QColor> defaults = SyntaxTheme::defaultColors();
-        QMap<QString, bool> defaultBold = SyntaxTheme::defaultBold();
+        // Reset all customizations in SyntaxDefinition
+        SyntaxDefinition& def = SyntaxDefinition::instance();
+        def.resetAllToDefaults();
         
-        m_colors.clear();
-        for (auto it = defaults.begin(); it != defaults.end(); ++it) {
-            m_colors[it.key()] = SyntaxTheme::ColorEntry(it.value(), defaultBold.value(it.key(), false));
-        }
+        // Reload colors from SyntaxDefinition
+        m_colorSettings.clear();
+        
+        // Reload all color settings
+        auto reloadColorItem = [this, &def](const QString& langKey, const QString& ruleKey) {
+            QString key = langKey + "." + ruleKey;
+            SyntaxRule rule;
+            
+            if (langKey == "common") {
+                rule = def.getCommonRule(ruleKey);
+            } else if (langKey == "console") {
+                rule = def.getConsoleRule(ruleKey);
+            } else {
+                rule = def.getRule(langKey, ruleKey);
+            }
+            
+            ColorSetting setting;
+            setting.langKey = langKey;
+            setting.ruleKey = ruleKey;
+            setting.color = rule.color;
+            setting.bold = rule.bold;
+            m_colorSettings[key] = setting;
+        };
+        
+        // Reload TASM
+        reloadColorItem("tasm", "keyword");
+        reloadColorItem("tasm", "register");
+        reloadColorItem("tasm", "label");
+        reloadColorItem("tasm", "comment");
+        reloadColorItem("tasm", "address");
+        reloadColorItem("tasm", "directive");
+        
+        // Reload TML
+        reloadColorItem("tml", "keyword");
+        reloadColorItem("tml", "field");
+        reloadColorItem("tml", "labelRef");
+        reloadColorItem("tml", "bracket0");
+        reloadColorItem("tml", "bracket1");
+        reloadColorItem("tml", "bracket2");
+        
+        // Reload common
+        reloadColorItem("common", "number");
+        reloadColorItem("common", "string");
+        
+        // Reload console
+        reloadColorItem("console", "error");
+        reloadColorItem("console", "warning");
+        reloadColorItem("console", "success");
+        reloadColorItem("console", "normal");
         
         // Update tree
         std::function<void(QTreeWidgetItem*)> updateTreeColors = [this, &updateTreeColors](QTreeWidgetItem* item) {
             QString key = item->data(0, Qt::UserRole).toString();
-            if (!key.isEmpty() && m_colors.contains(key)) {
-                updateColorPreview(item, m_colors[key].color, m_colors[key].bold);
+            if (!key.isEmpty() && m_colorSettings.contains(key)) {
+                updateColorPreview(item, m_colorSettings[key].color, m_colorSettings[key].bold);
             }
             for (int i = 0; i < item->childCount(); ++i) {
                 updateTreeColors(item->child(i));
@@ -756,6 +981,14 @@ bool SettingsDialog::autoSaveEnabled() const {
     return m_autoSaveCheck->isChecked();
 }
 
+bool SettingsDialog::completionEnabled() const {
+    return m_completionEnabledCheck->isChecked();
+}
+
+int SettingsDialog::completionMinChars() const {
+    return m_completionMinCharsSpinBox->value();
+}
+
 bool SettingsDialog::discordEnabled() const {
     return m_discordEnabledCheck->isChecked();
 }
@@ -776,4 +1009,258 @@ int SettingsDialog::discordElapsedTimeReset() const {
     if (m_elapsedProjectRadio->isChecked()) return 1;
     if (m_elapsedFileRadio->isChecked()) return 2;
     return 0;
+}
+
+// Extension management methods
+void SettingsDialog::refreshExtensionList() {
+    m_extensionTree->blockSignals(true);
+    m_extensionTree->clear();
+    
+    SyntaxDefinition& def = SyntaxDefinition::instance();
+    QList<SyntaxExtension> extensions = def.getExtensions();
+    
+    // Display in normal order: lowest priority (default) at TOP, highest priority at BOTTOM
+    // Items at the bottom override items above them
+    for (int i = 0; i < extensions.size(); ++i) {
+        const auto& ext = extensions[i];
+        
+        QString displayName = ext.name;
+        if (ext.isDefault) {
+            displayName += " (Built-in)";
+        } else if (ext.isEdited) {
+            displayName += " (Your Settings)";
+        }
+        
+        QTreeWidgetItem* item = new QTreeWidgetItem(m_extensionTree, {displayName});
+        item->setData(0, Qt::UserRole, ext.id);
+        item->setData(0, Qt::UserRole + 1, ext.isDefault);
+        item->setData(0, Qt::UserRole + 2, ext.isEdited);
+        item->setData(0, Qt::UserRole + 3, i);  // Store original index
+        item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
+        item->setCheckState(1, ext.enabled ? Qt::Checked : Qt::Unchecked);
+        
+        // Add visual indicators
+        QString tooltip;
+        if (ext.isDefault) {
+            tooltip = "Built-in default syntax definitions.\nLowest priority - gets overridden by everything below.\nCannot be deleted.";
+        } else if (ext.isEdited) {
+            tooltip = "Your color and style customizations from the settings dialog.\nCannot be deleted.";
+        } else {
+            tooltip = "Custom extension: " + ext.filePath;
+        }
+        item->setToolTip(0, tooltip);
+    }
+    
+    m_extensionTree->blockSignals(false);
+}
+
+bool SettingsDialog::checkExtensionOrderWarning(int fromIndex, int toIndex) {
+    // In the UI: TOP = highest priority (overrides), BOTTOM = lowest priority (default)
+    // We need to warn if:
+    // - Edited is being moved BELOW Default (moving edited down = lower priority = would be overridden)
+    // - Default is being moved ABOVE Edited (moving default up = higher priority = would override)
+    
+    QTreeWidgetItem* movingItem = m_extensionTree->topLevelItem(fromIndex);
+    if (!movingItem) return true;
+    
+    bool isDefault = movingItem->data(0, Qt::UserRole + 1).toBool();
+    bool isEdited = movingItem->data(0, Qt::UserRole + 2).toBool();
+    
+    // Moving edited DOWN (to higher index = lower visual position = lower priority)
+    if (isEdited && toIndex > fromIndex) {
+        // Check if default is between current position and target
+        for (int i = fromIndex + 1; i <= toIndex; ++i) {
+            QTreeWidgetItem* item = m_extensionTree->topLevelItem(i);
+            if (item && item->data(0, Qt::UserRole + 1).toBool()) {
+                // Edited would move below Default - warn!
+                QMessageBox::StandardButton reply = QMessageBox::warning(
+                    this, "Warning",
+                    "Moving Editor Settings below Default will cause your color customizations "
+                    "to be overridden by the default values.",
+                    QMessageBox::Ok | QMessageBox::Cancel,
+                    QMessageBox::Cancel);
+                return reply == QMessageBox::Ok;
+            }
+        }
+    }
+    
+    // Moving default UP (to lower index = higher visual position = higher priority)
+    if (isDefault && toIndex < fromIndex) {
+        // Check if edited is between target and current position
+        for (int i = toIndex; i < fromIndex; ++i) {
+            QTreeWidgetItem* item = m_extensionTree->topLevelItem(i);
+            if (item && item->data(0, Qt::UserRole + 2).toBool()) {
+                // Default would move above Edited - warn!
+                QMessageBox::StandardButton reply = QMessageBox::warning(
+                    this, "Warning",
+                    "Moving Default above Editor Settings will cause the default values "
+                    "to override your color customizations.",
+                    QMessageBox::Ok | QMessageBox::Cancel,
+                    QMessageBox::Cancel);
+                return reply == QMessageBox::Ok;
+            }
+        }
+    }
+    
+    return true;
+}
+
+void SettingsDialog::onExtensionMoveUp() {
+    QTreeWidgetItem* currentItem = m_extensionTree->currentItem();
+    if (!currentItem) return;
+    
+    int currentRow = m_extensionTree->indexOfTopLevelItem(currentItem);
+    if (currentRow <= 0) return;
+    
+    if (!checkExtensionOrderWarning(currentRow, currentRow - 1)) return;
+    
+    // Get the current extensions - UI order now matches internal order
+    SyntaxDefinition& def = SyntaxDefinition::instance();
+    QList<SyntaxExtension> extensions = def.getExtensions();
+    
+    // Swap with the item above (lower priority)
+    if (currentRow > 0 && currentRow < extensions.size()) {
+        extensions.swapItemsAt(currentRow, currentRow - 1);
+        def.setExtensions(extensions);
+        refreshExtensionList();
+        m_extensionTree->setCurrentItem(m_extensionTree->topLevelItem(currentRow - 1));
+        emit colorsChanged();
+    }
+}
+
+void SettingsDialog::onExtensionMoveDown() {
+    QTreeWidgetItem* currentItem = m_extensionTree->currentItem();
+    if (!currentItem) return;
+    
+    int currentRow = m_extensionTree->indexOfTopLevelItem(currentItem);
+    if (currentRow < 0 || currentRow >= m_extensionTree->topLevelItemCount() - 1) return;
+    
+    if (!checkExtensionOrderWarning(currentRow, currentRow + 1)) return;
+    
+    // Get the current extensions - UI order now matches internal order
+    SyntaxDefinition& def = SyntaxDefinition::instance();
+    QList<SyntaxExtension> extensions = def.getExtensions();
+    
+    // Swap with the item below (higher priority)
+    if (currentRow >= 0 && currentRow < extensions.size() - 1) {
+        extensions.swapItemsAt(currentRow, currentRow + 1);
+        def.setExtensions(extensions);
+        refreshExtensionList();
+        m_extensionTree->setCurrentItem(m_extensionTree->topLevelItem(currentRow + 1));
+        emit colorsChanged();
+    }
+}
+
+void SettingsDialog::onExtensionToggle(QTreeWidgetItem* item, int column) {
+    if (!item) return;
+    if (column != 1) return;  // Only handle clicks on the Enabled column
+    
+    QString id = item->data(0, Qt::UserRole).toString();
+    bool enabled = (item->checkState(1) == Qt::Checked);
+    
+    SyntaxDefinition& def = SyntaxDefinition::instance();
+    def.setExtensionEnabled(id, enabled);
+    emit colorsChanged();
+}
+
+void SettingsDialog::onAddExtension() {
+    QString filePath = QFileDialog::getOpenFileName(
+        this, "Import Syntax Extension",
+        QString(),
+        "JSON Files (*.json);;All Files (*)");
+    
+    if (!filePath.isEmpty()) {
+        SyntaxDefinition& def = SyntaxDefinition::instance();
+        def.addExtension(filePath);
+        refreshExtensionList();
+        emit colorsChanged();
+    }
+}
+
+void SettingsDialog::onCreateExtension() {
+    bool ok;
+    QString name = QInputDialog::getText(
+        this, "Create Extension",
+        "Extension Name:",
+        QLineEdit::Normal,
+        "My Extension",
+        &ok);
+    
+    if (ok && !name.isEmpty()) {
+        SyntaxDefinition& def = SyntaxDefinition::instance();
+        QString filePath = def.createNewExtension(name);
+        refreshExtensionList();
+        
+        // Offer to open the file for editing
+        QMessageBox::StandardButton reply = QMessageBox::question(
+            this, "Extension Created",
+            "Extension created successfully.\n\nWould you like to open it for editing?",
+            QMessageBox::Yes | QMessageBox::No);
+        
+        if (reply == QMessageBox::Yes) {
+            SyntaxDefinition::openExtensionInEditor(filePath);
+        }
+    }
+}
+
+void SettingsDialog::onEditDefaultJson() {
+    SyntaxDefinition& def = SyntaxDefinition::instance();
+    QString filePath = def.getDefaultFilePath();
+    SyntaxDefinition::openExtensionInEditor(filePath);
+}
+
+void SettingsDialog::onExtensionContextMenu(const QPoint& pos) {
+    QTreeWidgetItem* item = m_extensionTree->itemAt(pos);
+    if (!item) return;
+    
+    QString id = item->data(0, Qt::UserRole).toString();
+    bool isDefault = item->data(0, Qt::UserRole + 1).toBool();
+    bool isEdited = item->data(0, Qt::UserRole + 2).toBool();
+    
+    QMenu menu(this);
+    
+    QAction* editAction = menu.addAction("Edit JSON...");
+    connect(editAction, &QAction::triggered, this, [this, id]() {
+        SyntaxDefinition& def = SyntaxDefinition::instance();
+        QString filePath = def.getExtensionPath(id);
+        if (!filePath.isEmpty()) {
+            SyntaxDefinition::openExtensionInEditor(filePath);
+        }
+    });
+    
+    if (!isDefault && !isEdited) {
+        menu.addSeparator();
+        QAction* deleteAction = menu.addAction("Delete Extension");
+        connect(deleteAction, &QAction::triggered, this, &SettingsDialog::onExtensionDelete);
+    }
+    
+    menu.exec(m_extensionTree->viewport()->mapToGlobal(pos));
+}
+
+void SettingsDialog::onExtensionDelete() {
+    QTreeWidgetItem* item = m_extensionTree->currentItem();
+    if (!item) return;
+    
+    QString id = item->data(0, Qt::UserRole).toString();
+    bool isDefault = item->data(0, Qt::UserRole + 1).toBool();
+    bool isEdited = item->data(0, Qt::UserRole + 2).toBool();
+    
+    if (isDefault || isEdited) {
+        QMessageBox::warning(this, "Cannot Delete",
+            "Built-in extensions cannot be deleted.");
+        return;
+    }
+    
+    QMessageBox::StandardButton reply = QMessageBox::question(
+        this, "Delete Extension",
+        "Are you sure you want to delete this extension?\n\nThis will also delete the JSON file.",
+        QMessageBox::Yes | QMessageBox::No,
+        QMessageBox::No);
+    
+    if (reply == QMessageBox::Yes) {
+        SyntaxDefinition& def = SyntaxDefinition::instance();
+        def.removeExtension(id);
+        refreshExtensionList();
+        emit colorsChanged();
+    }
 }

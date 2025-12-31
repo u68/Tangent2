@@ -165,6 +165,17 @@ build CMakeFiles/TangentSDK.dir/src/editor/CompletionPopup.cpp.obj: CXX_COMPILER
   TARGET_PDB = TangentSDK.pdb
   TARGET_SUPPORT_DIR = CMakeFiles\TangentSDK.dir
 
+build CMakeFiles/TangentSDK.dir/src/editor/SyntaxDefinition.cpp.obj: CXX_COMPILER__TangentSDK_unscanned_ C$:/Users/harma/Desktop/GitHub/Tangent2/TangentSDK/src/editor/SyntaxDefinition.cpp || cmake_object_order_depends_target_TangentSDK
+  DEFINES = -DMINGW_HAS_SECURE_API=1 -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NO_DEBUG -DQT_WIDGETS_LIB -DUNICODE -DWIN32 -DWIN64 -DWINVER=0x0A00 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -D_UNICODE -D_WIN32_WINNT=0x0A00 -D_WIN64
+  DEP_FILE = CMakeFiles\TangentSDK.dir\src\editor\SyntaxDefinition.cpp.obj.d
+  FLAGS = -std=gnu++20
+  INCLUDES = -IC:/users/harma/desktop/github/tangent2/tangentsdk/build/TangentSDK_autogen/include -isystem C:/msys64/mingw64/include/qt6/QtWidgets -isystem C:/msys64/mingw64/include/qt6 -isystem C:/msys64/mingw64/include/qt6/QtCore -isystem C:/msys64/mingw64/share/qt6/mkspecs/win32-g++ -isystem C:/msys64/mingw64/include/qt6/QtGui
+  OBJECT_DIR = CMakeFiles\TangentSDK.dir
+  OBJECT_FILE_DIR = CMakeFiles\TangentSDK.dir\src\editor
+  TARGET_COMPILE_PDB = CMakeFiles\TangentSDK.dir\
+  TARGET_PDB = TangentSDK.pdb
+  TARGET_SUPPORT_DIR = CMakeFiles\TangentSDK.dir
+
 build CMakeFiles/TangentSDK.dir/src/app/DiscordRPCManager.cpp.obj: CXX_COMPILER__TangentSDK_unscanned_ C$:/Users/harma/Desktop/GitHub/Tangent2/TangentSDK/src/app/DiscordRPCManager.cpp || cmake_object_order_depends_target_TangentSDK
   DEFINES = -DMINGW_HAS_SECURE_API=1 -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NO_DEBUG -DQT_WIDGETS_LIB -DUNICODE -DWIN32 -DWIN64 -DWINVER=0x0A00 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -D_UNICODE -D_WIN32_WINNT=0x0A00 -D_WIN64
   DEP_FILE = CMakeFiles\TangentSDK.dir\src\app\DiscordRPCManager.cpp.obj.d
@@ -172,17 +183,6 @@ build CMakeFiles/TangentSDK.dir/src/app/DiscordRPCManager.cpp.obj: CXX_COMPILER_
   INCLUDES = -IC:/users/harma/desktop/github/tangent2/tangentsdk/build/TangentSDK_autogen/include -isystem C:/msys64/mingw64/include/qt6/QtWidgets -isystem C:/msys64/mingw64/include/qt6 -isystem C:/msys64/mingw64/include/qt6/QtCore -isystem C:/msys64/mingw64/share/qt6/mkspecs/win32-g++ -isystem C:/msys64/mingw64/include/qt6/QtGui
   OBJECT_DIR = CMakeFiles\TangentSDK.dir
   OBJECT_FILE_DIR = CMakeFiles\TangentSDK.dir\src\app
-  TARGET_COMPILE_PDB = CMakeFiles\TangentSDK.dir\
-  TARGET_PDB = TangentSDK.pdb
-  TARGET_SUPPORT_DIR = CMakeFiles\TangentSDK.dir
-
-build CMakeFiles/TangentSDK.dir/src/theme/SyntaxTheme.cpp.obj: CXX_COMPILER__TangentSDK_unscanned_ C$:/Users/harma/Desktop/GitHub/Tangent2/TangentSDK/src/theme/SyntaxTheme.cpp || cmake_object_order_depends_target_TangentSDK
-  DEFINES = -DMINGW_HAS_SECURE_API=1 -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NO_DEBUG -DQT_WIDGETS_LIB -DUNICODE -DWIN32 -DWIN64 -DWINVER=0x0A00 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -D_UNICODE -D_WIN32_WINNT=0x0A00 -D_WIN64
-  DEP_FILE = CMakeFiles\TangentSDK.dir\src\theme\SyntaxTheme.cpp.obj.d
-  FLAGS = -std=gnu++20
-  INCLUDES = -IC:/users/harma/desktop/github/tangent2/tangentsdk/build/TangentSDK_autogen/include -isystem C:/msys64/mingw64/include/qt6/QtWidgets -isystem C:/msys64/mingw64/include/qt6 -isystem C:/msys64/mingw64/include/qt6/QtCore -isystem C:/msys64/mingw64/share/qt6/mkspecs/win32-g++ -isystem C:/msys64/mingw64/include/qt6/QtGui
-  OBJECT_DIR = CMakeFiles\TangentSDK.dir
-  OBJECT_FILE_DIR = CMakeFiles\TangentSDK.dir\src\theme
   TARGET_COMPILE_PDB = CMakeFiles\TangentSDK.dir\
   TARGET_PDB = TangentSDK.pdb
   TARGET_SUPPORT_DIR = CMakeFiles\TangentSDK.dir
@@ -195,7 +195,7 @@ build CMakeFiles/TangentSDK.dir/src/theme/SyntaxTheme.cpp.obj: CXX_COMPILER__Tan
 #############################################
 # Link the executable TangentSDK.exe
 
-build TangentSDK.exe: CXX_EXECUTABLE_LINKER__TangentSDK_ CMakeFiles/TangentSDK.dir/TangentSDK_autogen/mocs_compilation.cpp.obj CMakeFiles/TangentSDK.dir/src/main.cpp.obj CMakeFiles/TangentSDK.dir/src/ui/MainWindow.cpp.obj CMakeFiles/TangentSDK.dir/src/ui/EditorWidget.cpp.obj CMakeFiles/TangentSDK.dir/src/ui/TabEditorWidget.cpp.obj CMakeFiles/TangentSDK.dir/src/ui/ConsoleWidget.cpp.obj CMakeFiles/TangentSDK.dir/src/ui/ProjectExplorer.cpp.obj CMakeFiles/TangentSDK.dir/src/ui/TitleBarWidget.cpp.obj CMakeFiles/TangentSDK.dir/src/ui/SettingsDialog.cpp.obj CMakeFiles/TangentSDK.dir/src/editor/SyntaxHighlighter.cpp.obj CMakeFiles/TangentSDK.dir/src/editor/CompletionPopup.cpp.obj CMakeFiles/TangentSDK.dir/src/app/DiscordRPCManager.cpp.obj CMakeFiles/TangentSDK.dir/src/theme/SyntaxTheme.cpp.obj | C$:/msys64/mingw64/lib/libQt6Widgets.dll.a C$:/Users/harma/Desktop/GitHub/Tangent2/TangentSDK/libdiscord-rpc.a C$:/msys64/mingw64/lib/libQt6Gui.dll.a C$:/msys64/mingw64/lib/libQt6Core.dll.a || TangentSDK_autogen TangentSDK_autogen_timestamp_deps
+build TangentSDK.exe: CXX_EXECUTABLE_LINKER__TangentSDK_ CMakeFiles/TangentSDK.dir/TangentSDK_autogen/mocs_compilation.cpp.obj CMakeFiles/TangentSDK.dir/src/main.cpp.obj CMakeFiles/TangentSDK.dir/src/ui/MainWindow.cpp.obj CMakeFiles/TangentSDK.dir/src/ui/EditorWidget.cpp.obj CMakeFiles/TangentSDK.dir/src/ui/TabEditorWidget.cpp.obj CMakeFiles/TangentSDK.dir/src/ui/ConsoleWidget.cpp.obj CMakeFiles/TangentSDK.dir/src/ui/ProjectExplorer.cpp.obj CMakeFiles/TangentSDK.dir/src/ui/TitleBarWidget.cpp.obj CMakeFiles/TangentSDK.dir/src/ui/SettingsDialog.cpp.obj CMakeFiles/TangentSDK.dir/src/editor/SyntaxHighlighter.cpp.obj CMakeFiles/TangentSDK.dir/src/editor/CompletionPopup.cpp.obj CMakeFiles/TangentSDK.dir/src/editor/SyntaxDefinition.cpp.obj CMakeFiles/TangentSDK.dir/src/app/DiscordRPCManager.cpp.obj | C$:/msys64/mingw64/lib/libQt6Widgets.dll.a C$:/Users/harma/Desktop/GitHub/Tangent2/TangentSDK/libdiscord-rpc.a C$:/msys64/mingw64/lib/libQt6Gui.dll.a C$:/msys64/mingw64/lib/libQt6Core.dll.a || TangentSDK_autogen TangentSDK_autogen_timestamp_deps
   LINK_LIBRARIES = C:/msys64/mingw64/lib/libQt6Widgets.dll.a  C:/Users/harma/Desktop/GitHub/Tangent2/TangentSDK/libdiscord-rpc.a  C:/msys64/mingw64/lib/libQt6Gui.dll.a  C:/msys64/mingw64/lib/libQt6Core.dll.a  -lmpr  -luserenv  -ld3d11  -ldxgi  -ldxguid  -ld3d12  -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32
   OBJECT_DIR = CMakeFiles\TangentSDK.dir
   POST_BUILD = cd .

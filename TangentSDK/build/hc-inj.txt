@@ -1,5 +1,0 @@
-# Custom Injection Template
-# Format: name = {
-#     address = "hex_data",
-#     address = "hex_data"
-# }

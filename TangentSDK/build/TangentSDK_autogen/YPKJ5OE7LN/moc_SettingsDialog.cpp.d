@@ -1,6 +1,6 @@
 C:/users/harma/desktop/github/tangent2/tangentsdk/build/TangentSDK_autogen/YPKJ5OE7LN/moc_SettingsDialog.cpp: C:/Users/harma/Desktop/GitHub/Tangent2/TangentSDK/src/ui/SettingsDialog.h \
   C:/users/harma/desktop/github/tangent2/tangentsdk/build/TangentSDK_autogen/moc_predefs.h \
-  C:/Users/harma/Desktop/GitHub/Tangent2/TangentSDK/src/theme/SyntaxTheme.h \
+  C:/Users/harma/Desktop/GitHub/Tangent2/TangentSDK/src/editor/SyntaxDefinition.h \
   C:/msys64/mingw64/include/_mingw.h \
   C:/msys64/mingw64/include/_mingw_mac.h \
   C:/msys64/mingw64/include/_mingw_off_t.h \
@@ -234,9 +234,13 @@ C:/users/harma/desktop/github/tangent2/tangentsdk/build/TangentSDK_autogen/YPKJ5
   C:/msys64/mingw64/include/pthread_signal.h \
   C:/msys64/mingw64/include/pthread_time.h \
   C:/msys64/mingw64/include/pthread_unistd.h \
+  C:/msys64/mingw64/include/qt6/QtCore/QJsonArray \
+  C:/msys64/mingw64/include/qt6/QtCore/QJsonDocument \
+  C:/msys64/mingw64/include/qt6/QtCore/QJsonObject \
   C:/msys64/mingw64/include/qt6/QtCore/QMap \
   C:/msys64/mingw64/include/qt6/QtCore/QSettings \
   C:/msys64/mingw64/include/qt6/QtCore/QString \
+  C:/msys64/mingw64/include/qt6/QtCore/QStringList \
   C:/msys64/mingw64/include/qt6/QtCore/q17memory.h \
   C:/msys64/mingw64/include/qt6/QtCore/q20functional.h \
   C:/msys64/mingw64/include/qt6/QtCore/q20iterator.h \
@@ -261,6 +265,9 @@ C:/users/harma/desktop/github/tangent2/tangentsdk/build/TangentSDK_autogen/YPKJ5
   C:/msys64/mingw64/include/qt6/QtCore/qbytearrayalgorithms.h \
   C:/msys64/mingw64/include/qt6/QtCore/qbytearraylist.h \
   C:/msys64/mingw64/include/qt6/QtCore/qbytearrayview.h \
+  C:/msys64/mingw64/include/qt6/QtCore/qcalendar.h \
+  C:/msys64/mingw64/include/qt6/QtCore/qcborcommon.h \
+  C:/msys64/mingw64/include/qt6/QtCore/qcborvalue.h \
   C:/msys64/mingw64/include/qt6/QtCore/qchar.h \
   C:/msys64/mingw64/include/qt6/QtCore/qcheckedint_impl.h \
   C:/msys64/mingw64/include/qt6/QtCore/qcompare.h \
@@ -275,6 +282,7 @@ C:/users/harma/desktop/github/tangent2/tangentsdk/build/TangentSDK_autogen/YPKJ5
   C:/msys64/mingw64/include/qt6/QtCore/qcontiguouscache.h \
   C:/msys64/mingw64/include/qt6/QtCore/qdarwinhelpers.h \
   C:/msys64/mingw64/include/qt6/QtCore/qdatastream.h \
+  C:/msys64/mingw64/include/qt6/QtCore/qdatetime.h \
   C:/msys64/mingw64/include/qt6/QtCore/qdebug.h \
   C:/msys64/mingw64/include/qt6/QtCore/qendian.h \
   C:/msys64/mingw64/include/qt6/QtCore/qexceptionhandling.h \
@@ -292,6 +300,11 @@ C:/users/harma/desktop/github/tangent2/tangentsdk/build/TangentSDK_autogen/YPKJ5
   C:/msys64/mingw64/include/qt6/QtCore/qitemselectionmodel.h \
   C:/msys64/mingw64/include/qt6/QtCore/qiterable.h \
   C:/msys64/mingw64/include/qt6/QtCore/qiterator.h \
+  C:/msys64/mingw64/include/qt6/QtCore/qjsonarray.h \
+  C:/msys64/mingw64/include/qt6/QtCore/qjsondocument.h \
+  C:/msys64/mingw64/include/qt6/QtCore/qjsonobject.h \
+  C:/msys64/mingw64/include/qt6/QtCore/qjsonparseerror.h \
+  C:/msys64/mingw64/include/qt6/QtCore/qjsonvalue.h \
   C:/msys64/mingw64/include/qt6/QtCore/qlatin1stringview.h \
   C:/msys64/mingw64/include/qt6/QtCore/qline.h \
   C:/msys64/mingw64/include/qt6/QtCore/qlist.h \
@@ -365,13 +378,13 @@ C:/users/harma/desktop/github/tangent2/tangentsdk/build/TangentSDK_autogen/YPKJ5
   C:/msys64/mingw64/include/qt6/QtCore/qtypes.h \
   C:/msys64/mingw64/include/qt6/QtCore/qurl.h \
   C:/msys64/mingw64/include/qt6/QtCore/qutf8stringview.h \
+  C:/msys64/mingw64/include/qt6/QtCore/quuid.h \
   C:/msys64/mingw64/include/qt6/QtCore/qvariant.h \
   C:/msys64/mingw64/include/qt6/QtCore/qvarlengtharray.h \
   C:/msys64/mingw64/include/qt6/QtCore/qversiontagging.h \
   C:/msys64/mingw64/include/qt6/QtCore/qxptype_traits.h \
   C:/msys64/mingw64/include/qt6/QtCore/qyieldcpu.h \
   C:/msys64/mingw64/include/qt6/QtGui/QColor \
-  C:/msys64/mingw64/include/qt6/QtGui/QFont \
   C:/msys64/mingw64/include/qt6/QtGui/qaction.h \
   C:/msys64/mingw64/include/qt6/QtGui/qbitmap.h \
   C:/msys64/mingw64/include/qt6/QtGui/qbrush.h \
@@ -410,7 +423,9 @@ C:/users/harma/desktop/github/tangent2/tangentsdk/build/TangentSDK_autogen/YPKJ5
   C:/msys64/mingw64/include/qt6/QtWidgets/QComboBox \
   C:/msys64/mingw64/include/qt6/QtWidgets/QDialog \
   C:/msys64/mingw64/include/qt6/QtWidgets/QGroupBox \
+  C:/msys64/mingw64/include/qt6/QtWidgets/QInputDialog \
   C:/msys64/mingw64/include/qt6/QtWidgets/QLineEdit \
+  C:/msys64/mingw64/include/qt6/QtWidgets/QListWidget \
   C:/msys64/mingw64/include/qt6/QtWidgets/QPushButton \
   C:/msys64/mingw64/include/qt6/QtWidgets/QRadioButton \
   C:/msys64/mingw64/include/qt6/QtWidgets/QSpinBox \
@@ -430,7 +445,10 @@ C:/users/harma/desktop/github/tangent2/tangentsdk/build/TangentSDK_autogen/YPKJ5
   C:/msys64/mingw64/include/qt6/QtWidgets/qdialog.h \
   C:/msys64/mingw64/include/qt6/QtWidgets/qframe.h \
   C:/msys64/mingw64/include/qt6/QtWidgets/qgroupbox.h \
+  C:/msys64/mingw64/include/qt6/QtWidgets/qinputdialog.h \
   C:/msys64/mingw64/include/qt6/QtWidgets/qlineedit.h \
+  C:/msys64/mingw64/include/qt6/QtWidgets/qlistview.h \
+  C:/msys64/mingw64/include/qt6/QtWidgets/qlistwidget.h \
   C:/msys64/mingw64/include/qt6/QtWidgets/qpushbutton.h \
   C:/msys64/mingw64/include/qt6/QtWidgets/qradiobutton.h \
   C:/msys64/mingw64/include/qt6/QtWidgets/qrubberband.h \

@@ -1,0 +1,178 @@
+{
+    "languages": {
+        "tasm": {
+            "name": "Tangent Assembly",
+            "extensions": ["tasm"],
+            "rules": {
+                "comment": {
+                    "displayName": "Comments",
+                    "color": "#6A9955",
+                    "bold": false,
+                    "pattern": ";.*$"
+                },
+                "directive": {
+                    "displayName": "Directives (@)",
+                    "color": "#C586C0",
+                    "bold": false,
+                    "pattern": "^\\s*(@[a-zA-Z_][a-zA-Z0-9_]*)"
+                },
+                "label": {
+                    "displayName": "Labels",
+                    "color": "#DCDCAA",
+                    "bold": false,
+                    "pattern": "\\b([a-zA-Z_][a-zA-Z0-9_]*):"
+                },
+                "keyword": {
+                    "displayName": "Keywords",
+                    "color": "#569CD6",
+                    "bold": false,
+                    "keywords": [
+                        "mov", "add", "sub", "mul", "div", "cmp", "and", "or", "xor", "not", "shl", "shr",
+                        "b", "bl", "beq", "bne", "blt", "bgt", "ble", "bge", "bles",
+                        "push", "pop", "call", "ret", "nop", "halt",
+                        "ldr", "str", "ldm", "stm", "swp",
+                        "adc", "sbc", "neg", "abs",
+                        "tst", "teq", "bic", "mvn"
+                    ]
+                },
+                "register": {
+                    "displayName": "Registers",
+                    "color": "#4EC9B0",
+                    "bold": false,
+                    "patterns": [
+                        "\\b(r(1[0-5]|[0-9]))\\b",
+                        "\\b(er(14|12|10|[02468]))\\b",
+                        "\\b(xr(12|[048]))\\b",
+                        "\\b(qr[08])\\b"
+                    ]
+                },
+                "address": {
+                    "displayName": "Addresses",
+                    "color": "#CE9178",
+                    "bold": false,
+                    "pattern": "#[a-zA-Z0-9_]+"
+                }
+            },
+            "completions": {
+                "keywords": [
+                    "mov", "add", "sub", "mul", "div", "cmp", "and", "or", "xor", "not", "shl", "shr",
+                    "b", "bl", "beq", "bne", "blt", "bgt", "ble", "bge", "bles",
+                    "push", "pop", "call", "ret", "nop", "halt",
+                    "ldr", "str", "ldm", "stm", "swp",
+                    "adc", "sbc", "neg", "abs",
+                    "tst", "teq", "bic", "mvn"
+                ],
+                "registers": [
+                    "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7",
+                    "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15",
+                    "er0", "er2", "er4", "er6", "er8", "er10", "er12", "er14",
+                    "xr0", "xr4", "xr8", "xr12",
+                    "qr0", "qr8"
+                ]
+            }
+        },
+        "tml": {
+            "name": "Tangent Markup Language",
+            "extensions": ["tml"],
+            "rules": {
+                "keyword": {
+                    "displayName": "Keywords",
+                    "color": "#569CD6",
+                    "bold": false,
+                    "keywords": [
+                        "root", "text", "button", "input", "label", "panel", "container",
+                        "image", "list", "grid", "scroll", "checkbox", "radio", "slider",
+                        "dropdown", "menu", "menuitem", "toolbar", "statusbar",
+                        "window", "dialog", "popup", "tooltip", "tab", "tabpanel"
+                    ]
+                },
+                "field": {
+                    "displayName": "Fields",
+                    "color": "#9CDCFE",
+                    "bold": false,
+                    "keywords": [
+                        "x", "y", "width", "height", "colour", "color", "background", "foreground",
+                        "font", "fontsize", "fontweight", "padding", "margin", "border",
+                        "visible", "enabled", "text", "value", "id", "name", "class", "style",
+                        "onclick", "onchange", "onhover", "onfocus", "onblur",
+                        "align", "valign", "wrap", "overflow", "opacity", "zindex"
+                    ]
+                },
+                "labelRef": {
+                    "displayName": "Label References",
+                    "color": "#DCDCAA",
+                    "bold": false,
+                    "dynamic": true
+                },
+                "bracket0": {
+                    "displayName": "Brackets (Level 1)",
+                    "color": "#FFD700",
+                    "bold": false
+                },
+                "bracket1": {
+                    "displayName": "Brackets (Level 2)",
+                    "color": "#DA70D6",
+                    "bold": false
+                },
+                "bracket2": {
+                    "displayName": "Brackets (Level 3)",
+                    "color": "#87CEEB",
+                    "bold": false
+                }
+            },
+            "completions": {
+                "keywords": [
+                    "root", "text", "button", "input", "label", "panel", "container",
+                    "image", "list", "grid", "scroll", "checkbox", "radio", "slider",
+                    "dropdown", "menu", "menuitem", "toolbar", "statusbar",
+                    "window", "dialog", "popup", "tooltip", "tab", "tabpanel"
+                ],
+                "fields": [
+                    "x", "y", "width", "height", "colour", "color", "background", "foreground",
+                    "font", "fontsize", "fontweight", "padding", "margin", "border",
+                    "visible", "enabled", "text", "value", "id", "name", "class", "style",
+                    "onclick", "onchange", "onhover", "onfocus", "onblur",
+                    "align", "valign", "wrap", "overflow", "opacity", "zindex"
+                ]
+            }
+        }
+    },
+    "common": {
+        "rules": {
+            "number": {
+                "displayName": "Numbers",
+                "color": "#B5CEA8",
+                "bold": false,
+                "pattern": "\\b(0x[0-9a-fA-F]+|[0-9]+\\.?[0-9]*)\\b"
+            },
+            "string": {
+                "displayName": "Strings",
+                "color": "#CE9178",
+                "bold": false,
+                "pattern": "(\"[^\"]*\"|'[^']*')"
+            }
+        }
+    },
+    "console": {
+        "error": {
+            "displayName": "Error Text",
+            "color": "#F44747",
+            "bold": false
+        },
+        "warning": {
+            "displayName": "Warning Text",
+            "color": "#CCA700",
+            "bold": false
+        },
+        "success": {
+            "displayName": "Success Text",
+            "color": "#4EC9B0",
+            "bold": false
+        },
+        "normal": {
+            "displayName": "Normal Text",
+            "color": "#D4D4D4",
+            "bold": false
+        }
+    }
+}
