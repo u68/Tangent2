@@ -130,12 +130,6 @@ void DiscordRPCManager::updatePresence(const QString& fileName, const QString& p
     presence.state = stateBytes.constData();
     presence.startTimestamp = m_startTime.toSecsSinceEpoch();
     
-    // Note: Image keys must be uploaded to Discord Developer Portal first
-    // Go to: https://discord.com/developers/applications/YOUR_APP_ID/rich-presence/assets
-    // Upload images with these exact names, or comment these lines out
-    // presence.largeImageKey = "tangentsdk_logo";
-    // presence.largeImageText = "TangentSDK";
-    
     Discord_UpdatePresence(&presence);
     
     qDebug() << "Discord presence updated - Details:" << details << "State:" << state;

@@ -18,11 +18,11 @@
 
 Tangent2 is a complete ground-up rewrite of the original Tangent OS experiment. The goal is to create a functional, usable operating system targeting calculator hardware, complete with a custom development toolkit.
 
-## ✦ Features
+## Features
 
 ### Tangent UI System (Tui)
 
-An element-based UI framework with a human-readable markup language that compiles directly to pixels.
+An element-based UI framework with a human-readable markup language.
 
 | Component | Status |
 |-----------|--------|
@@ -30,56 +30,64 @@ An element-based UI framework with a human-readable markup language that compile
 | Text | Complete |
 | Boxes | Complete |
 | Lines | Complete |
-| Checkboxes | Complete |
-| Radio buttons | Complete |
+| Checkboxes | Visual |
+| Radio buttons | Visual |
 | Multiple font sizes | Complete |
+| Input boxes | Not Implemented |
+| Interaction | Not Implemented |
+| Navigation  | Not Implemented |
 
-Tui operates as a standalone rendering system with hooks for external interaction, designed for seamless integration with Tangent2.
+Tui operates as a standalone rendering system with hooks for external interaction, designed for integration with Tangent2 and other projects alike.
 
 ### Operating System
 
 | Feature | Description |
 |---------|-------------|
 | **Desktop Environment** | Icons, taskbar, clock, backgrounds — fully customizable |
-| **Custom Filesystem** | Optimized for maximum storage capacity on limited hardware |
-| **Process Virtualization** | Unlimited concurrent processes via VM emulation |
+| **Custom Filesystem** | Optimized for maximum storage capacity |
+| **Process Virtualization** | Unlimited\* concurrent processes v |
 | **Native Applications** | Performance-critical apps written in C (video playback, file management) |
 
+\*Unlimited meaning that the only limitation is ram size (24kb in this case).
+Let's say for example a program only took up a handful of bytes, didn't require any of its own memory (only registers) theoretically, if stored in rom (and read from there too), you would only need the PC register if the only instruction was B, so you can create an infinite loop that takes up 2 bytes of physical ram, and with 24kb, you can run up to 12000 processes all at once!
 ---
 
-## ✦ Tangent SDK
+## Tangent SDK
 
-A purpose-built IDE for Tangent development featuring a dark-themed interface optimized for long coding sessions.
+An IDE dedicated for working with the build tools and what not.
 
 ### Supported Languages
 
 **TASM** (Tangent Assembly)
 ```asm
-lewp:
-    syscall get_element_field "smth" "x" r0
-    inc r0
-    syscall set_element_field "smth" "x" r0
-    syscall render_element "smth"
-    b lewp
+lewp:                                        ; define looop label
+    syscall get_element_field "smth" "x" r0  ; store the x position of the element "smth" into r0
+    inc r0                                   ; increment r0
+    syscall set_element_field "smth" "x" r0  ; store r0 into the x position field of the element with the id of "smth"
+    syscall render_element "smth"            ; render the element with the id of "smth"
+    b lewp                                   : loop to the start
 ```
 
 **TML** (Tangent Markup Language)
 ```
-root {
-    id: "tml_root"
-    text {
-        id: "smth"
-        x: 10
-        y: 20
-        colour: black
-        text: "Hello, World!" 
+root {                          ; start of all Tml
+    id: "tml_root"              ; give the root Tml an id (if you want to render everything for example)
+    text {                      ; define an text element with the id of "smth"
+        id: "smth"              ;
+        x: 10                   ; initialize the x position field with 10
+        y: 20                   ; initialize the y position field with 20
+        colour: black           ; set the colour/text colour to black
+        text: "Hello, World!"   ; set the text field to "Hello, World!"
     }
 }
 ```
 
+Explination:
+These two files work together to make a piece of text (Hello, World!) move horizontally right across the screen in an infinite loop.
+
 ---
 
-## ✦ SDK Features
+## SDK Features
 
 ### Editor
 
@@ -122,6 +130,9 @@ The SDK supports advanced chip configuration for the ML620909:
 - `Overclocked` — 3.9 MHz with 21 MHz boost
 - `Custom` — Enter your own 32-character hex configuration
 
+Note:
+If you were to select custom for these two options, make sure you know what you are doing, as it could *potentially* brick your device.
+
 ### Discord Rich Presence
 
 Show off your development work with Discord integration:
@@ -140,7 +151,7 @@ Show off your development work with Discord integration:
 
 ---
 
-## ✦ Settings
+## Settings
 
 Access settings via **File → Settings** or the toolbar. Settings are organized into tabs:
 
@@ -207,7 +218,7 @@ Configure hardware settings (see Run & Debug section above).
 
 ---
 
-## ✦ Syntax Extensions
+## Syntax Extensions
 
 The SDK uses a JSON-based syntax definition system that supports custom extensions. Extensions are loaded in priority order, with higher-priority extensions overriding lower ones.
 
@@ -277,15 +288,15 @@ The `edited.json` file is automatically created and always exists — you can ed
 ### Extension Priority
 
 Extensions are processed in order from top to bottom:
-1. **Default (Built-in)** — Base syntax definitions (lowest priority)
+1. **Custom Extensions** — Your imported/created extensions (highest priority)
 2. **Editor Settings (Your Settings)** — Colors customized via the Settings dialog
-3. **Custom Extensions** — Your imported/created extensions (highest priority)
+3. **Default (Built-in)** — Base syntax definitions (lowest priority)
 
-Items at the top of the list have the highest priority and override items below them. The settings dialog warns you if you try to move Editor Settings below Default, as this would cause your customizations to be overridden by the defaults.
+Items at the top of the list have the highest priority and override items below them.
 
 ---
 
-## ✦ Building
+## Building
 
 ### Prerequisites
 
@@ -301,10 +312,7 @@ cd TangentSDK
 ./build.sh
 ```
 
-The build script will:
-1. Compile the assembler, linker, and ML compiler
-2. Build the Qt-based IDE using CMake/Ninja
-3. Launch the SDK
+The build script will compil everything, and automatically launch the app when completed.
 
 > **Note:** The OS itself has some compiler-specific dependencies that make standalone builds tricky. The SDK includes prebuilt OS binaries and will eventually support building the OS directly inside the SDK, allowing you to modify it to your needs.
 
@@ -314,7 +322,7 @@ If the build doesn't work on your setup — fork it, fix it, and open a pull req
 
 ---
 
-## ✦ Keyboard Shortcuts
+## Keyboard Shortcuts
 
 | Shortcut | Action |
 |----------|--------|
@@ -325,7 +333,51 @@ If the build doesn't work on your setup — fork it, fix it, and open a pull req
 
 ---
 
-## ✦ License
+## What's Next?
+
+Right now, it isn't much, you will *probably* like it when it is done, so here is my current path:
+- Refactor Tui to be more compatable with many things, and look more readable/nicer
+- Finish OS to be able to test run stuff, (Kernel and FS)
+- Finish build tools so you guys can use it without having to manually create c arrays, this is what I have to work with for the time being, I'm sure it's not the *ideal* way of doing things, but it's purely for debugging/testing etc.:
+```c
+const byte test_element_const[] = {
+	'<',
+		TML_ROOT,
+		E_FIELD_ID, 0, 0,
+		E_FIELD_PARENT_ID, 0, 0,
+		E_FIELD_FIELD_SIZE, 2,
+		'<',
+			TML_BUTTON,
+			E_FIELD_ID, 0, 1,
+			E_FIELD_PARENT_ID, 0, 0,
+			E_FIELD_FIELD_SIZE, 27,
+			E_FIELD_X, 10,
+			E_FIELD_WIDTH, 80,
+			E_FIELD_HEIGHT, 20,
+			E_FIELD_Y, 10,
+			E_FIELD_FONT_SIZE, FONT_SIZE_8x12,
+			E_FIELD_TEXT_COLOUR, COLOUR_DARK_GREY,
+			E_FIELD_BORDER_THICKNESS, 1,
+			E_FIELD_BORDER_STYLE, LINE_STYLE_SOLID,
+			E_FIELD_TEXT_ALIGN, ALIGN_MIDDLE_CENTER,
+			E_FIELD_COLOUR, COLOUR_BLACK,
+			E_FIELD_TEXT,
+			'D','V','D',0,
+		'>',
+	'>'
+};
+```
+- Create a desktop for desktop stuff
+- Create bundled programs (text editor, debugger, file explorer, media viewer etc), a few of these built in apps such as the media viewer (specifically for video playing) will be written in c, and not actually run directly on the os, because if it were, it would be incredibly slow, (in the future I may support more accelerated stuff for media playing).
+- Make some videos about it showcasing the whole thing
+- Make Tangent3
+
+Also FYI, I don't care too much about the IDE, mainly the os itself and build tools, so I just got claude to do it for me because I'm a lazy humanoid creature.
+Sorry to dissapoint you all. 
+
+---
+
+## License
 
 This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
 
@@ -336,3 +388,4 @@ This project is licensed under the MIT License — see the [LICENSE](LICENSE) fi
 **[Report Bug](../../issues) · [Request Feature](../../issues)**
 
 </div>
+
