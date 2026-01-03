@@ -12,6 +12,18 @@
 
 *Because not everyone can say they built an OS from scratch for a calculator.*
 
+[Overview](#overview) | 
+[Features](#features) | 
+[Tangent SDK](#tangent-sdk) | 
+[SDK Features](#sdk-features) | 
+[Build Tools](#build-tools) | 
+[Settings](#settings) | 
+[Syntax Extensions](#syntax-extensions) | 
+[Building](#building) | 
+[Keyboard Shortcuts](#keyboard-shortcuts) | 
+[What's Next?](#whats-next) | 
+[License](#license)
+
 </div>
 
 ## Overview
@@ -108,6 +120,7 @@ These two files work together to make a piece of text (Hello, World!) move horiz
 - **One-Click Build** — Compile your project with a single click or keyboard shortcut
 - **Integrated Console** — View build output, errors, and warnings with color-coded messages
 - **Error Highlighting** — Console output highlights errors (red), warnings (yellow), and success messages (green)
+- **ROM Builder** — Combine multiple programs into a single ROM image with the Build ROM dialog
 
 ### Run & Debug
 
@@ -148,6 +161,225 @@ Show off your development work with Discord integration:
   - On IDE startup
   - When opening a new project
   - When opening a new file
+
+---
+
+## Build Tools
+
+The TangentSDK includes a suite of command-line build tools written in D. These tools handle the compilation pipeline from source code to final ROM images.
+
+### Build Pipeline Overview
+
+```
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│  .tasm      │     │   .tml      │     │    .to      │     │    .tp      │
+│  (assembly) │     │  (markup)   │     │  (object)   │     │  (program)  │
+└──────┬──────┘     └──────┬──────┘     └──────┬──────┘     └──────┬──────┘
+       │                   │                   │                   │
+       ▼                   ▼                   │                   │
+  ┌─────────┐         ┌─────────┐              │                   │
+  │ tas-t16 │         │tmlc-t16 │              │                   │
+  │assembler│         │compiler │              │                   │
+  └────┬────┘         └────┬────┘              │                   │
+       │                   │                   │                   │
+       └─────────┬─────────┘                   │                   │
+                 │                             │                   │
+                 ▼                             │                   │
+            ┌─────────┐                        │                   │
+            │ tl-t16  │◄───────────────────────┘                   │
+            │ linker  │                                            │
+            └────┬────┘                                            │
+                 │                                                 │
+                 ▼                                                 │
+            ┌─────────┐                                            │
+            │   .tp   │                                            │
+            │(program)│                                            │
+            └────┬────┘                                            │
+                 │                                                 │
+                 └──────────────────┬──────────────────────────────┘
+                                    │
+                                    ▼
+                              ┌───────────┐
+                              │combiner-  │
+                              │   t16     │
+                              └─────┬─────┘
+                                    │
+                          ┌─────────┴─────────┐
+                          ▼                   ▼
+                     ┌─────────┐         ┌─────────┐
+                     │ rom.bin │         │ rom.hex │
+                     └─────────┘         └─────────┘
+```
+
+### tas-t16 (Tangent Assembler)
+
+Assembles `.tasm` (Tangent Assembly) source files into `.to` (Tangent Object) files.
+
+**Usage:**
+```bash
+tas-t16 <file.tasm> [-o <output.to>] [-v]
+```
+
+**Options:**
+| Option | Description |
+|--------|-------------|
+| `-o <file>` | Specify output file (default: input name with `.to` extension) |
+| `-v` | Verbose output |
+
+**Example:**
+```bash
+tas-t16 main.tasm -o build/main.to
+```
+
+**Exit Codes:**
+| Code | Meaning |
+|------|---------|
+| 0 | Success |
+| 1 | File not found |
+| 2 | Invalid input |
+| 3 | Parse error |
+| 4 | Assembly error |
+| 5 | Output error |
+
+---
+
+### tmlc-t16 (TML Compiler)
+
+Compiles `.tml` (Tangent Markup Language) source files into `.to` (Tangent Object) files.
+
+**Usage:**
+```bash
+tmlc-t16 <file.tml> [-o <output.to>] [-v] [-w]
+```
+
+**Options:**
+| Option | Description |
+|--------|-------------|
+| `-o <file>` | Specify output file (default: input name with `.to` extension) |
+| `-v` | Verbose output |
+| `-w` | Suppress warnings |
+
+**Example:**
+```bash
+tmlc-t16 ui.tml -o build/ui.to -v
+```
+
+**Exit Codes:**
+| Code | Meaning |
+|------|---------|
+| 0 | Success |
+| 1 | File not found |
+| 2 | Invalid input |
+| 3 | Syntax error |
+| 4 | Semantic error |
+| 5 | Code generation error |
+| 6 | Output error |
+
+---
+
+### tl-t16 (Tangent Linker)
+
+Links multiple `.to` (Tangent Object) files into a single `.tp` (Tangent Program) file.
+
+**Usage:**
+```bash
+tl-t16 [options] <file1.to> [file2.to] ...
+```
+
+**Options:**
+| Option | Description |
+|--------|-------------|
+| `-o <file>` | Specify output file with full name and extension (e.g., `program.tp`) |
+| `-v` | Verbose output |
+
+**Example:**
+```bash
+tl-t16 build/main.to build/ui.to -o build/myproject.tp
+```
+
+**Exit Codes:**
+| Code | Meaning |
+|------|---------|
+| 0 | Success |
+| 1 | File not found |
+| 2 | Invalid input |
+| 3 | Symbol error (undefined/duplicate symbols) |
+| 4 | Link error |
+| 5 | Output error |
+
+---
+
+### combiner-t16 (ROM Combiner)
+
+Combines multiple `.tp` (Tangent Program) files into a final ROM binary, applying chip configuration (password and clock speed) and injecting programs at a specified memory address.
+
+**Usage:**
+```bash
+combiner-t16 [options] <file1.tp> [file2.tp] ...
+```
+
+**Options:**
+| Option | Description |
+|--------|-------------|
+| `-bh` | Generate both `.bin` and `.hex` output files |
+| `-o <name>` | Output file name (without extension) |
+| `-p <password>` | Chip password (64 hex characters = 32 bytes) |
+| `-c <clock>` | Clock speed setting (32 hex characters = 16 bytes) |
+| `-i <address>` | Inject address (5 hex digits, e.g., `06ACE`) |
+| `-v` | Verbose output |
+
+**Example:**
+```bash
+combiner-t16 project1.tp project2.tp -bh -o Tangent-V6.7-20260103 -p FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF -c EEFE6650CE7525F71FFF64587A121682 -i 06ACE
+```
+
+**Exit Codes:**
+| Code | Meaning |
+|------|---------|
+| 0 | Success |
+| 1 | File not found |
+| 2 | Invalid input |
+| 3 | Invalid address format |
+| 4 | Output error |
+
+### Common Password Values
+
+| Name | Hex Value (64 chars) |
+|------|---------------------|
+| FF (Default) | `FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF` |
+| 00 | `0000000000000000000000000000000000000000000000000000000000000000` |
+| Casio Default | `373143415347615971677973FFFFFFFF0723131119172923FFFFFFFFFFFFFFFF` |
+
+### Common Clock Speed Values
+
+| Name | Hex Value (32 chars) |
+|------|---------------------|
+| Default (2MHz) | `EEFE6650CE7525F71FFF64587A121682` |
+| Overclocked | `75021E0C440032373B2110007C000000` |
+
+---
+
+### Complete Build Example
+
+Here's a complete example of building a project from source to ROM:
+
+```bash
+# Step 1: Assemble .tasm files
+tas-t16 src/main.tasm -o build/main.to
+
+# Step 2: Compile .tml files  
+tmlc-t16 src/ui.tml -o build/ui.to
+
+# Step 3: Link object files into a program
+tl-t16 build/main.to build/ui.to -o build/myproject.tp
+
+# Step 4: Combine programs into ROM (with password and clock speed)
+combiner-t16 build/myproject.tp -bh -o build/rom -p FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF -c EEFE6650CE7525F71FFF64587A121682 -i 06ACE
+```
+
+This produces `build/rom.bin` and `build/rom.hex` ready for flashing.
+
+> **Note:** The TangentSDK IDE automates this entire process — just press F5 to build your project, or use Project → Build ROM to create a combined ROM from multiple projects.
 
 ---
 
