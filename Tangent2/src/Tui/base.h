@@ -10,15 +10,15 @@
  #define deref(x) (*((__near byte*)(x)))
  #define derefw(x) (*((__near word*)(x)))
 
- //#define __near
+ #define __near
 
  typedef unsigned short ushort;
 
  #define val(x) *((volatile __near byte *)x)
  #define valw(x) *((volatile __near word *)x)
 
-#define hw_deref(x)  (*((volatile __near byte*)(x)))
-#define hw_derefw(x) (*((volatile __near word*)(x)))
+ #define hw_deref(x)  (*((volatile __near byte*)(x)))
+ #define hw_derefw(x) (*((volatile __near word*)(x)))
  // STPACP
  // STPACP is a write-only special function register (SFR) that is used for setting a STOP mode.
  // When STPACP is read, “0x00” is read.

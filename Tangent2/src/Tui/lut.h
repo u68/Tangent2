@@ -10,7 +10,7 @@
 
 #include "base.h"
 
-extern const sbyte sin_table[360];
-extern const sbyte cos_table[360];
+extern const sbyte tui_sin_table[360];
+extern const sbyte tui_cos_table[360];
 
 #endif /* LUT_H_ */
