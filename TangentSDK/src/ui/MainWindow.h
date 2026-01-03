@@ -26,6 +26,7 @@ private slots:
     void onCreateFolder();
     void onNewProject();
     void onBuildProject();
+    void onBuildRom();
     void onOpenSettings();
     void onRunOnEmulator();
     void onLoadOntoPicoEase();
@@ -55,3 +56,4 @@ private:
     QString getPasswordHexString() const;
     QString getClockspeedHexString() const;
 };
+

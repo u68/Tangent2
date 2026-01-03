@@ -5,6 +5,7 @@
 #include "ProjectExplorer.h"
 #include "TitleBarWidget.h"
 #include "SettingsDialog.h"
+#include "RomBuilderDialog.h"
 #include "../app/DiscordRPCManager.h"
 
 #include <QDockWidget>
@@ -283,6 +284,10 @@ void MainWindow::setupMenus() {
     QAction* buildProjectAction = project->addAction("Build Project");
     buildProjectAction->setShortcut(QKeySequence("F5"));
     connect(buildProjectAction, &QAction::triggered, this, &MainWindow::onBuildProject);
+    
+    QAction* buildRomAction = project->addAction("Build ROM...");
+    buildRomAction->setShortcut(QKeySequence("F7"));
+    connect(buildRomAction, &QAction::triggered, this, &MainWindow::onBuildRom);
 
     // Run/Debug menu
     QMenu* runDebug = menuBar()->addMenu("Run/Debug");
@@ -536,16 +541,13 @@ void MainWindow::onBuildProject() {
             relativeToFiles << "build/" + QFileInfo(f).fileName();
         }
         
-        // Get password and clockspeed from settings
-        QString password = getPasswordHexString();
-        QString clockspeed = getClockspeedHexString();
+        // Output is now a .tp (Tangent Program) file
+        QString outputFile = projectName + ".tp";
         
         QStringList args = toFiles;
-        args << "-bh" << "-o" << "rom";
-        args << "-p" << password;
-        args << "-c" << clockspeed;
+        args << "-o" << outputFile;
         
-        console->appendOutput("$ tl-t16.exe " + relativeToFiles.join(" ") + " -bh -o rom -p " + password + " -c " + clockspeed + "\n");
+        console->appendOutput("$ tl-t16.exe " + relativeToFiles.join(" ") + " -o " + outputFile + "\n");
         
         QProcess process;
         process.setWorkingDirectory(buildPath);
@@ -565,7 +567,7 @@ void MainWindow::onBuildProject() {
             console->appendError("=== Build Failed ===\n");
             success = false;
         } else {
-            console->appendSuccess("  -> build/rom.bin\n\n");
+            console->appendSuccess("  -> build/" + outputFile + "\n\n");
         }
     }
     
@@ -575,6 +577,86 @@ void MainWindow::onBuildProject() {
     }
     
     // Refresh project explorer to show build folder
+    projectExplorer->refresh();
+}
+
+void MainWindow::onBuildRom() {
+    // Save all files first
+    tabEditor->saveAllFiles();
+    
+    // Open the ROM builder dialog
+    RomBuilderDialog dialog(m_workspacePath, this);
+    
+    if (dialog.exec() != QDialog::Accepted) {
+        return;
+    }
+    
+    // Get the selected programs and settings
+    QStringList selectedPrograms = dialog.getSelectedPrograms();
+    QString romPath = dialog.getSelectedRomPath();
+    QString injectAddress = dialog.getInjectAddress();
+    QString outputName = dialog.getOutputName();
+    
+    if (selectedPrograms.isEmpty()) {
+        QMessageBox::warning(this, "Build ROM Error", "No programs selected.");
+        return;
+    }
+    
+    // Get buildtools path
+    QString appDir = QCoreApplication::applicationDirPath();
+    QString buildToolsPath = appDir + "/../buildtools";
+    QString combinerExe = buildToolsPath + "/combiner-t16.exe";
+    
+    // Get password and clockspeed from settings
+    QString password = getPasswordHexString();
+    QString clockspeed = getClockspeedHexString();
+    
+    // Clear console and start build output
+    console->clear();
+    console->appendSuccess("=== Building ROM: " + outputName + " ===\n\n");
+    
+    // Build the combiner arguments
+    QStringList args = selectedPrograms;
+    args << "-bh";
+    args << "-o" << outputName;
+    args << "-p" << password;
+    args << "-c" << clockspeed;
+    args << "-i" << injectAddress;
+    
+    // Display command
+    QStringList displayArgs;
+    for (const QString& prog : selectedPrograms) {
+        displayArgs << QFileInfo(prog).fileName();
+    }
+    console->appendOutput("$ combiner-t16.exe " + displayArgs.join(" ") + 
+                         " -bh -o " + outputName + 
+                         " -p " + password + 
+                         " -c " + clockspeed + 
+                         " -i " + injectAddress + "\n");
+    
+    // Run the combiner
+    QProcess process;
+    process.start(combinerExe, args);
+    process.waitForFinished();
+    
+    QString output = process.readAllStandardOutput();
+    QString errors = process.readAllStandardError();
+    
+    if (!output.isEmpty()) console->appendOutput(output);
+    if (!errors.isEmpty()) {
+        console->appendError(errors);
+    }
+    
+    if (process.exitCode() != 0) {
+        console->appendError("  -> FAILED (exit code " + QString::number(process.exitCode()) + ")\n\n");
+        console->appendError("=== ROM Build Failed ===\n");
+    } else {
+        console->appendSuccess("  -> " + outputName + ".bin\n");
+        console->appendSuccess("  -> " + outputName + ".hex\n\n");
+        console->appendSuccess("=== ROM Build Successful ===\n");
+    }
+    
+    // Refresh project explorer
     projectExplorer->refresh();
 }
 

@@ -68,8 +68,8 @@ LinkResult validateAllInputFiles(string[] inputFiles) {
     return result;
 }
 
-// Link object files together
-LinkResult link(string[] inputFiles, string outputFile, bool hexOutput, bool binOutput, string password, string clockspeed) {
+// Link object files together into a Tangent Program (.tp) file
+LinkResult link(string[] inputFiles, string outputFile) {
     LinkResult result;
     result.errorCode = LinkError.SUCCESS;
     
@@ -80,14 +80,6 @@ LinkResult link(string[] inputFiles, string outputFile, bool hexOutput, bool bin
     }
     
     writeln("Linking ", inputFiles.length, " object file(s)...");
-    
-    // Display password and clockspeed if provided
-    if (password.length > 0) {
-        writeln("Using password: ", password);
-    }
-    if (clockspeed.length > 0) {
-        writeln("Using clockspeed: ", clockspeed);
-    }
     
     // Try to read all input files
     foreach (inputFile; inputFiles) {
@@ -107,40 +99,24 @@ LinkResult link(string[] inputFiles, string outputFile, bool hexOutput, bool bin
     // TODO: Implement actual linking logic here
     // - Symbol resolution
     // - Address relocation
-    // - Output generation
-    // - Apply password and clockspeed to ROM
+    // - Output generation to .tp (Tangent Program) file
     
-    if (hexOutput) {
-        writeln("Generating HEX output...");
-        // TODO: Generate .hex file
-    }
-    
-    if (binOutput) {
-        writeln("Generating BIN output...");
-        // TODO: Generate .bin file
-    }
+    writeln("Generating output: ", outputFile);
+    // TODO: Write output file
     
     writeln("Linking completed successfully.");
     return result;
 }
 
 void main(string[] args) {
-    bool flagH = false; // HEX output
-    bool flagB = false; // BIN output
     bool verbose = false;
     string outputFile;
-    string password;
-    string clockspeed;
     string[] inputFiles;
 
     if (args.length < 2) {
         writeln("Usage: tl-t16 [options] <file1.to> ...");
         writeln("Options:");
-        writeln("  -h             Enable HEX file output");
-        writeln("  -b             Enable BIN file output");
-        writeln("  -o <name>      Specify output file name");
-        writeln("  -p <password>  Chip password (64 hex chars = 32 bytes)");
-        writeln("  -c <clock>     Clockspeed setting (32 hex chars = 16 bytes)");
+        writeln("  -o <file>      Specify output file (full name with extension, e.g., program.tp)");
         writeln("  -v             Verbose output");
         exit(LinkError.INVALID_INPUT);
     }
@@ -148,44 +124,19 @@ void main(string[] args) {
     size_t i = 1;
     while (i < args.length) {
         string arg = args[i];
-        if (arg.startsWith("-")) {
-            foreach (idx, c; arg[1 .. $]) {
-                switch (c) {
-                    case 'h': flagH = true; break;
-                    case 'b': flagB = true; break;
-                    case 'v': verbose = true; break;
-                    case 'o':
-                        if (i + 1 < args.length) {
-                            outputFile = args[i + 1];
-                            i++;
-                        } else {
-                            writeln("Error: -o requires an output file");
-                            exit(LinkError.INVALID_INPUT);
-                        }
-                        break;
-                    case 'p':
-                        if (i + 1 < args.length) {
-                            password = args[i + 1];
-                            i++;
-                        } else {
-                            writeln("Error: -p requires a password hex string");
-                            exit(LinkError.INVALID_INPUT);
-                        }
-                        break;
-                    case 'c':
-                        if (i + 1 < args.length) {
-                            clockspeed = args[i + 1];
-                            i++;
-                        } else {
-                            writeln("Error: -c requires a clockspeed hex string");
-                            exit(LinkError.INVALID_INPUT);
-                        }
-                        break;
-                    default:
-                        writeln("Unknown flag: -", c);
-                        exit(LinkError.INVALID_INPUT);
-                }
+        if (arg == "-o") {
+            if (i + 1 < args.length) {
+                outputFile = args[i + 1];
+                i++;
+            } else {
+                writeln("Error: -o requires an output file");
+                exit(LinkError.INVALID_INPUT);
             }
+        } else if (arg == "-v") {
+            verbose = true;
+        } else if (arg.startsWith("-")) {
+            writeln("Unknown flag: ", arg);
+            exit(LinkError.INVALID_INPUT);
         } else {
             inputFiles ~= arg;
         }
@@ -198,25 +149,17 @@ void main(string[] args) {
     }
 
     if (outputFile.length == 0) {
-        outputFile = "out.bin"; // default output
+        outputFile = "out.tp"; // default output
     }
 
     writeln("Tangent Linker Framework");
     if (verbose) {
         writeln("Input files: ", inputFiles);
         writeln("Output file: ", outputFile);
-        writeln("HEX output: ", flagH);
-        writeln("BIN output: ", flagB);
-        if (password.length > 0) {
-            writeln("Password: ", password);
-        }
-        if (clockspeed.length > 0) {
-            writeln("Clockspeed: ", clockspeed);
-        }
     }
 
     // Perform the linking
-    LinkResult result = link(inputFiles, outputFile, flagH, flagB, password, clockspeed);
+    LinkResult result = link(inputFiles, outputFile);
     
     // Output any warnings
     foreach (warning; result.warnings) {
