@@ -556,12 +556,37 @@ If the build doesn't work on your setup — fork it, fix it, and open a pull req
 
 ## Keyboard Shortcuts
 
+### File Operations
+
 | Shortcut | Action |
 |----------|--------|
+| `Ctrl+N` | New file |
+| `Ctrl+Shift+N` | New folder |
+| `Ctrl+O` | Open file |
 | `Ctrl+S` | Save current file |
 | `Ctrl+Shift+S` | Save all files |
-| `Ctrl+B` | Build project |
+
+### Project
+
+| Shortcut | Action |
+|----------|--------|
+| `F5` | Build project |
+| `F7` | Build ROM |
+| `F6` | Run on emulator |
+
+### General
+
+| Shortcut | Action |
+|----------|--------|
 | `Ctrl+,` | Open settings |
+
+### Project Explorer
+
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl+C` | Copy file/folder |
+| `Ctrl+X` | Cut file/folder |
+| `Ctrl+V` | Paste file/folder |
 
 ---
 

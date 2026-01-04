@@ -7,7 +7,7 @@
 
 
 #include "lut.h"
-#include "base.h"
+#include "../base.h"
 
 const sbyte tui_sin_table[360] = {
        0,    2,    4,    7,    9,   11,   13,   15,   18,   20,   22,   24,   26,   29,   31,   33,

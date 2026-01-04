@@ -8,7 +8,7 @@
 #ifndef LUT_H_
 #define LUT_H_
 
-#include "base.h"
+#include "../base.h"
 
 extern const sbyte tui_sin_table[360];
 extern const sbyte tui_cos_table[360];

@@ -8,7 +8,7 @@
 #ifndef YSGLFONTS_H_
 #define YSGLFONTS_H_
 
-#include "base.h"
+#include "../base.h"
 
 extern const byte YsFont6x7[1792];
 extern const byte YsFont6x8[2048];

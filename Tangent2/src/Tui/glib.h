@@ -8,7 +8,7 @@
 #ifndef GLIB_H_
 #define GLIB_H_
 
-#include "base.h"
+#include "../base.h"
 #include "graphics.h"
 
 #define TML_ROOT_ELEMENT_ADDR *((volatile __near word *)0x9C02)

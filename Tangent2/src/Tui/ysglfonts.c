@@ -1,5 +1,5 @@
 #include "ysglfonts.h"
-#include "base.h"
+#include "../base.h"
 // Flattened + row-reversed font: YsFont6x7
 // Width=6, Height=7, PaddedBytes=1
 const byte YsFont6x7[1792] = {

@@ -8,7 +8,7 @@
 #ifndef GRAPHICS_H_
 #define GRAPHICS_H_
 
-#include "base.h"
+#include "../base.h"
 
 #define VRAM 0x9000
 #define Write2RealScreen *((volatile __near byte *)0x9C00)
