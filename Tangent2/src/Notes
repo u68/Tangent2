@@ -1,0 +1,3 @@
+A lot of this isn't finished yet, and I don't have a deadline...
+Instead of hard coding adresses, I will make and use a custom memory allocator which will come in handy for the VM.
+It is subject to change a lot, so don't try to develop too much with what is in here, because it might be absolutely useless.
