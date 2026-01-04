@@ -1,6 +1,6 @@
 /*
  * glib.c
- *
+ * Implementation of TML parsing and rendering
  *  Created on: Dec 2, 2025
  *      Author: harma
  */

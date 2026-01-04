@@ -1,6 +1,6 @@
 /*
  * lut.h
- *
+ * Interface for lookup tables for TUI
  *  Created on: Nov 11, 2025
  *      Author: harma
  */

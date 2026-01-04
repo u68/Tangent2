@@ -1,6 +1,6 @@
 /*
  * glib.h
- *
+ * Interface for TML parsing and rendering
  *  Created on: Dec 2, 2025
  *      Author: harma
  */

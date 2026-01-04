@@ -1,6 +1,6 @@
 /*
  * graphics.h
- *
+ * Interface for TUI graphics functions
  *  Created on: Nov 11, 2025
  *      Author: harma
  */
