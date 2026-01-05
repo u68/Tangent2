@@ -1,0 +1,1 @@
+I understand that many of you may think to immediately jump to using structs and unions etc for the elements, but I want to have an arbitrary amount of fields on an element, so it breaks that with the fixed size constraint of structs, and I understand that it is super messy, I will definitely clean it up, unless you want to do it for me :P

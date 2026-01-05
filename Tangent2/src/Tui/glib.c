@@ -7,7 +7,7 @@
 
 #include "glib.h"
 // Search for specific field in TML element
-const byte __tml_get_element_field(const byte* idxadr, byte field) {
+static const byte __tml_get_element_field(const byte* idxadr, byte field) {
 	byte i;
 	// Start from 6 to skip ID and PARENT fields  I
 	for (i = 6; i < (TML_MAX_E_FIELD << 1); i+= 2){
@@ -15,6 +15,7 @@ const byte __tml_get_element_field(const byte* idxadr, byte field) {
 			//derefw(0xA050) = (word)&idxadr[i + 1];
 			return idxadr[i + 1];
 		} else if (idxadr[i] == TML_E_FIELD_TEXT || idxadr[i] == 0x3C) {
+			// Break if it reached text (last field) or found another element (new max field field will not make this an issue)
 			break;
 		}
 	}
@@ -22,13 +23,14 @@ const byte __tml_get_element_field(const byte* idxadr, byte field) {
 }
 
 // Search for specific field in TML element but return address
-const byte* __tml_get_element_field_addr(const byte* idxadr, byte field) {
+static const byte* __tml_get_element_field_addr(const byte* idxadr, byte field) {
 	byte i;
 	// Start from 6 to skip ID and PARENT fields
 	for (i = 6; i < (TML_MAX_E_FIELD << 1); i+= 2){
 		if (idxadr[i] == field) {
 			return &idxadr[i + 1];
 		} else if (idxadr[i] == TML_E_FIELD_TEXT || idxadr[i] == 0x3C) {
+			// Break if it reached text (last field) or found another element (new max field field will not make this an issue)
 			break;
 		}
 	}
@@ -36,10 +38,11 @@ const byte* __tml_get_element_field_addr(const byte* idxadr, byte field) {
 }
 
 // Search for text field in TML element
-const char* __tml_get_element_text(const byte* idxadr, byte *not_found) {
+static const char* __tml_get_element_text(const byte* idxadr, byte *not_found) {
 	byte i;
 	// Start from 6 to skip ID and PARENT fields
 	for (i = 6; i < (TML_MAX_E_FIELD << 1); i+= 2){
+		// I will make this better without relying on having every field,and utilize the new max field field
 		if (idxadr[i] == TML_E_FIELD_TEXT) {
 			return (const char*)&idxadr[i+1];
 		}
@@ -49,13 +52,15 @@ const char* __tml_get_element_text(const byte* idxadr, byte *not_found) {
 }
 
 // Return root element
-const byte* __tml_get_root_element() {
+static const byte* __tml_get_root_element() {
 	//word parent_id = (idxadr[4] << 8) | idxadr[5];
 	return (const byte*)TML_ROOT_ELEMENT_ADDR;// + 2; // Skip '<' and element type;
+	// It is a bit of a hack right now
 }
 
 // Get offsets for element (Fowards search from root)
-void __tml_get_offsets(word id, byte* x, byte* y, word* rotation) {
+static void __tml_get_offsets(word id, byte* x, byte* y, word* rotation) {
+	// Initialize some stuff
 	const byte* root = (const byte*)TML_ROOT_ELEMENT_ADDR;
 	word i = 0;
 	word pos_history[10] = {0,0,0,0,0,0,0,0,0,0};
@@ -78,16 +83,19 @@ void __tml_get_offsets(word id, byte* x, byte* y, word* rotation) {
 				}
 			}
 			i+=8;
+			// Apply offsets (I will apply position offsets with the parent rotation added later)
 			toprotation += __tml_get_element_field(&root[i-6], TML_E_FIELD_ROTATION);
 			rtopx += __tml_get_element_field(&root[i-6], TML_E_FIELD_X);
 			rtopy += __tml_get_element_field(&root[i-6], TML_E_FIELD_Y);
 			//tui_rotate_point(topx, topy, );
+			// Update history of new positions for future children to use
 			pos_history[history_index] = ((word)topx << 8) | topy;
 			rotation_history[history_index] = toprotation;
 			history_index++;
 			i+=__tml_get_element_field(&root[i-6], TML_E_FIELD_FIELD_SIZE);
 			// If element is found, return offsets
 		} else if (root[i] == '>') {
+			// At the end of element, restore offsets
 			history_index--;
 			if (history_index == 0) {
 				return;
@@ -128,6 +136,7 @@ void tml_render_element(const byte* data) {
 			// 0 1    2  3 4 5      6 7 8
 			byte element_type = data[i+1];
 			i+=8;
+			// Offsets, and yes like before I will apply the rotation transform
 			topx += __tml_get_element_field(&data[i-6], TML_E_FIELD_X);
 			topy += __tml_get_element_field(&data[i-6], TML_E_FIELD_Y);
 			rotation += __tml_get_element_field(&data[i-6], TML_E_FIELD_ROTATION);
@@ -283,6 +292,7 @@ void tml_render_element(const byte* data) {
 	}
 }
 
+// Will not be needed when time.h is finished
 void delay2(ushort after_ticks)
 {
     if ((FCON & 2) != 0)
@@ -302,7 +312,7 @@ void delay2(ushort after_ticks)
 
 // Display a splash screen for a set duration
 void tml_splash(const byte* data, word duration) {
-	// NOTE: Make a dedicated splash screen function, draw image slow asf
+	// TODO: Make a dedicated splash screen function, draw image slow asf
 	byte old = Write2RealScreen;
 	Write2RealScreen = 1;
 	tui_draw_image(0, 1, 192, 63, data, 0, 0, 0, TUI_COLOUR_IMAGE);
@@ -328,10 +338,13 @@ const char* tml_get_element_text(const byte* tml_data, word id, byte *not_found)
 const byte* tml_get_element(const byte* tml_data, word id) {
 	word i;
 	word e_counter = 0;
+	// Filter through data and find elements
+	// It is a short hack, since the new max field field will make it so we can jump to the next/end of the element
 	for (i = 0; ; i++) {
 		if (tml_data[i] == '<') {
 			e_counter++;
 			//derefw(0xA050) = (word)&tml_data[i+3];
+			// Check the id field
 			if (tml_data[i + 3] == (byte)(id >> 8)) {
 				if (tml_data[i + 4] == (byte)(id & 0xff)) {
 					return &tml_data[i];
@@ -361,9 +374,9 @@ void tml_set_element_text(const byte* tml_data, word id, const char* text) {
 		return;
 	}
 	byte i = 0;
-	while (text[i] != 0 && ntext[i] != 0) {
+	while (text[i] && ntext[i]) {
 		ntext[i] = text[i];
 		i++;
-		i+=1;
+		//i+=1; I'm leaving this here because it is funny that it was here
 	}
 }

@@ -136,7 +136,7 @@ void tui_render_buffer() {
 }
 
 // An attempt to work around compiler optimization issues
-void __tui_clear_screen_real_buf_2() {
+static void __tui_clear_screen_real_buf_2() {
 	word i;
 	hw_deref(0xF037) = 4; // hw_deref using volatile to prevent optimization issues
 	for (i = 0; i < 0x800; i+=2) {
@@ -145,7 +145,7 @@ void __tui_clear_screen_real_buf_2() {
 	}
 }
 
-void __tui_clear_screen_real_buf_1() {
+static void __tui_clear_screen_real_buf_1() {
 	word i;
 	hw_deref(0xF037) = 0; // hw_deref using volatile to prevent optimization issues
 	for (i = 0; i < 0x800; i+=2) {
@@ -219,7 +219,7 @@ byte tui_get_pixel(byte x, byte y) {
 }
 
 // Internal function to set a pixel in real VRAM
-void __tui_set_pixel_real(byte x, byte y, byte colour) {
+static void __tui_set_pixel_real(byte x, byte y, byte colour) {
 	if (x > 191 || y > 63) {
 		return;
 	}
@@ -252,7 +252,7 @@ void __tui_set_pixel_real(byte x, byte y, byte colour) {
 }
 
 // Internal function to set a pixel in VRAM buffer
-void __tui_set_pixel(byte x, byte y, byte colour) {
+static void __tui_set_pixel(byte x, byte y, byte colour) {
 	if (x > 191 || y > 63) {
 		return;
 	} //else

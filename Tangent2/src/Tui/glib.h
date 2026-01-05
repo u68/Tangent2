@@ -69,12 +69,13 @@ enum tml_element_field {
 	TML_MAX_E_FIELD
 };
 
-const byte __tml_get_element_field(const byte* idxadr, byte field);
-const byte* __tml_get_element_field_addr(const byte* idxadr, byte field);
+// Internal stuff
+//const byte __tml_get_element_field(const byte* idxadr, byte field);
+//const byte* __tml_get_element_field_addr(const byte* idxadr, byte field);
 //const byte* __tml_get_element_image(const byte* idxadr, byte *not_found); Future me problem
-const char* __tml_get_element_text(const byte* idxadr, byte *not_found);
-const byte* __tml_get_root_element();
-void __tml_get_offsets(word id, byte* x, byte* y, word* rotation);
+//const char* __tml_get_element_text(const byte* idxadr, byte *not_found);
+//const byte* __tml_get_root_element();
+//void __tml_get_offsets(word id, byte* x, byte* y, word* rotation);
 void tml_parse(const byte* data);
 void tml_render_element(const byte* data);
 void tml_splash(const byte* data, word duration);
