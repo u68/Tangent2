@@ -1,0 +1,1 @@
+I know that there is a lot in here, and that I am trying to include nothing inside the actual OS source itself, the compiler already includes stuff for example the mul div accelerator, so until then, you will have to stick with this pile of unused stuff.
