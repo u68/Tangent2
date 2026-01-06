@@ -1,3 +1,17 @@
 A lot of this isn't finished yet, and I don't have a deadline...
 Instead of hard coding adresses, I will make and use a custom memory allocator which will come in handy for the VM.
 It is subject to change a lot, and Tui is still very much a WIP.
+
+Allocator:
+The memory allocator probably works a bit differently to what you might imagine,
+I have called the functions pretty similar to the C standard library names, except it is prefixed with 'h' for 'heap'.
+halloc -> malloc
+hfree -> free
+hrealloc -> realloc
+hcalloc -> calloc
+You are able to define a max heap size, and where the heap is located.
+halloc will first try to find a block that satisfies the requested memory size, if it can't, it will merge all the adjacent free blocks and try again, if it still can't it will return 0.
+hfree will just set the free flag of the block to 1
+hcalloc will run halloc, but fill everything with zeros
+hrealloc will set the block to free, run halloc, and copy over the data from the old block to the new one.
+(if hrealloc were to fail (halloc returns 0) then the memory is practically discarded, as if halloc were to return 0, the block could have potentially been merged, and it would be a hassle to restore it, so be careful running hrealloc)

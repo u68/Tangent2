@@ -115,24 +115,18 @@ void *hrealloc(void *ptr, word size) {
     if (!ptr) return halloc(size); // If null just allocate new block
     block_t *old = (block_t *)((byte *)ptr - sizeof(block_t)); // get block header
 
-    // Check size compared to original block size
-    if (old->size == size) return ptr; // Return if the same size
-    if (old->size > size + sizeof(block_t) + HEAP_BLOCK_ALIGN) {
-        hsplit(old, size); // split if block too large
-        return ptr; // return same pointer
-    }
-
-    // If requested size is larger than current
-    void *new_ptr = halloc(size);
+    old->free = 1; // mark old block as free for searching
+    word old_size = old->size; // get old size
+    word new_size = size; // new size
+    void *new_ptr = halloc(size); // try to allocate new block (halloc will merge if needed)
     if (!new_ptr) return 0; // allocation failed
 
     // Copy old data
     byte *src = (byte *)ptr;
     byte *dst = (byte *)new_ptr;
-    for (word i = 0; i < old->size; i++) dst[i] = src[i];
+    if (src == dst) return new_ptr; // same pointer, nothing to do
 
-    // Free old block
-    hfree(ptr);
+    for (word i = 0; i < ((old_size < new_size) ? old_size : new_size); i++) dst[i] = src[i]; // copy data depending on which is smaller
 
     return new_ptr;
 }
