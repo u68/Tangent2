@@ -195,3 +195,36 @@ _$L02E:
 _entry:
 	b _main
 	;start your program here
+
+public _test_regs
+_test_regs:
+	st r0, 09100H
+	st r1, 09101H
+    st r2, 09102H
+    st r3, 09103H
+    st r4, 09104H
+    st r5, 09105H
+    st r6, 09106H
+    st r7, 09107H
+    st r8, 09108H
+    st r9, 09109H
+    st r10, 0910AH
+    st r11, 0910BH
+    st r12, 0910CH
+    st r13, 0910DH
+    st r14, 0910EH
+    st r15, 0910FH
+    mov r0, ecsr
+    st r0, 09110H
+    mov r0, epsw
+    st r0, 09111H
+    mov r0, psw
+    st r0, 09112H
+    mov er0, elr
+    st er0, 09114H
+    push lr		   ; Push CSR:PC to the stack
+	pop er0
+    st er0, 09116H ; 0x9116<-er0<-pc (not really important)
+	pop r0
+	st er0, 09118H ; 0x9118<-r0<-csr (not really important)
+    rt
