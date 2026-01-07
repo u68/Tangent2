@@ -1,382 +1,712 @@
 /*
  * glib.c
- * Implementation of TML parsing and rendering
+ * Tangent Markup Language (TML) Engine Implementation
+ * Cool UI library for "embedded" systems
  *  Created on: Dec 2, 2025
  *      Author: harma
  */
 
 #include "glib.h"
-// Search for specific field in TML element
-static const byte __tml_get_element_field(const byte* idxadr, byte field) {
-	byte i;
-	// Start from 6 to skip ID and PARENT fields  I
-	for (i = 6; i < (TML_MAX_E_FIELD << 1); i+= 2){
-		if (idxadr[i] == field) {
-			//derefw(0xA050) = (word)&idxadr[i + 1];
-			return idxadr[i + 1];
-		} else if (idxadr[i] == TML_E_FIELD_TEXT || idxadr[i] == 0x3C) {
-			// Break if it reached text (last field) or found another element (new max field field will not make this an issue)
+
+// Internal stuff
+static void render_text(TmlElement* elem, byte world_x, byte world_y, word world_rot);
+static void render_button(TmlElement* elem, byte world_x, byte world_y, word world_rot);
+static void render_div(TmlElement* elem, byte world_x, byte world_y, word world_rot);
+static void render_line(TmlElement* elem, byte world_x, byte world_y, word world_rot);
+static void render_checkbox(TmlElement* elem, byte world_x, byte world_y, word world_rot);
+static void render_radio(TmlElement* elem, byte world_x, byte world_y, word world_rot);
+
+// Transform helper
+static void apply_transform(byte parent_wx, byte parent_wy, word parent_rot,
+                            byte local_x, byte local_y,
+                            byte* out_wx, byte* out_wy) {
+	byte rx, ry;
+	
+	if (parent_rot == 0) {
+		// No rotation - simple offset
+		*out_wx = parent_wx + local_x;
+		*out_wy = parent_wy + local_y;
+	} else {
+		// Rotate local position around parent origin, then add parent position
+		tui_rotate_point(0, 0, local_x, local_y, parent_rot, &rx, &ry);
+		*out_wx = parent_wx + rx;
+		*out_wy = parent_wy + ry;
+	}
+}
+
+// Main render function - traverses tree and renders elements
+void tml_render(TmlElement* root) {
+	if (!root) return;
+	
+	// Stack for traversal state
+	TmlElement* elem_stack[TML_MAX_DEPTH];
+	TmlTransform transform_stack[TML_MAX_DEPTH];
+	byte stack_ptr = 0;
+	
+	// Start with root
+	TmlElement* current = root;
+	TmlTransform current_transform = {0, 0, 0};
+	
+	while (current || stack_ptr > 0) {
+		// Go as deep as possible through first children
+		while (current) {
+			// Calculate this element's world transform
+			byte world_x, world_y;
+			word world_rot;
+			
+			if (stack_ptr > 0) {
+				// Apply parent's transform to get our world position
+				TmlTransform* parent_t = &transform_stack[stack_ptr - 1];
+				apply_transform(parent_t->x, parent_t->y, parent_t->rotation,
+				                current->x, current->y,
+				                &world_x, &world_y);
+				world_rot = (parent_t->rotation + current->rotation) % 360;
+			} else {
+				// Root element - local = world
+				world_x = current->x;
+				world_y = current->y;
+				world_rot = current->rotation;
+			}
+			
+			// Render this element (skip ROOT type)
+			if (current->type != TML_TYPE_ROOT) {
+				switch (current->type) {
+				case TML_TYPE_TEXT:
+					render_text(current, world_x, world_y, world_rot);
+					break;
+				case TML_TYPE_BUTTON:
+					render_button(current, world_x, world_y, world_rot);
+					break;
+				case TML_TYPE_DIV:
+					render_div(current, world_x, world_y, world_rot);
+					break;
+				case TML_TYPE_LINE:
+					render_line(current, world_x, world_y, world_rot);
+					break;
+				case TML_TYPE_CHECKBOX:
+					render_checkbox(current, world_x, world_y, world_rot);
+					break;
+				case TML_TYPE_RADIO:
+					render_radio(current, world_x, world_y, world_rot);
+					break;
+				}
+			}
+			
+			// If has children, push current state and descend
+			if (current->first_child) {
+				// Push current element and its world transform
+				elem_stack[stack_ptr] = current;
+				transform_stack[stack_ptr].x = world_x;
+				transform_stack[stack_ptr].y = world_y;
+				transform_stack[stack_ptr].rotation = world_rot;
+				stack_ptr++;
+				
+				current = current->first_child;
+			} else {
+				// No children - try sibling
+				if (current->next_sibling) {
+					current = current->next_sibling;
+				} else {
+					// No sibling - need to backtrack
+					current = 0;
+				}
+			}
+		}
+		
+		// Backtrack: pop stack and try sibling of popped element
+		while (stack_ptr > 0 && !current) {
+			stack_ptr--;
+			TmlElement* parent = elem_stack[stack_ptr];
+			
+			if (parent->next_sibling) {
+				current = parent->next_sibling;
+			}
+		}
+	}
+}
+
+// Element renderers
+static void render_text(TmlElement* elem, byte world_x, byte world_y, word world_rot) {
+	if (!elem->data.text.text) return;
+	
+	tui_draw_text(world_x, world_y, 
+	          elem->data.text.text, 
+	          elem->data.text.font_size,
+	          elem->anchor_x, elem->anchor_y,
+	          world_rot, elem->colour);
+}
+
+static void render_button(TmlElement* elem, byte world_x, byte world_y, word world_rot) {
+	TmlButtonData* btn = &elem->data.button;
+	
+	// Draw border rectangle
+	tui_draw_rectangle(world_x, world_y,
+	               btn->width, btn->height,
+	               elem->anchor_x, elem->anchor_y,
+	               world_rot, elem->colour,
+	               btn->border_thickness, btn->border_style);
+	
+	// Draw text if present
+	if (btn->text) {
+		byte text_w, text_h;
+		byte text_x = world_x;
+		byte text_y = world_y;
+		
+		tui_get_text_size(btn->font_size, btn->text, &text_w, &text_h);
+		
+		// Calculate text position based on alignment
+		switch (btn->text_align) {
+		case TML_ALIGN_CENTER_LEFT:
+			text_y += (btn->height >> 1) - (text_h >> 1);
+			break;
+		case TML_ALIGN_BOTTOM_LEFT:
+			text_y += btn->height - text_h;
+			break;
+		case TML_ALIGN_TOP_RIGHT:
+		case TML_ALIGN_CENTER_RIGHT:
+			text_x += btn->width - text_w;
+			text_y += (btn->height >> 1) - (text_h >> 1);
+			break;
+		case TML_ALIGN_BOTTOM_RIGHT:
+			text_x += btn->width - text_w;
+			text_y += btn->height - text_h;
+			break;
+		case TML_ALIGN_TOP_CENTER:
+			text_x += (btn->width >> 1) - (text_w >> 1);
+			break;
+		case TML_ALIGN_BOTTOM_CENTER:
+			text_x += (btn->width >> 1) - (text_w >> 1);
+			text_y += btn->height - text_h;
+			break;
+		case TML_ALIGN_MIDDLE_CENTER:
+			text_x += (btn->width >> 1) - (text_w >> 1);
+			text_y += (btn->height >> 1) - (text_h >> 1);
 			break;
 		}
+		
+		// Apply rotation to text position
+		byte rot_x, rot_y;
+		tui_rotate_point(world_x, world_y, 
+		             text_x - elem->anchor_x + 2, 
+		             text_y - elem->anchor_y + 2, 
+		             world_rot, &rot_x, &rot_y);
+		
+		tui_draw_text(rot_x, rot_y, btn->text, btn->font_size,
+		          elem->anchor_x, elem->anchor_y, world_rot, elem->colour);
 	}
+}
+
+static void render_div(TmlElement* elem, byte world_x, byte world_y, word world_rot) {
+	TmlDivData* div = &elem->data.div;
+	
+	tui_draw_rectangle(world_x, world_y,
+	               div->width, div->height,
+	               elem->anchor_x, elem->anchor_y,
+	               world_rot, elem->colour,
+	               div->border_thickness, div->border_style);
+}
+
+static void render_line(TmlElement* elem, byte world_x, byte world_y, word world_rot) {
+	TmlLineData* line = &elem->data.line;
+	
+	byte x0 = world_x - elem->anchor_x;
+	byte y0 = world_y - elem->anchor_y;
+	byte x1 = world_x + line->x1 - elem->anchor_x;
+	byte y1 = world_y + line->y1 - elem->anchor_y;
+	
+	// Apply rotation if needed
+	if (world_rot != 0) {
+		byte rx0, ry0, rx1, ry1;
+		tui_rotate_point(world_x, world_y, x0, y0, world_rot, &rx0, &ry0);
+		tui_rotate_point(world_x, world_y, x1, y1, world_rot, &rx1, &ry1);
+		x0 = rx0; y0 = ry0;
+		x1 = rx1; y1 = ry1;
+	}
+	
+	tui_draw_line(x0, y0, x1, y1, elem->colour, line->thickness, line->style);
+}
+
+static void render_checkbox(TmlElement* elem, byte world_x, byte world_y, word world_rot) {
+	TmlCheckboxData* cb = &elem->data.checkbox;
+	
+	// Draw square border
+	tui_draw_rectangle(world_x, world_y,
+	               cb->size, cb->size,
+	               elem->anchor_x, elem->anchor_y,
+	               world_rot, elem->colour,
+	               cb->border_thickness, cb->border_style);
+	
+	// Draw checkmark if checked
+	if (cb->checked) {
+		byte inner = cb->size - (cb->border_thickness << 1) - 2;
+		byte ix = world_x + cb->border_thickness + 1;
+		byte iy = world_y + cb->border_thickness + 1;
+		
+		// Simple X mark
+		tui_draw_line(ix, iy, ix + inner, iy + inner, elem->colour, 1, TUI_LINE_STYLE_SOLID);
+		tui_draw_line(ix + inner, iy, ix, iy + inner, elem->colour, 1, TUI_LINE_STYLE_SOLID);
+	}
+}
+
+static void render_radio(TmlElement* elem, byte world_x, byte world_y, word world_rot) {
+	TmlRadioData* radio = &elem->data.radio;
+	byte radius = radio->size >> 1;
+	
+	tui_draw_circle(world_x, world_y, radius,
+	            elem->anchor_x, elem->anchor_y,
+	            radio->border_thickness, elem->colour);
+	
+	// Draw filled inner circle if selected
+	if (radio->selected) {
+		byte inner_r = radius - radio->border_thickness - 1;
+		if (inner_r > 0) {
+			tui_draw_circle(world_x, world_y, inner_r,
+			            elem->anchor_x, elem->anchor_y,
+			            inner_r, elem->colour);
+		}
+	}
+}
+
+// Initializers (not super required)
+void tml_init_root(TmlElement* e) {
+	e->type = TML_TYPE_ROOT;
+	e->id = 0;
+	e->x = 0;
+	e->y = 0;
+	e->rotation = 0;
+	e->anchor_x = 0;
+	e->anchor_y = 0;
+	e->colour = TUI_COLOUR_BLACK;
+	e->parent = 0;
+	e->first_child = 0;
+	e->next_sibling = 0;
+}
+
+void tml_init_text(TmlElement* e, word id, byte x, byte y, const char* text, byte font_size, byte colour) {
+	e->type = TML_TYPE_TEXT;
+	e->id = id;
+	e->x = x;
+	e->y = y;
+	e->rotation = 0;
+	e->anchor_x = 0;
+	e->anchor_y = 0;
+	e->colour = colour;
+	e->parent = 0;
+	e->first_child = 0;
+	e->next_sibling = 0;
+	e->data.text.text = text;
+	e->data.text.font_size = font_size;
+}
+
+void tml_init_button(TmlElement* e, word id, byte x, byte y, byte w, byte h, const char* text, byte font_size, byte colour) {
+	e->type = TML_TYPE_BUTTON;
+	e->id = id;
+	e->x = x;
+	e->y = y;
+	e->rotation = 0;
+	e->anchor_x = 0;
+	e->anchor_y = 0;
+	e->colour = colour;
+	e->parent = 0;
+	e->first_child = 0;
+	e->next_sibling = 0;
+	e->data.button.text = text;
+	e->data.button.font_size = font_size;
+	e->data.button.width = w;
+	e->data.button.height = h;
+	e->data.button.border_thickness = 1;
+	e->data.button.border_style = TUI_LINE_STYLE_SOLID;
+	e->data.button.text_align = TML_ALIGN_MIDDLE_CENTER;
+}
+
+void tml_init_div(TmlElement* e, word id, byte x, byte y, byte w, byte h, byte colour, byte thickness, byte style) {
+	e->type = TML_TYPE_DIV;
+	e->id = id;
+	e->x = x;
+	e->y = y;
+	e->rotation = 0;
+	e->anchor_x = 0;
+	e->anchor_y = 0;
+	e->colour = colour;
+	e->parent = 0;
+	e->first_child = 0;
+	e->next_sibling = 0;
+	e->data.div.width = w;
+	e->data.div.height = h;
+	e->data.div.border_thickness = thickness;
+	e->data.div.border_style = style;
+	e->data.div.child_align = TML_ALIGN_TOP_LEFT;
+}
+
+void tml_init_line(TmlElement* e, word id, byte x, byte y, byte x1, byte y1, byte colour, byte thickness, byte style) {
+	e->type = TML_TYPE_LINE;
+	e->id = id;
+	e->x = x;
+	e->y = y;
+	e->rotation = 0;
+	e->anchor_x = 0;
+	e->anchor_y = 0;
+	e->colour = colour;
+	e->parent = 0;
+	e->first_child = 0;
+	e->next_sibling = 0;
+	e->data.line.x1 = x1;
+	e->data.line.y1 = y1;
+	e->data.line.thickness = thickness;
+	e->data.line.style = style;
+}
+
+void tml_init_checkbox(TmlElement* e, word id, byte x, byte y, byte size, byte colour, byte checked) {
+	e->type = TML_TYPE_CHECKBOX;
+	e->id = id;
+	e->x = x;
+	e->y = y;
+	e->rotation = 0;
+	e->anchor_x = 0;
+	e->anchor_y = 0;
+	e->colour = colour;
+	e->parent = 0;
+	e->first_child = 0;
+	e->next_sibling = 0;
+	e->data.checkbox.size = size;
+	e->data.checkbox.border_thickness = 1;
+	e->data.checkbox.border_style = TUI_LINE_STYLE_SOLID;
+	e->data.checkbox.checked = checked;
+}
+
+void tml_init_radio(TmlElement* e, word id, byte x, byte y, byte size, byte colour, byte selected) {
+	e->type = TML_TYPE_RADIO;
+	e->id = id;
+	e->x = x;
+	e->y = y;
+	e->rotation = 0;
+	e->anchor_x = 0;
+	e->anchor_y = 0;
+	e->colour = colour;
+	e->parent = 0;
+	e->first_child = 0;
+	e->next_sibling = 0;
+	e->data.radio.size = size;
+	e->data.radio.border_thickness = 1;
+	e->data.radio.selected = selected;
+}
+
+// Tree manipulation
+void tml_add_child(TmlElement* parent, TmlElement* child) {
+	if (!parent || !child) return;
+	
+	child->parent = parent;
+	child->next_sibling = 0;
+	
+	if (!parent->first_child) {
+		// First child
+		parent->first_child = child;
+	} else {
+		// Find last sibling and append
+		TmlElement* sibling = parent->first_child;
+		while (sibling->next_sibling) {
+			sibling = sibling->next_sibling;
+		}
+		sibling->next_sibling = child;
+	}
+}
+
+// Add sibling after given element
+void tml_add_sibling(TmlElement* elem, TmlElement* sibling) {
+	if (!elem || !sibling) return;
+	
+	sibling->parent = elem->parent;
+	sibling->next_sibling = elem->next_sibling;
+	elem->next_sibling = sibling;
+}
+
+// Find element by ID using iterative traversal
+TmlElement* tml_find_by_id(TmlElement* root, word id) {
+	if (!root) return 0;
+	
+	TmlElement* stack[TML_MAX_DEPTH];
+	byte sp = 0;
+	
+	stack[sp++] = root;
+	
+	while (sp > 0) {
+		TmlElement* current = stack[--sp];
+		
+		if (current->id == id) return current;
+		
+		// Push siblings first (so children are processed first)
+		if (current->next_sibling) {
+			stack[sp++] = current->next_sibling;
+		}
+		if (current->first_child) {
+			stack[sp++] = current->first_child;
+		}
+	}
+	
 	return 0;
 }
 
-// Search for specific field in TML element but return address
-static const byte* __tml_get_element_field_addr(const byte* idxadr, byte field) {
-	byte i;
-	// Start from 6 to skip ID and PARENT fields
-	for (i = 6; i < (TML_MAX_E_FIELD << 1); i+= 2){
-		if (idxadr[i] == field) {
-			return &idxadr[i + 1];
-		} else if (idxadr[i] == TML_E_FIELD_TEXT || idxadr[i] == 0x3C) {
-			// Break if it reached text (last field) or found another element (new max field field will not make this an issue)
-			break;
-		}
-	}
-	return 0;
-}
-
-// Search for text field in TML element
-static const char* __tml_get_element_text(const byte* idxadr, byte *not_found) {
-	byte i;
-	// Start from 6 to skip ID and PARENT fields
-	for (i = 6; i < (TML_MAX_E_FIELD << 1); i+= 2){
-		// I will make this better without relying on having every field,and utilize the new max field field
-		if (idxadr[i] == TML_E_FIELD_TEXT) {
-			return (const char*)&idxadr[i+1];
-		}
-	}
-	*not_found = 1;
-	return 0;
-}
-
-// Return root element
-static const byte* __tml_get_root_element() {
-	//word parent_id = (idxadr[4] << 8) | idxadr[5];
-	return (const byte*)TML_ROOT_ELEMENT_ADDR;// + 2; // Skip '<' and element type;
-	// It is a bit of a hack right now
-}
-
-// Get offsets for element (Fowards search from root)
-static void __tml_get_offsets(word id, byte* x, byte* y, word* rotation) {
-	// Initialize some stuff
-	const byte* root = (const byte*)TML_ROOT_ELEMENT_ADDR;
-	word i = 0;
-	word pos_history[10] = {0,0,0,0,0,0,0,0,0,0};
-	word rotation_history[10] = {0,0,0,0,0,0,0,0,0,0};
-	pos_history[0] = 0x0000;
-	// Store current offset position
-	word toprotation = 0;
-	byte topx = 0, topy = 0;
-	byte history_index = 0;
-	byte rtopx = 0, rtopy = 0;
-	for (i = 0; ;) {
-		if (root[i] == '<') {
-			// Adjust offset position
-			if (root[i+3] == (byte)(id >> 8)) {
-				if (root[i+4] == (byte)(id & 0xff)) {
-					*x = topx;
-					*y = topy;
-					*rotation = toprotation;
-					return;
-				}
-			}
-			i+=8;
-			// Apply offsets (I will apply position offsets with the parent rotation added later)
-			toprotation += __tml_get_element_field(&root[i-6], TML_E_FIELD_ROTATION);
-			rtopx += __tml_get_element_field(&root[i-6], TML_E_FIELD_X);
-			rtopy += __tml_get_element_field(&root[i-6], TML_E_FIELD_Y);
-			//tui_rotate_point(topx, topy, );
-			// Update history of new positions for future children to use
-			pos_history[history_index] = ((word)topx << 8) | topy;
-			rotation_history[history_index] = toprotation;
-			history_index++;
-			i+=__tml_get_element_field(&root[i-6], TML_E_FIELD_FIELD_SIZE);
-			// If element is found, return offsets
-		} else if (root[i] == '>') {
-			// At the end of element, restore offsets
-			history_index--;
-			if (history_index == 0) {
-				return;
-			}
-			topx = (pos_history[history_index] >> 8) & 0xff;
-			topy = pos_history[history_index] & 0xff;
-			toprotation = rotation_history[history_index];
-		}
-	}
-}
-// Function to parse TML data and render elements, (root)
-// It can also be used to render any element
-void tml_parse(const byte* data) {
-	TML_ROOT_ELEMENT_ADDR = (word)&data;
-	tml_render_element(data);
-}
-
-void tml_render_element(const byte* data) {
-	// History stacks
-	word pos_history[10] = {0,0,0,0,0,0,0,0,0,0};
-	word rotation_history[10] = {0,0,0,0,0,0,0,0,0,0};
-	pos_history[0] = 0x0000;
-	// Store current offset position
-	word rotation = 0;
-	byte topx = 0, topy = 0;
-	if (data[1] != TML_ROOT) {
-		__tml_get_offsets(((word)data[3] << 8) | data[4], &topx, &topy, &rotation);
-	}
-	byte history_index = 0;
-	word i = 0;
-	for (i = 0; ;) {
-		// If element is found
-		if (data[i] == '<') {
-			pos_history[history_index] = ((word)topx << 8) | topy;
-			rotation_history[history_index] = rotation;
-			history_index++;
-			// < type id x y parent x y
-			// 0 1    2  3 4 5      6 7 8
-			byte element_type = data[i+1];
-			i+=8;
-			// Offsets, and yes like before I will apply the rotation transform
-			topx += __tml_get_element_field(&data[i-6], TML_E_FIELD_X);
-			topy += __tml_get_element_field(&data[i-6], TML_E_FIELD_Y);
-			rotation += __tml_get_element_field(&data[i-6], TML_E_FIELD_ROTATION);
-
-			byte ax, ay, font_size, rotation, colour, width, height, border_thickness, border_style, not_found, text_align, align;
-			const char* text;
-			const byte* image;
-			const byte* tml_element = &data[i-6];
-			// Get common fields
-			ax = __tml_get_element_field(tml_element, TML_E_FIELD_ANCHOR_X);
-			ay = __tml_get_element_field(tml_element, TML_E_FIELD_ANCHOR_Y);
-			//rotation = __tml_get_element_field(tml_element, TML_E_FIELD_ROTATION);
-			colour = __tml_get_element_field(tml_element, TML_E_FIELD_COLOUR);
-			// Render element based on type
-			switch(element_type) {
-			case TML_TEXT:
-				// Draws text element
-				font_size = __tml_get_element_field(tml_element, TML_E_FIELD_FONT_SIZE);
-				not_found = 0;
-				text = __tml_get_element_text(tml_element, &not_found);
-				if (not_found) break;
-				tui_draw_text(topx, topy, text, font_size, ax, ay, rotation, colour);
-				break;
-			case TML_BUTTON:
-				// Draws button element with text alignment
-				width = __tml_get_element_field(tml_element, TML_E_FIELD_WIDTH);
-				height = __tml_get_element_field(tml_element, TML_E_FIELD_HEIGHT);
-				font_size = __tml_get_element_field(tml_element, TML_E_FIELD_FONT_SIZE);
-				border_thickness = __tml_get_element_field(tml_element, TML_E_FIELD_BORDER_THICKNESS);
-				border_style = __tml_get_element_field(tml_element, TML_E_FIELD_BORDER_STYLE);
-				not_found = 0;
-				text = __tml_get_element_text(tml_element, &not_found);
-				text_align = __tml_get_element_field(tml_element, TML_E_FIELD_TEXT_ALIGN);
-				byte text_width, text_height;
-				byte otopx = topx;
-				byte otopy = topy;
-				byte topxr;
-				byte topyr;
-				tui_get_text_size(font_size, text, &text_width, &text_height);
-				// Do text alignment magic
-				switch (text_align) {
-				case TML_ALIGN_CENTER_LEFT:
-					topy += (height >> 1) - (text_height >> 1);
-					break;
-				case TML_ALIGN_BOTTOM_LEFT:
-					topy += height - text_height;
-					break;
-				case TML_ALIGN_RIGHT:
-					topx += width - text_width;
-					topy += (height >> 1) - (text_height >> 1);
-					break;
-				case TML_ALIGN_CENTER_RIGHT:
-					topx += width - text_width;
-					topy += (height >> 1) - (text_height >> 1);
-					break;
-				case TML_ALIGN_BOTTOM_RIGHT:
-					topx += width - text_width;
-					topy += height - text_height;
-					break;
-				case TML_ALIGN_CENTER:
-					topx += (width >> 1) - (text_width >> 1);
-					break;
-				case TML_ALIGN_BOTTOM_CENTER:
-					topx += (width >> 1) - (text_width >> 1);
-					topy += height - text_height;
-					break;
-				case TML_ALIGN_MIDDLE_CENTER:
-					topx += (width >> 1) - (text_width >> 1);
-					topy += (height >> 1) - (text_height >> 1);
-					break;
-				}
-				tui_rotate_point(otopx, otopy, topx - ax + 2, topy - ay + 2, rotation, &topxr, &topyr);
-				if (!not_found) tui_draw_text(topxr, topyr, text, font_size, ax, ay, rotation, colour);
-				topx = otopx;
-				topy = otopy;
-				tui_draw_rectangle(topx, topy, width, height, ax, ay, rotation, colour, border_thickness, border_style);
-				break;
-			case TML_DIV:
-				// Draws a rectangle, with element alignment
-				width = __tml_get_element_field(tml_element, TML_E_FIELD_WIDTH);
-				height = __tml_get_element_field(tml_element, TML_E_FIELD_HEIGHT);
-				border_thickness = __tml_get_element_field(tml_element, TML_E_FIELD_BORDER_THICKNESS);
-				border_style = __tml_get_element_field(tml_element, TML_E_FIELD_BORDER_STYLE);
-				align = __tml_get_element_field(tml_element, TML_E_FIELD_ALIGN);
-				tui_draw_rectangle(topx, topy, width, height, ax, ay, rotation, colour, border_thickness, border_style);
-				// Do alignment magic
-				switch (text_align) {
-				case TML_ALIGN_CENTER_LEFT:
-					topy += (height >> 1);
-					break;
-				case TML_ALIGN_BOTTOM_LEFT:
-					topy += height;
-					break;
-				case TML_ALIGN_RIGHT:
-					topx += width;
-					topy += (height >> 1);
-					break;
-				case TML_ALIGN_CENTER_RIGHT:
-					topx += width;
-					topy += (height >> 1);
-					break;
-				case TML_ALIGN_BOTTOM_RIGHT:
-					topx += width;
-					topy += height;
-					break;
-				case TML_ALIGN_CENTER:
-					topx += (width >> 1);
-					break;
-				case TML_ALIGN_BOTTOM_CENTER:
-					topx += (width >> 1);
-					topy += height;
-					break;
-				case TML_ALIGN_MIDDLE_CENTER:
-					topx += (width >> 1);
-					topy += (height >> 1);
-					break;
-				}
-				break;
-			case TML_RADIO:
-				// Draws a circle for now
-				width = __tml_get_element_field(tml_element, TML_E_FIELD_WIDTH);
-				border_thickness = __tml_get_element_field(tml_element, TML_E_FIELD_BORDER_THICKNESS);
-				tui_draw_circle(topx, topy, width >> 1, ax, ay, border_thickness, colour);
-				break;
-			case TML_CHECKBOX:
-				// Draws a square for now
-				width = __tml_get_element_field(tml_element, TML_E_FIELD_WIDTH);
-				border_thickness = __tml_get_element_field(tml_element, TML_E_FIELD_BORDER_THICKNESS);
-				border_style = __tml_get_element_field(tml_element, TML_E_FIELD_BORDER_STYLE);
-				tui_draw_rectangle(topx, topy, width, width, ax, ay, rotation, colour, border_thickness, border_style);
-				break;
-			case TML_LINE:
-				// Draws a line element
-				width = __tml_get_element_field(tml_element, TML_E_FIELD_X1);
-				height = __tml_get_element_field(tml_element, TML_E_FIELD_Y1);
-				border_thickness = __tml_get_element_field(tml_element, TML_E_FIELD_BORDER_THICKNESS);
-				border_style = __tml_get_element_field(tml_element, TML_E_FIELD_BORDER_STYLE);
-				tui_draw_line(topx - ax, topy - ay, topx + width - ax, topy + height - ay, colour, border_thickness, border_style);
-				break;
-			}
-			i+= __tml_get_element_field(tml_element, TML_E_FIELD_FIELD_SIZE);
-		} else if (data[i] == '>') {
-
-			// Restore previous offset position when end of element is found
-			history_index--;
-			if (history_index == 0) {
-				return;
-			}
-			topx = (pos_history[history_index] >> 8) & 0xff;
-			topy = pos_history[history_index] & 0xff;
-			rotation = rotation_history[history_index];
-		}
+// Property setters
+void tml_set_position(TmlElement* elem, byte x, byte y) {
+	if (elem) {
+		elem->x = x;
+		elem->y = y;
 	}
 }
 
-// Will not be needed when time.h is finished
-void delay2(ushort after_ticks)
-{
-    if ((FCON & 2) != 0)
-        FCON &= 0xfd;
-    __DI();
-    Timer0Interval = after_ticks;
-    Timer0Counter = 0;
-    Timer0Control = 0x0101;
-    InterruptPending_W0 = 0;
-    StopAcceptor = 0x50;
-    StopAcceptor = 0xa0;
-    StopControl = 2;
-    __asm("nop");
-    __asm("nop");
-    __EI();
+void tml_set_rotation(TmlElement* elem, word rotation) {
+	if (elem) {
+		elem->rotation = rotation % 360;
+	}
 }
 
-// Display a splash screen for a set duration
-void tml_splash(const byte* data, word duration) {
-	// TODO: Make a dedicated splash screen function, draw image slow asf
-	byte old = Write2RealScreen;
+void tml_set_anchor(TmlElement* elem, byte ax, byte ay) {
+	if (elem) {
+		elem->anchor_x = ax;
+		elem->anchor_y = ay;
+	}
+}
+
+void tml_set_colour(TmlElement* elem, byte colour) {
+	if (elem) {
+		elem->colour = colour;
+	}
+}
+
+// Utilities (will be replaced with stuff from T2)
+static void tml_delay(ushort after_ticks) {
+	if ((FCON & 2) != 0) {
+		FCON &= 0xFD;
+	}
+	__DI();
+	Timer0Interval = after_ticks;
+	Timer0Counter = 0;
+	Timer0Control = 0x0101;
+	InterruptPending_W0 = 0;
+	StopAcceptor = 0x50;
+	StopAcceptor = 0xA0;
+	StopControl = 2;
+	__asm("nop");
+	__asm("nop");
+	__EI();
+}
+
+void tml_splash(const byte* image_data, word duration) {
+	byte old_write_mode = Write2RealScreen;
 	Write2RealScreen = 1;
-	tui_draw_image(0, 1, 192, 63, data, 0, 0, 0, TUI_COLOUR_IMAGE);
-	delay2(duration << 3);
-	tui_draw_image(0, 1, 192, 63, data, 0, 0, 0, TUI_COLOUR_LIGHT_GREY);
-	delay2(4000);
-	Write2RealScreen = old;
+	
+	tui_draw_image(0, 1, 192, 63, image_data, 0, 0, 0, TUI_COLOUR_IMAGE);
+	ml_delay(duration << 3);
+	
+	tui_draw_image(0, 1, 192, 63, image_data, 0, 0, 0, TUI_COLOUR_LIGHT_GREY);
+	tml_delay(4000);
+	
+	Write2RealScreen = old_write_mode;
 }
 
-// Similar to __tml_get_element_field but uses tml_get_element to get element data by ID
-byte tml_get_element_field(const byte* tml_data, word id, byte field) {
-	return __tml_get_element_field(tml_get_element(tml_data, id), field);
-	return 0;
+// Helper to read word from byte array (little-endian)
+static word read_word(const byte* p) {
+	return p[0] | (p[1] << 8);
 }
 
-// Returns pointer to element text
-const char* tml_get_element_text(const byte* tml_data, word id, byte *not_found) {
-	return __tml_get_element_text(tml_get_element(tml_data, id), not_found);
-	return 0;
-}
-
-// Query element by ID
-const byte* tml_get_element(const byte* tml_data, word id) {
-	word i;
-	word e_counter = 0;
-	// Filter through data and find elements
-	// It is a short hack, since the new max field field will make it so we can jump to the next/end of the element
-	for (i = 0; ; i++) {
-		if (tml_data[i] == '<') {
-			e_counter++;
-			//derefw(0xA050) = (word)&tml_data[i+3];
-			// Check the id field
-			if (tml_data[i + 3] == (byte)(id >> 8)) {
-				if (tml_data[i + 4] == (byte)(id & 0xff)) {
-					return &tml_data[i];
-				}
-			}
-		} else if (tml_data[i] == '>') {
-			e_counter--;
-			if (e_counter == 0) {
+// Parser for TML data format
+TmlElement* tml_parse(const byte* data, TmlElement* elements, byte max_elems) {
+	if (!data || !elements || max_elems == 0) return 0;
+	
+	TmlElement* root = 0;
+	TmlElement* parent_stack[TML_MAX_DEPTH];
+	byte stack_ptr = 0;
+	
+	const byte* p = data;
+	byte elem_idx = 0;
+	
+	while (elem_idx < max_elems && *p != 0) {
+		if (*p == TML_START) {
+			p++;
+			byte type = *p++;
+			
+			TmlElement* elem = &elements[elem_idx++];
+			
+			// Set defaults
+			elem->type = type;
+			elem->id = 0;
+			elem->x = 0;
+			elem->y = 0;
+			elem->rotation = 0;
+			elem->anchor_x = 0;
+			elem->anchor_y = 0;
+			elem->colour = TUI_COLOUR_BLACK;
+			elem->parent = 0;
+			elem->first_child = 0;
+			elem->next_sibling = 0;
+			
+			// Type-specific defaults
+			switch (type) {
+			case TML_TYPE_TEXT:
+				elem->data.text.text = 0;
+				elem->data.text.font_size = TUI_FONT_SIZE_6x8;
+				break;
+			case TML_TYPE_BUTTON:
+				elem->data.button.text = 0;
+				elem->data.button.font_size = TUI_FONT_SIZE_6x8;
+				elem->data.button.width = 20;
+				elem->data.button.height = 12;
+				elem->data.button.border_thickness = 1;
+				elem->data.button.border_style = TUI_LINE_STYLE_SOLID;
+				elem->data.button.text_align = TML_ALIGN_MIDDLE_CENTER;
+				break;
+			case TML_TYPE_DIV:
+				elem->data.div.width = 10;
+				elem->data.div.height = 10;
+				elem->data.div.border_thickness = 1;
+				elem->data.div.border_style = TUI_LINE_STYLE_SOLID;
+				elem->data.div.child_align = TML_ALIGN_TOP_LEFT;
+				break;
+			case TML_TYPE_LINE:
+				elem->data.line.x1 = 10;
+				elem->data.line.y1 = 0;
+				elem->data.line.thickness = 1;
+				elem->data.line.style = TUI_LINE_STYLE_SOLID;
+				break;
+			case TML_TYPE_CHECKBOX:
+				elem->data.checkbox.size = 8;
+				elem->data.checkbox.border_thickness = 1;
+				elem->data.checkbox.border_style = TUI_LINE_STYLE_SOLID;
+				elem->data.checkbox.checked = 0;
+				break;
+			case TML_TYPE_RADIO:
+				elem->data.radio.size = 8;
+				elem->data.radio.border_thickness = 1;
+				elem->data.radio.selected = 0;
 				break;
 			}
+			
+			// Parse fields until we hit '<' (child) or '>' (end)
+			while (*p != TML_END && *p != TML_START && *p != 0) {
+				byte field = *p++;
+				switch (field) {
+				case FIELD_ID:
+					elem->id = read_word(p); p += 2;
+					break;
+				case FIELD_X:
+					elem->x = *p++;
+					break;
+				case FIELD_Y:
+					elem->y = *p++;
+					break;
+				case FIELD_WIDTH:
+					if (type == TML_TYPE_BUTTON) elem->data.button.width = *p++;
+					else if (type == TML_TYPE_DIV) elem->data.div.width = *p++;
+					else p++;
+					break;
+				case FIELD_HEIGHT:
+					if (type == TML_TYPE_BUTTON) elem->data.button.height = *p++;
+					else if (type == TML_TYPE_DIV) elem->data.div.height = *p++;
+					else p++;
+					break;
+				case FIELD_COLOUR:
+					elem->colour = *p++;
+					break;
+				case FIELD_THICKNESS:
+					if (type == TML_TYPE_BUTTON) elem->data.button.border_thickness = *p++;
+					else if (type == TML_TYPE_DIV) elem->data.div.border_thickness = *p++;
+					else if (type == TML_TYPE_LINE) elem->data.line.thickness = *p++;
+					else if (type == TML_TYPE_CHECKBOX) elem->data.checkbox.border_thickness = *p++;
+					else if (type == TML_TYPE_RADIO) elem->data.radio.border_thickness = *p++;
+					else p++;
+					break;
+				case FIELD_STYLE:
+					if (type == TML_TYPE_BUTTON) elem->data.button.border_style = *p++;
+					else if (type == TML_TYPE_DIV) elem->data.div.border_style = *p++;
+					else if (type == TML_TYPE_LINE) elem->data.line.style = *p++;
+					else if (type == TML_TYPE_CHECKBOX) elem->data.checkbox.border_style = *p++;
+					else p++;
+					break;
+				case FIELD_FONT:
+					if (type == TML_TYPE_TEXT) elem->data.text.font_size = *p++;
+					else if (type == TML_TYPE_BUTTON) elem->data.button.font_size = *p++;
+					else p++;
+					break;
+				case FIELD_TEXT:
+					if (type == TML_TYPE_TEXT) {
+						elem->data.text.text = (const char*)p;
+					} else if (type == TML_TYPE_BUTTON) {
+						elem->data.button.text = (const char*)p;
+					}
+					while (*p) p++;  // skip past string
+					p++;  // skip null terminator
+					break;
+				case FIELD_ALIGN:
+					if (type == TML_TYPE_BUTTON) elem->data.button.text_align = *p++;
+					else p++;
+					break;
+				case FIELD_CHECKED:
+					if (type == TML_TYPE_CHECKBOX) elem->data.checkbox.checked = *p++;
+					else p++;
+					break;
+				case FIELD_SELECTED:
+					if (type == TML_TYPE_RADIO) elem->data.radio.selected = *p++;
+					else p++;
+					break;
+				case FIELD_SIZE:
+					if (type == TML_TYPE_CHECKBOX) elem->data.checkbox.size = *p++;
+					else if (type == TML_TYPE_RADIO) elem->data.radio.size = *p++;
+					else p++;
+					break;
+				case FIELD_END_X:
+					if (type == TML_TYPE_LINE) elem->data.line.x1 = *p++;
+					else p++;
+					break;
+				case FIELD_END_Y:
+					if (type == TML_TYPE_LINE) elem->data.line.y1 = *p++;
+					else p++;
+					break;
+				case FIELD_ROTATION:
+					elem->rotation = read_word(p); p += 2;
+					break;
+				case FIELD_ANCHOR_X:
+					elem->anchor_x = *p++;
+					break;
+				case FIELD_ANCHOR_Y:
+					elem->anchor_y = *p++;
+					break;
+				}
+			}
+			
+			// Add to tree
+			if (!root) {
+				root = elem;
+			} else if (stack_ptr > 0) {
+				tml_add_child(parent_stack[stack_ptr - 1], elem);
+			} else {
+				// Top-level sibling - link after root
+				TmlElement* sib = root;
+				while (sib->next_sibling) sib = sib->next_sibling;
+				sib->next_sibling = elem;
+			}
+			
+			// If next is '<', this element has children - push onto stack
+			if (*p == TML_START) {
+				if (stack_ptr < TML_MAX_DEPTH) {
+					parent_stack[stack_ptr++] = elem;
+				}
+			}
+			// If next is '>', element is done with no children - skip it
+			else if (*p == TML_END) {
+				p++;
+			}
+		}
+		else if (*p == TML_END) {
+			// Closing '>' pops parent off stack
+			p++;
+			if (stack_ptr > 0) {
+				stack_ptr--;
+			}
+		}
+		else {
+			p++;
 		}
 	}
-	return 0;
-}
-
-// Set element field data by ID
-void tml_set_element_field(const byte* tml_data, word id, byte field, byte data) {
-	//derefw(0xA000) = (word)__tml_get_element_field_addr(tml_get_element(tml_data, id), field);
-	deref((word)__tml_get_element_field_addr(tml_get_element(tml_data, id), field)) = data;
-}
-
-// Set text field of element by ID
-void tml_set_element_text(const byte* tml_data, word id, const char* text) {
-	byte not_found = 0;
-	char* ntext = (char*)__tml_get_element_text(tml_get_element(tml_data, id), &not_found);
-	if (not_found) {
-		return;
-	}
-	byte i = 0;
-	while (text[i] && ntext[i]) {
-		ntext[i] = text[i];
-		i++;
-		//i+=1; I'm leaving this here because it is funny that it was here
-	}
+	
+	return root;
 }
