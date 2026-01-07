@@ -60,8 +60,8 @@ Tui operates as a standalone rendering system with hooks for external interactio
 | **Process Virtualization** | Unlimited\* concurrent processes v |
 | **Native Applications** | Performance-critical apps written in C (video playback, file management) |
 
-\*Unlimited meaning that the only limitation is ram size (24kb in this case).
-Let's say for example a program only took up a handful of bytes, didn't require any of its own memory (only registers) theoretically, if stored in rom (and read from there too), you would only need the PC register if the only instruction was B, so you can create an infinite loop that takes up 2 bytes of physical ram, and with 24kb, you can run up to 12000 processes all at once!
+<small>\*Unlimited meaning that the only limitation is ram size (24kb in this case).
+Let's say for example a program only took up a handful of bytes, didn't require any of its own memory (only registers) theoretically, if stored in rom (and read from there too), you would only need the PC register if the only instruction was B, so you can create an infinite loop that takes up 2 bytes of physical ram, and with 24kb, you can run up to 12000 processes all at once!</small>
 ---
 
 ## Tangent SDK
@@ -645,4 +645,5 @@ This project is licensed under the MIT License — see the [LICENSE](LICENSE) fi
 **[Report Bug](../../issues) · [Request Feature](../../issues)**
 
 </div>
+
 
