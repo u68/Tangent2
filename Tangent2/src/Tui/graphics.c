@@ -10,6 +10,12 @@
 #include "lut.h"
 #include "ysglfonts.h"
 
+// Internal static defs
+static void __tui_clear_screen_real_buf_2();
+static void __tui_clear_screen_real_buf_1();
+static void __tui_set_pixel_real(byte x, byte y, byte colour);
+static void __tui_set_pixel(byte x, byte y, byte colour);
+
 // Rotates point (ax, ay) around anchor (px, py) by angle (in degrees)
 void tui_rotate_point(byte ax, byte ay, byte px, byte py, word angle, byte *out_x, byte *out_y) {
 	if (!angle) {
@@ -710,3 +716,56 @@ void tui_draw_char(byte x, byte y, char c, byte font_size, sbyte ax, sbyte ay, w
 	tui_draw_image(x, y, font_width, font_height, &font_data[(byte)c * (font_height * ((font_width + 7) >> 3))], ax, ay, rotation, colour);
 }
 
+void tui_draw_full_image(const word* bitmap, byte colour) {
+	word i = 0;
+	word j = 0;
+	word* dest = (word*)0xF800;
+	if (colour == TUI_COLOUR_IMAGE) {
+		// Lower bitplane
+		BufSelSFR = 0;
+		for(i = 0; i < 0x300; i++)
+		{
+			dest[j] = bitmap[i];
+			j++;
+			if((j & 0x001F) == 0x0C)
+			{
+				j+=4;
+			}
+		}
+		// Upper bitplane
+		BufSelSFR = 4;
+		j = 0;
+		for(i = 0x300; i < 0x600; i++)
+		{
+			dest[j] = bitmap[i];
+			j++;
+			if((j & 0x001F) == 0x0C)
+			{
+				j+=4;
+			}
+		}
+	} else if (colour == TUI_COLOUR_LIGHT_GREY) {
+		BufSelSFR = 0;
+		for(i = 0; i < 0x300; i++)
+		{
+			dest[j] = bitmap[i];
+			j++;
+			if((j & 0x001F) == 0x0C)
+			{
+				j+=4;
+			}
+		}
+	} else if (colour == TUI_COLOUR_DARK_GREY) {
+		BufSelSFR = 4;
+		for(i = 0x300; i < 0x600; i++)
+		{
+			dest[j] = bitmap[i];
+			j++;
+			if((j & 0x001F) == 0x0C)
+			{
+				j+=4;
+			}
+		}
+	}
+	
+}

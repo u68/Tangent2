@@ -10,8 +10,9 @@
 
 #include "base.h"
 
+void vminit();
 byte* vm_spawn(word code_size, word ram_size);
-void vm_destroy(byte* vm_id);
-void vm_step(byte* vm_id);
+void vm_destroy(byte* vm);
+void vm_step(byte* vm);
 
 #endif /* VM_H_ */

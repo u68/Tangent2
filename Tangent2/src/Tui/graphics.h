@@ -79,5 +79,6 @@ void tui_draw_text(byte x, byte y, const char* text, byte font_size, sbyte ax, s
 void tui_draw_byte(byte x, byte y, byte data, byte data2, byte mask);
 void tui_draw_image(byte x, byte y, byte width, byte height, const byte* bitmap, sbyte ax, sbyte ay, word rotation, byte colour);
 void tui_draw_char(byte x, byte y, char c, byte font_size, sbyte ax, sbyte ay, word rotation, byte colour);
+void tui_draw_full_image(const word* bitmap, byte colour);
 
 #endif /* GRAPHICS_H_ */

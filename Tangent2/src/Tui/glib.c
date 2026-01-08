@@ -7,7 +7,7 @@
  */
 
 #include "glib.h"
-#include "../heap.h"
+#include "../time.h"
 
 // Internal stuff
 static void render_text(TmlElement* elem, byte world_x, byte world_y, word world_rot);
@@ -34,18 +34,6 @@ static void apply_transform(byte parent_wx, byte parent_wy, word parent_rot,
 		*out_wy = parent_wy + ry;
 	}
 }
-
-// Allocate and copy a zero-terminated string onto the heap (using the project's heap)
-static char* tml_strdup_heap(const char* s) {
-	if (!s) return 0;
-	// compute length
-	word len = 0;
-	while (s[len]) len++;
-	char* d = (char*)halloc(len + 1);
-	if (!d) return 0;
-	for (word i = 0; i <= len; i++) d[i] = s[i];
-	return d;
-} 
 
 // Main render function - traverses tree and renders elements
 void tml_render(TmlElement* root) {
@@ -486,35 +474,9 @@ void tml_set_colour(TmlElement* elem, byte colour) {
 	}
 }
 
-// Utilities (will be replaced with stuff from T2)
-static void tml_delay(ushort after_ticks) {
-	if ((FCON & 2) != 0) {
-		FCON &= 0xFD;
-	}
-	__DI();
-	Timer0Interval = after_ticks;
-	Timer0Counter = 0;
-	Timer0Control = 0x0101;
-	InterruptPending_W0 = 0;
-	StopAcceptor = 0x50;
-	StopAcceptor = 0xA0;
-	StopControl = 2;
-	__asm("nop");
-	__asm("nop");
-	__EI();
-}
-
 void tml_splash(const byte* image_data, word duration) {
-	byte old_write_mode = Write2RealScreen;
-	Write2RealScreen = 1;
-	
-	tui_draw_image(0, 1, 192, 63, image_data, 0, 0, 0, TUI_COLOUR_IMAGE);
-	tml_delay(duration << 3);
-	
-	tui_draw_image(0, 1, 192, 63, image_data, 0, 0, 0, TUI_COLOUR_LIGHT_GREY);
-	tml_delay(4000);
-	
-	Write2RealScreen = old_write_mode;
+	tui_draw_full_image((const word*)image_data, TUI_COLOUR_IMAGE);
+	delay_s(duration);
 }
 
 // Helper to read word from byte array (little-endian)
@@ -722,38 +684,4 @@ TmlElement* tml_parse(const byte* data, TmlElement* elements, byte max_elems) {
 	}
 	
 	return root;
-}
-
-// Free heap-allocated strings inside a TML element tree.
-// This frees any strings allocated by the parser or the init helpers above.
-void tml_free_tree(TmlElement* root) {
-	if (!root) return;
-	// Free children first
-	if (root->first_child) tml_free_tree(root->first_child);
-	// Free siblings
-	if (root->next_sibling) tml_free_tree(root->next_sibling);
-
-	// Free any heap-allocated strings owned by this element
-	switch (root->type) {
-	case TML_TYPE_TEXT:
-		if (root->data.text.text) {
-			hfree(root->data.text.text);
-			root->data.text.text = 0;
-		}
-		break;
-	case TML_TYPE_BUTTON:
-		if (root->data.button.text) {
-			hfree(root->data.button.text);
-			root->data.button.text = 0;
-		}
-		break;
-	case TML_TYPE_INPUT:
-		if (root->data.input.text) {
-			hfree(root->data.input.text);
-			root->data.input.text = 0;
-		}
-		break;
-	default:
-		break;
-	}
 }

@@ -148,7 +148,7 @@ void delay_s(word s) {
 }
 
 // Tick Conversion Functions
-
+// Due to ticks being a max of 0xFFFF, this only works for small values, in the future I may support more stuff but it doesn't seem useful right now
 word ms_to_ticks(word ms) {
     return ms * TICKS_PER_MS;
 }
@@ -162,6 +162,5 @@ word ticks_to_ms(word ticks) {
 }
 
 word ticks_to_s(word ticks) {
-    // Due to ticks being a max of 0xFFFF, this only works for small values
     return ticks / TICKS_PER_SECOND;
 }
