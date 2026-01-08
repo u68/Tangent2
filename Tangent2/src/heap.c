@@ -19,8 +19,18 @@ typedef struct block {
     byte free; // Whether block is free (1) or used (0)
 } block_t;
 
+// Get user data pointer from block header
+static void *hdata(block_t *b) {
+    return (void *)((byte *)b + sizeof(block_t));
+}
+
+// Get block header from user data pointer
+static block_t *hblock(void *ptr) {
+    return (block_t *)((byte *)ptr - sizeof(block_t));
+}
+
 // Align size
-static byte halign(word size) {
+static word halign(word size) {
     // If already aligned, return size
     if (size % HEAP_BLOCK_ALIGN == 0) {
         return size;
@@ -41,7 +51,7 @@ void hinit() {
 
 // Split block into two if larger than needed
 static void hsplit(block_t *b, word size) {
-    block_t *new_block = (block_t *)((byte *)b + sizeof(block_t) + size); // calculate address of new block by adding size and header size
+    block_t *new_block = (block_t *)((byte *)hdata(b) + size);
     // Set new block properties
     new_block->size = b->size - size - sizeof(block_t);
     new_block->next = b->next;
@@ -91,12 +101,13 @@ void *halloc(word size) {
         hsplit(b, size); // split if block too large
 
     b->free = 0;
-    return (void *)((byte *)b + sizeof(block_t)); // return user pointer
+    return hdata(b);
 }
 
 // Allocate and zero-initialize memory block
 void *hcalloc(word num, word size) {
     word total_size = num * size;
+    total_size = halign(total_size); // Align size
     void *ptr = halloc(total_size);
     if (ptr) {
         // Zero-initialize memory
@@ -113,26 +124,29 @@ void *hrealloc(void *ptr, word size) {
     size = halign(size); // Align size
 
     if (!ptr) return halloc(size); // If null just allocate new block
-    block_t *old = (block_t *)((byte *)ptr - sizeof(block_t)); // get block header
+    block_t *old = hblock(ptr);
+    word old_size = old->size;
 
-    old->free = 1; // mark old block as free for searching
-    word old_size = old->size; // get old size
-    word new_size = size; // new size
-    void *new_ptr = halloc(size); // try to allocate new block (halloc will merge if needed)
-    if (!new_ptr) return 0; // allocation failed
+    // If new size fits in current block, just return same pointer
+    if (size <= old_size) return ptr;
 
-    // Copy old data
+    // Try to allocate new block (keep old block allocated!)
+    void *new_ptr = halloc(size);
+    if (!new_ptr) return 0; // allocation failed, old data still intact
+
+    // Copy old data to new location
     byte *src = (byte *)ptr;
     byte *dst = (byte *)new_ptr;
-    if (src == dst) return new_ptr; // same pointer, nothing to do
+    for (word i = 0; i < old_size; i++) dst[i] = src[i];
 
-    for (word i = 0; i < ((old_size < new_size) ? old_size : new_size); i++) dst[i] = src[i]; // copy data depending on which is smaller
+    // Now safe to free old block
+    old->free = 1;
 
     return new_ptr;
 }
 
 void hfree(void *ptr) {
     if (!ptr) return; // ignore null pointers
-    block_t *b = (block_t *)((byte *)ptr - sizeof(block_t)); // get block header
+    block_t *b = hblock(ptr);
     b->free = 1; // mark block as free
 }
