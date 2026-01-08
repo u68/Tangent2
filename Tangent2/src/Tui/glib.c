@@ -7,6 +7,7 @@
  */
 
 #include "glib.h"
+#include "../heap.h"
 
 // Internal stuff
 static void render_text(TmlElement* elem, byte world_x, byte world_y, word world_rot);
@@ -33,6 +34,18 @@ static void apply_transform(byte parent_wx, byte parent_wy, word parent_rot,
 		*out_wy = parent_wy + ry;
 	}
 }
+
+// Allocate and copy a zero-terminated string onto the heap (using the project's heap)
+static char* tml_strdup_heap(const char* s) {
+	if (!s) return 0;
+	// compute length
+	word len = 0;
+	while (s[len]) len++;
+	char* d = (char*)halloc(len + 1);
+	if (!d) return 0;
+	for (word i = 0; i <= len; i++) d[i] = s[i];
+	return d;
+} 
 
 // Main render function - traverses tree and renders elements
 void tml_render(TmlElement* root) {
@@ -496,7 +509,7 @@ void tml_splash(const byte* image_data, word duration) {
 	Write2RealScreen = 1;
 	
 	tui_draw_image(0, 1, 192, 63, image_data, 0, 0, 0, TUI_COLOUR_IMAGE);
-	ml_delay(duration << 3);
+	tml_delay(duration << 3);
 	
 	tui_draw_image(0, 1, 192, 63, image_data, 0, 0, 0, TUI_COLOUR_LIGHT_GREY);
 	tml_delay(4000);
@@ -709,4 +722,38 @@ TmlElement* tml_parse(const byte* data, TmlElement* elements, byte max_elems) {
 	}
 	
 	return root;
+}
+
+// Free heap-allocated strings inside a TML element tree.
+// This frees any strings allocated by the parser or the init helpers above.
+void tml_free_tree(TmlElement* root) {
+	if (!root) return;
+	// Free children first
+	if (root->first_child) tml_free_tree(root->first_child);
+	// Free siblings
+	if (root->next_sibling) tml_free_tree(root->next_sibling);
+
+	// Free any heap-allocated strings owned by this element
+	switch (root->type) {
+	case TML_TYPE_TEXT:
+		if (root->data.text.text) {
+			hfree(root->data.text.text);
+			root->data.text.text = 0;
+		}
+		break;
+	case TML_TYPE_BUTTON:
+		if (root->data.button.text) {
+			hfree(root->data.button.text);
+			root->data.button.text = 0;
+		}
+		break;
+	case TML_TYPE_INPUT:
+		if (root->data.input.text) {
+			hfree(root->data.input.text);
+			root->data.input.text = 0;
+		}
+		break;
+	default:
+		break;
+	}
 }

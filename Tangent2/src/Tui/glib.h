@@ -45,13 +45,13 @@ struct TmlElement;
 
 // Element-specific data for TEXT elements
 typedef struct {
-	const char*  text;
+	char*        text;
 	byte         font_size;
 } TmlTextData;
 
 // Element-specific data for BUTTON elements
 typedef struct {
-	const char*  text;
+	char*        text;
 	byte         font_size;
 	byte         width;
 	byte         height;
@@ -143,6 +143,9 @@ typedef struct {
 // Rendering
 void tml_render(TmlElement* root);
 void tml_render_element(TmlElement* elem, TmlTransform* transform);
+
+// Free any heap-allocated resources owned by a parsed TML tree
+void tml_free_tree(TmlElement* root);
 
 // Element initialization - user provides storage, library initializes it
 void tml_init_root(TmlElement* elem);

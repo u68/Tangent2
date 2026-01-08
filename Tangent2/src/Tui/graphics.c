@@ -206,14 +206,14 @@ byte tui_get_pixel(byte x, byte y) {
 	// Determine whether to read from real screen or buffer
 	if (Write2RealScreen) {
 		BufSelSFR = 0;
-		a = deref((y<<5) + (x >> 3) + 0xF800) & ty ? 1 : 0;
+		a = (deref((y<<5) + (x >> 3) + 0xF800) & ty) ? 1 : 0;
 		BufSelSFR = 4;
-		b = deref((y<<5) + (x >> 3) + 0xF800) & ty ? 2 : 0;
+		b = (deref((y<<5) + (x >> 3) + 0xF800) & ty) ? 2 : 0;
 		return a + b;
 	} else {
 		word addr = (y << 4) + (y << 3) + (x >> 3) + VRAM;
-		a = deref(addr) & ty ? 1 : 0;
-		b = deref(addr+0x600) & ty ? 2 : 0;
+		a = (deref(addr) & ty) ? 1 : 0;
+		b = (deref(addr+0x600) & ty) ? 2 : 0;
 		return a + b;
 	}
 }
@@ -483,7 +483,6 @@ void tui_draw_text(byte x, byte y, const char* text, byte font_size, sbyte ax, s
 
 // Draw a byte at x,y with mask
 void tui_draw_byte(byte x, byte y, byte data, byte data2, byte mask) {
-	// I'm sorry this is messy, but that's not my problem
 	if (x > 191 || y > 63) {
 		return;
 	}
@@ -492,6 +491,8 @@ void tui_draw_byte(byte x, byte y, byte data, byte data2, byte mask) {
 	byte hbyte = data << (8 - bitpos);
 	byte lbyte2 = data2 >> bitpos;
 	byte hbyte2 = data2 << (8 - bitpos);
+	byte lmask = mask >> bitpos;
+	byte hmask = mask << (8 - bitpos);
 	byte temp;
 	word addr;
 	// Determine starting address
@@ -500,14 +501,14 @@ void tui_draw_byte(byte x, byte y, byte data, byte data2, byte mask) {
 	} else {
 		addr = (y << 4) + (y << 3) + (x >> 3) + VRAM;
 	}
-	// Write high bytes first if it exists
-	if (hbyte | hbyte2) {
+	// Write high bytes first if there's spillover
+	if (bitpos) {
 		if (Write2RealScreen) {
 			BufSelSFR = 0;
 		}
 		temp = deref(addr + 1);
-		temp &= (0xFF >> bitpos);
-		temp |= (hbyte & (mask << (8 - bitpos)));
+		temp &= ~hmask;
+		temp |= (hbyte & hmask);
 		deref(addr + 1) = temp;
 		if (Write2RealScreen) {
 			BufSelSFR = 4;
@@ -515,8 +516,8 @@ void tui_draw_byte(byte x, byte y, byte data, byte data2, byte mask) {
 			addr += 0x600;
 		}
 		temp = deref(addr + 1);
-		temp &= (0xFF >> bitpos);
-		temp |= (hbyte2 & (mask << (8 - bitpos)));
+		temp &= ~hmask;
+		temp |= (hbyte2 & hmask);
 		deref(addr + 1) = temp;
 		if (!Write2RealScreen) {
 			addr -= 0x600;
@@ -527,8 +528,8 @@ void tui_draw_byte(byte x, byte y, byte data, byte data2, byte mask) {
 	}
 	// Draw low bytes
 	temp = deref(addr);
-	temp &= (0xFF << (8 - bitpos));
-	temp |= (lbyte & (mask >> bitpos));
+	temp &= ~lmask;
+	temp |= (lbyte & lmask);
 	deref(addr) = temp;
 	if (Write2RealScreen) {
 		BufSelSFR = 4;
@@ -536,8 +537,8 @@ void tui_draw_byte(byte x, byte y, byte data, byte data2, byte mask) {
 		addr += 0x600;
 	}
 	temp = deref(addr);
-	temp &= (0xFF << (8 - bitpos));
-	temp |= (lbyte2 & (mask >> bitpos));
+	temp &= ~lmask;
+	temp |= (lbyte2 & lmask);
 	deref(addr) = temp;
 }
 
@@ -568,6 +569,8 @@ void tui_draw_image(byte x, byte y, byte width, byte height, const byte* bitmap,
 
 	if (!rotation) {
 		byte osf = (width & 7) ? 1 : 0;
+		byte rem = width & 7;
+		byte last_mask = rem ? (0xFF << (8 - rem)) : 0xFF;
 		// No rotation, simple blit, but it's massive (https://x.com/Ninja/status/1862933454767239616) becuase doing the switch when it comes to draw the byte increases the amount of cycles
 		switch (colour) {
 		case TUI_COLOUR_WHITE:
@@ -576,7 +579,7 @@ void tui_draw_image(byte x, byte y, byte width, byte height, const byte* bitmap,
 			for (iy = 0; iy < height; iy++) {
 				for (ix = 0; ix < bwidth; ix++) {
 					mapindex = iy * bwidth + ix;
-					byte mask = (ix == bwidth - osf && osf) ? (0xFF << (8 - (width & 7))) : 0xFF;
+					byte mask = (ix == bwidth - osf && osf) ? last_mask : 0xFF;
 					tui_draw_byte(x + (ix << 3) - ax, y - ay + iy, bitmap[mapindex], 0, mask);
 				}
 			}
@@ -585,7 +588,7 @@ void tui_draw_image(byte x, byte y, byte width, byte height, const byte* bitmap,
 			for (iy = 0; iy < height; iy++) {
 				for (ix = 0; ix < bwidth; ix++) {
 					mapindex = iy * bwidth + ix;
-					byte mask = (ix == bwidth - osf && osf) ? (0xFF << (8 - (width & 7))) : 0xFF;
+					byte mask = (ix == bwidth - osf && osf) ? last_mask : 0xFF;
 					tui_draw_byte(x + (ix << 3) - ax, y - ay + iy, 0, bitmap[mapindex], mask);
 				}
 			}
@@ -594,7 +597,7 @@ void tui_draw_image(byte x, byte y, byte width, byte height, const byte* bitmap,
 			for (iy = 0; iy < height; iy++) {
 				for (ix = 0; ix < bwidth; ix++) {
 					mapindex = iy * bwidth + ix;
-					byte mask = (ix == bwidth - osf && osf) ? (0xFF << (8 - (width & 7))) : 0xFF;
+					byte mask = (ix == bwidth - osf && osf) ? last_mask : 0xFF;
 					tui_draw_byte(x + (ix << 3) - ax, y - ay + iy, bitmap[mapindex], bitmap[mapindex], mask);
 				}
 			}
@@ -603,7 +606,7 @@ void tui_draw_image(byte x, byte y, byte width, byte height, const byte* bitmap,
 			for (iy = 0; iy < height; iy++) {
 				for (ix = 0; ix < bwidth; ix++) {
 					mapindex = iy * bwidth + ix;
-					byte mask = (ix == bwidth - osf && osf) ? (0xFF << (8 - (width & 7))) : 0xFF;
+					byte mask = (ix == bwidth - osf && osf) ? last_mask : 0xFF;
 					tui_draw_byte(x + (ix << 3) - ax, y - ay + iy, bitmap[mapindex], bitmap[mapindex + psize], mask);
 				}
 			}
