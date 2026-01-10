@@ -209,11 +209,15 @@ static void render_div(TmlElement* elem, byte world_x, byte world_y, word world_
 
 static void render_line(TmlElement* elem, byte world_x, byte world_y, word world_rot) {
 	TmlLineData* line = &elem->data.line;
-	
+	TmlElement* parent = elem->parent;
 	byte x0 = world_x - elem->anchor_x;
 	byte y0 = world_y - elem->anchor_y;
-	byte x1 = world_x + line->x1 - elem->anchor_x;
+	/*
+	byte x1 = world_x + line->x1 - elem->anchor_x; // Offset from line pos
 	byte y1 = world_y + line->y1 - elem->anchor_y;
+	*/
+	byte x1 = parent->x + line->x1 - elem->anchor_x; // Offset from parent pos
+	byte y1 = parent->y + line->y1 - elem->anchor_y;
 	
 	// Apply rotation if needed
 	if (world_rot != 0) {
@@ -226,6 +230,7 @@ static void render_line(TmlElement* elem, byte world_x, byte world_y, word world
 	
 	tui_draw_line(x0, y0, x1, y1, elem->colour, line->thickness, line->style);
 }
+
 
 static void render_checkbox(TmlElement* elem, byte world_x, byte world_y, word world_rot) {
 	TmlCheckboxData* cb = &elem->data.checkbox;
