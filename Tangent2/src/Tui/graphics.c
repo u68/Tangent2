@@ -9,6 +9,7 @@
 #include "graphics.h"
 #include "lut.h"
 #include "ysglfonts.h"
+#include "../debug.h"
 
 // Internal static defs
 static void __tui_clear_screen_real_buf_2();
@@ -254,6 +255,9 @@ static void __tui_set_pixel_real(byte x, byte y, byte colour) {
 		deref(0xF037) = 4;
 		deref(addr) |= ty;
 		break;
+	default:
+		trigger_bsod(ERROR_TUI_INVALID_COLOUR);
+		break;
 	}
 }
 
@@ -288,6 +292,9 @@ static void __tui_set_pixel(byte x, byte y, byte colour) {
 	case 3:
 		deref(addr) |= ty;		// Set both bitplanes bits to 1
 		deref(addr+0x600) |= ty;
+		break;
+	default:
+		trigger_bsod(ERROR_TUI_INVALID_COLOUR);
 		break;
 	}
 }
@@ -355,6 +362,11 @@ void tui_draw_line(byte x0, byte y0, byte x1, byte y1, byte colour, byte thickne
 	case TUI_STYLE_DASHED:
 		pattern = 0xF8;
 		break;
+	case TUI_STYLE_DOUBLE:
+		break;
+	default:
+		trigger_bsod(ERROR_TUI_INVALID_LINE_STYLE);
+		return;
 	}
 	tui_pattern_draw_line(pattern, x0, y0, x1, y1, colour, thickness);
 }
@@ -451,6 +463,11 @@ void tui_get_font_size(byte font_size, byte* width, byte* height) {
 	case TUI_FONT_SIZE_12x16:
 		*width = 12;
 		*height = 16;
+		return;
+	default:
+		trigger_bsod(ERROR_TUI_INVALID_FONT_SIZE);
+		*width = 6;
+		*height = 8;
 		return;
 	}
 }
@@ -711,6 +728,7 @@ void tui_draw_char(byte x, byte y, char c, byte font_size, sbyte ax, sbyte ay, w
 		font_height = 16;
 		break;
 	default:
+		trigger_bsod(ERROR_TUI_INVALID_FONT_SIZE);
 		return;
 	}
 	tui_draw_image(x, y, font_width, font_height, &font_data[(byte)c * (font_height * ((font_width + 7) >> 3))], ax, ay, rotation, colour);

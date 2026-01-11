@@ -7,7 +7,11 @@
  */
 
 #include "glib.h"
-#include "../time.h"
+#include "../debug.h"
+
+// Declare external asm functions
+extern void __DI();
+extern void __EI();
 
 // Internal stuff
 static void render_text(TmlElement* elem, byte world_x, byte world_y, word world_rot);
@@ -89,6 +93,9 @@ void tml_render(TmlElement* root) {
 					break;
 				case TML_TYPE_RADIO:
 					render_radio(current, world_x, world_y, world_rot);
+					break;
+				default:
+					trigger_bsod(ERROR_TUI_INVALID_ELEMENT);
 					break;
 				}
 			}
@@ -179,9 +186,8 @@ static void render_button(TmlElement* elem, byte world_x, byte world_y, word wor
 			text_x += (btn->width >> 1) - (text_w >> 1);
 			text_y += btn->height - text_h;
 			break;
-		case TML_ALIGN_MIDDLE_CENTER:
-			text_x += (btn->width >> 1) - (text_w >> 1);
-			text_y += (btn->height >> 1) - (text_h >> 1);
+		default:
+			trigger_bsod(ERROR_TUI_INVALID_TEXT_ALIGNMENT);
 			break;
 		}
 		
@@ -212,12 +218,10 @@ static void render_line(TmlElement* elem, byte world_x, byte world_y, word world
 	TmlElement* parent = elem->parent;
 	byte x0 = world_x - elem->anchor_x;
 	byte y0 = world_y - elem->anchor_y;
-	/*
-	byte x1 = world_x + line->x1 - elem->anchor_x; // Offset from line pos
-	byte y1 = world_y + line->y1 - elem->anchor_y;
-	*/
-	byte x1 = parent->x + line->x1 - elem->anchor_x; // Offset from parent pos
-	byte y1 = parent->y + line->y1 - elem->anchor_y;
+	
+	byte x1, y1;
+	x1 = parent->x + line->x1 - elem->anchor_x;
+	y1 = parent->y + line->y1 - elem->anchor_y;
 	
 	// Apply rotation if needed
 	if (world_rot != 0) {
@@ -230,7 +234,6 @@ static void render_line(TmlElement* elem, byte world_x, byte world_y, word world
 	
 	tui_draw_line(x0, y0, x1, y1, elem->colour, line->thickness, line->style);
 }
-
 
 static void render_checkbox(TmlElement* elem, byte world_x, byte world_y, word world_rot) {
 	TmlCheckboxData* cb = &elem->data.checkbox;
@@ -479,9 +482,37 @@ void tml_set_colour(TmlElement* elem, byte colour) {
 	}
 }
 
+// Utilities (will be replaced with stuff from T2)
+
+// Internal delay function using Timer0
+static void tml_delay(ushort after_ticks) {
+	if ((FCON & 2) != 0) {
+		FCON &= 0xFD;
+	}
+	__DI();
+	Timer0Interval = after_ticks;
+	Timer0Counter = 0;
+	Timer0Control = 0x0101;
+	InterruptPending_W0 = 0;
+	StopAcceptor = 0x50;
+	StopAcceptor = 0xA0;
+	StopControl = 2;
+	__asm("nop");
+	__asm("nop");
+	__EI();
+}
+
 void tml_splash(const byte* image_data, word duration) {
-	tui_draw_full_image((const word*)image_data, TUI_COLOUR_IMAGE);
-	delay_s(duration);
+	byte old_write_mode = Write2RealScreen;
+	Write2RealScreen = 1;
+	
+	tui_draw_image(0, 1, 192, 63, image_data, 0, 0, 0, TUI_COLOUR_IMAGE);
+	tml_delay(duration << 3);
+	
+	tui_draw_image(0, 1, 192, 63, image_data, 0, 0, 0, TUI_COLOUR_LIGHT_GREY);
+	tml_delay(4000);
+	
+	Write2RealScreen = old_write_mode;
 }
 
 // Helper to read word from byte array (little-endian)
@@ -558,6 +589,9 @@ TmlElement* tml_parse(const byte* data, TmlElement* elements, byte max_elems) {
 				elem->data.radio.size = 8;
 				elem->data.radio.border_thickness = 1;
 				elem->data.radio.selected = 0;
+				break;
+			default:
+				trigger_bsod(ERROR_TUI_INVALID_ELEMENT);
 				break;
 			}
 			
@@ -649,6 +683,9 @@ TmlElement* tml_parse(const byte* data, TmlElement* elements, byte max_elems) {
 					break;
 				case FIELD_ANCHOR_Y:
 					elem->anchor_y = *p++;
+					break;
+				default:
+					trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD);
 					break;
 				}
 			}

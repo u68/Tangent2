@@ -105,7 +105,10 @@
  #define KeyboardInPullUp *((volatile __near byte *)0xF041)
  #define KeyboardInMask *((volatile __near byte *)0xF042)
  // Although KO has 2 bytes.but only 7 bits are used. so just ignore that.
- #define KeyboardOutMask *((volatile __near byte *)0xF044)
- #define KeyboardOut *((volatile __near byte *)0xF046)
- #endif
+#define KeyboardOutMask *((volatile __near byte *)0xF044)
+#define KeyboardOut *((volatile __near byte *)0xF046)
+
+void __DI();
+void __EI();
+#endif
 

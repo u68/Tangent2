@@ -27,6 +27,15 @@
 #define TICKS_PER_MS 8
 #define TICKS_PER_SECOND 8000
 
+typedef enum {
+    TIME_FORMAT_24H,
+    TIME_FORMAT_12H,
+    TIME_FORMAT_24H_WITH_SECONDS,
+    TIME_FORMAT_12H_WITH_SECONDS,
+} format_t;
+
+void get_time_string(format_t format, char* out);
+
 // TODO: alarms
 
 void rtc_reset();

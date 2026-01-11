@@ -10,10 +10,12 @@
 #include "heap.h"
 #include "desktop.h"
 
+// Custom breakpoint handler
 void custom_break() {
 
 }
 
+// Main entry point
 int main() {
 	Write2RealScreen = 0;
 	tui_clear_screen();
