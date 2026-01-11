@@ -7,7 +7,7 @@
  */
 
 #include "glib.h"
-#include "../debug.h"
+#include "../debug/debug.h"
 
 // Declare external asm functions
 extern void __DI();

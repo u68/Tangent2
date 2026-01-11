@@ -7,7 +7,7 @@
 
 #include "debug.h"
 #include "bsod.h"
-#include "Tui/glib.h"
+#include "../tui/glib.h"
 
 // Helper: convert nibble to hex char
 static char nibble_to_hex(byte n) {

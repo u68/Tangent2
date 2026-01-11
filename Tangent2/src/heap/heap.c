@@ -6,7 +6,6 @@
  */
 
 #include "heap.h"
-#include "base.h"
 
 #define HEAP_START_ADDR 0x9C04
 #define HEAP_MAX_SIZE   0x2000

@@ -9,7 +9,7 @@
 #include "graphics.h"
 #include "lut.h"
 #include "ysglfonts.h"
-#include "../debug.h"
+#include "../debug/debug.h"
 
 // Internal static defs
 static void __tui_clear_screen_real_buf_2();

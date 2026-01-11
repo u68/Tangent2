@@ -8,7 +8,7 @@
 #ifndef HEAP_H_
 #define HEAP_H_
 
-#include "base.h"
+#include "../base.h"
 
 void hinit();
 void hmerge();

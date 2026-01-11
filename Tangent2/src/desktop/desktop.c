@@ -6,8 +6,8 @@
  */
 
 #include "desktop.h"
-#include "Tui/glib.h"
-#include "heap.h"
+#include "../tui/glib.h"
+#include "../heap/heap.h"
 
 #define ID_TASKBAR 1
 #define ID_WINDOW 2

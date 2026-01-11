@@ -7,7 +7,6 @@
 
 
 #include "lut.h"
-#include "../base.h"
 
 // Auto generated sin table
 const sbyte tui_sin_table[360] = {

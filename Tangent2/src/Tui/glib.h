@@ -11,7 +11,6 @@
 #ifndef GLIB_H_
 #define GLIB_H_
 
-#include "../base.h"
 #include "graphics.h"
 
 // Element types

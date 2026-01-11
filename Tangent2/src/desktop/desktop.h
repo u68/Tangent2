@@ -8,8 +8,10 @@
 #ifndef DESKTOP_H_
 #define DESKTOP_H_
 
-#include "base.h"
-#include "Tui/glib.h"
+#include "../base.h"
+
+/* Forward declaration to avoid pulling in the entire TUI header */
+typedef struct TmlElement TmlElement;
 
 TmlElement* desktop_init(void);
 void desktop_render(TmlElement* root);

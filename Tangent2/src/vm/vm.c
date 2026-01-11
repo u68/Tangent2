@@ -6,9 +6,9 @@
  */
 
 #include "vm.h"
-#include "Tui/glib.h"
-#include "heap.h"
-#include "debug.h"
+#include "../tui/glib.h"
+#include "../heap/heap.h"
+#include "../debug/debug.h"
 
 // Internals
 
@@ -323,8 +323,10 @@ void vm_init(TangentMachine* vm, byte* code) {
     vm->code = code;
     vm->vm_properties.code_size = *((word*)code);
     vm->vm_properties.ram_size = *((word*)(code + 2));
+    vm->vm_properties.uses_ram = 1; /* ensure memory ops are enabled */
     vm->vm_properties.running = 1;
     vm->sp = vm->vm_properties.ram_size; // Stack pointer starts at top of RAM
+    vm->pc = 4; /* code starts after the 2-word header */
 }
 
 // Create new VM from bytecode, add to pool, expand pool if needed
@@ -387,6 +389,12 @@ void vm_step(TangentMachine* vm) {
     byte opcode = vm->code[vm->pc];
 
     switch(opcode) {
+        case 0x67: // Test
+            {
+                vm->ram[0]++;
+                vm->pc += 1;
+            }
+            break;
         default:
             trigger_bsod(ERROR_VM_INVALID_INSTRUCTION);
             break;

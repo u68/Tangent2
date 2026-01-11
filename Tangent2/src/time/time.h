@@ -8,7 +8,7 @@
 #ifndef TIME_H_
 #define TIME_H_
 
-#include "base.h"
+#include "../base.h"
 #define RTC_ENABLE *((volatile __near byte *)0xF0C7)
 #define RTC_SECONDS *((volatile __near byte *)0xF0C0)
 #define RTC_MINUTES *((volatile __near byte *)0xF0C1)
