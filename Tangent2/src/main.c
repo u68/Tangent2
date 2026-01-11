@@ -7,15 +7,17 @@
  *
 */
 
-#include "tui/glib.h"
+#include "base.h"
 #include "heap/heap.h"
-#include "desktop/desktop.h"
+#include "tui/graphics.h"
 #include "vm/vm.h"
 
 // Custom breakpoint handler (called when BRK executed in asm)
 void custom_break() {
 
 }
+
+#define num_vms 144
 
 // Main entry point
 int main() {
@@ -25,25 +27,33 @@ int main() {
     hinit();
 
     vm_init_system();
-    // Set code size to 10, and ram to 10, and 5 67's (test instruction that increments ram[0])
-    static const byte example_program[] = { 10, 0, 10, 0, 0x67, 0x67, 0x67, 0x67, 0x67 };
+    // Set code size to 6, ram to 2, with five 0x67 test instructions
+    static const byte example_program[] = { 6, 0, 2, 0, 0x67, 0x67, 0x67, 0x67, 0x67, 0x61 };
 
-    TangentMachine* vm1 = vm_spawn((byte*)example_program);
-    TangentMachine* vm2 = vm_spawn((byte*)example_program);
-    TangentMachine* vm3 = vm_spawn((byte*)example_program);
-    TangentMachine* vm4 = vm_spawn((byte*)example_program);
-    TangentMachine* vm5 = vm_spawn((byte*)example_program);
-
-    // Step all VMs 5 times
-    for (int i = 0; i < 5; i++) {
-        vm_step_all();
+    TangentMachine* vms[num_vms];
+    for (int i = 0; i < num_vms; i++) {
+        vms[i] = vm_spawn((byte*)example_program);
     }
 
-    // Store each VM's ram[0] into 0x9100..0x9104 to inspect results
-    deref(0x9100) = vm1 ? vm1->ram[0] : 0;
-    deref(0x9101) = vm2 ? vm2->ram[0] : 0;
-    deref(0x9102) = vm3 ? vm3->ram[0] : 0;
-    deref(0x9103) = vm4 ? vm4->ram[0] : 0;
-    deref(0x9104) = vm5 ? vm5->ram[0] : 0;
+    while(1) {
+    	if (deref(0xE010) == 0x67) {
+    		break;
+    	}
+    }
+
+    // Step all VMs 100 times
+    for (int step = 0; step < 100; step++) {
+        vm_step_all();
+    }
+    deref(0xE011) = 0x67;
+    /*for (int step = 0; step < 5; step++) {
+            vm_step_all();
+        }*/
+
+    // Store each VM's ram[0] into 0x9100 to inspect results
+    for (int i = 0; i < num_vms; i++) {
+        deref(0x9100 + i) = vms[i] ? vms[i]->ram[0] : 0;
+    }
 	return 0;
 }
+
