@@ -26,6 +26,8 @@
 
 </div>
 
+## We have a [Discord Server](https://discord.gg/hB863urWnB) now, come check it out!
+
 ## Overview
 
 Tangent2 is a complete ground-up rewrite of the original Tangent OS experiment. The goal is to create a functional, usable operating system targeting calculator hardware, complete with a custom development toolkit.
@@ -546,13 +548,13 @@ cd TangentSDK
 ./build.sh
 ```
 
-The build script will compil everything, and automatically launch the app when completed.
+The build script will compile everything, and automatically launch the app when completed.
 
 > **Note:** The OS itself has some compiler-specific dependencies that make standalone builds tricky. The SDK includes prebuilt OS binaries and will eventually support building the OS directly inside the SDK, allowing you to modify it to your needs.
 
 ### Having Issues?
 
-If the build doesn't work on your setup — fork it, fix it, and open a pull request. Contributions are welcome.
+Let me know on the [Discord Server](https://discord.gg/hB863urWnB), I will rarely keep up with github pull requests sorry.
 
 ---
 
@@ -647,6 +649,7 @@ This project is licensed under the MIT License — see the [LICENSE](LICENSE) fi
 **[Report Bug](../../issues) · [Request Feature](../../issues)**
 
 </div>
+
 
 
 
