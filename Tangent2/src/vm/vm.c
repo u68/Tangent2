@@ -29,6 +29,106 @@
 static TangentMachine** vm_pool = 0;
 static word vm_capacity = 0;
 
+// Opcode definitions
+// 0x00 - 0x0F: Data movement
+// 0x10 - 0x1F: Stack operations
+// 0x20 - 0x2F: ALU operations
+// 0x30 - 0x3F: Logical operations
+// 0x40 - 0x4F: Misc Alu/Logical/Comparison
+// 0x50 - 0x5F: Control flow
+// 0x60 - 0x6F: 
+typedef enum {
+    OP_MOV8_REG_REG, // Data movement
+    OP_MOV8_REG_IMM,
+    OP_MOV16_REG_REG,
+    OP_MOV16_REG_IMM,
+    OP_LOAD8_REG_MREG,
+    OP_LOAD8_REG_MIMM,
+    OP_LOAD16_REG_MREG,
+    OP_LOAD16_REG_MIMM,
+    OP_STORE8_MREG_REG,
+    OP_STORE8_MIMM_REG,
+    OP_STORE16_MREG_REG,
+    OP_STORE16_MIMM_REG,
+    // (4 more opcodes here if needed)
+
+    OP_PUSH8_REG = 0x10, // Stack operations
+    OP_PUSH8_IMM,
+    OP_PUSH16_REG,
+    OP_PUSH16_IMM,
+    OP_POP8_REG,
+    OP_POP16_REG,
+    OP_PUSH_LR,
+    OP_POP_PC,
+    OP_PUSH_SP,
+    OP_POP_SP,
+    // (6 more opcodes here if needed)
+
+    OP_ADD8_REG_REG = 0x20, // ALU operations
+    OP_ADD8_REG_IMM,
+    OP_ADD16_REG_REG,
+    OP_ADD16_REG_IMM,
+    OP_SUB8_REG_REG,
+    OP_SUB8_REG_IMM,
+    OP_SUB16_REG_REG,
+    OP_SUB16_REG_IMM,
+    OP_MUL8_REG_REG,
+    OP_MUL8_REG_IMM,
+    OP_MUL16_REG_REG,
+    OP_MUL16_REG_IMM,
+    OP_DIV8_REG_REG,
+    OP_DIV8_REG_IMM,
+    OP_DIV16_REG_REG,
+    OP_DIV16_REG_IMM,
+    
+    OP_AND8_REG_REG, // Logical operations
+    OP_AND8_REG_IMM,
+    OP_AND16_REG_REG,
+    OP_AND16_REG_IMM,
+    OP_OR8_REG_REG,
+    OP_OR8_REG_IMM,
+    OP_OR16_REG_REG,
+    OP_OR16_REG_IMM,
+    OP_XOR8_REG_REG,
+    OP_XOR8_REG_IMM,
+    OP_XOR16_REG_REG,
+    OP_XOR16_REG_IMM,
+    OP_NOT8_REG,
+    OP_NOT16_REG,
+    // (2 more opcodes here if needed)
+    
+    OP_CMP8_REG_REG, // Comparison operations
+    OP_CMP8_REG_IMM,
+    OP_CMP16_REG_REG,
+    OP_CMP16_REG_IMM,
+    OP_SLL8_REG_REG, // Shift operations
+    OP_SLL8_REG_IMM,
+    OP_SLL16_REG_REG,
+    OP_SLL16_REG_IMM,
+    OP_SRL8_REG_REG,
+    OP_SRL8_REG_IMM,
+    OP_SRL16_REG_REG,
+    OP_SRL16_REG_IMM,
+    OP_SRA8_REG_REG,
+    OP_SRA8_REG_IMM,
+    OP_SRA16_REG_REG,
+    OP_SRA16_REG_IMM,
+
+    OP_B_REG = 0x50, // Control flow
+    OP_B_IMM,
+    OP_BEQ_IMM,
+    OP_BNE_IMM,
+    OP_BLT_IMM,
+    OP_BLE_IMM,
+    OP_BGT_IMM,
+    OP_BGE_IMM,
+    OP_BL_REG, // Branch link, pc is saved to lr, then branch
+    OP_BL_IMM,
+    // (6 more opcodes here if needed)
+
+
+} opcode_t;
+
 typedef enum {
     ALU_OP_ADD,
     ALU_OP_SUB,
@@ -66,7 +166,18 @@ static psw_flags_t cmp_words(word a, word b);
 // Syscall
 typedef enum {
     // Syscall numbers
-    DUMMY,
+    GET_ELEMENT_FIELD,
+    SET_ELEMENT_FIELD,
+    RENDER_ELEMENT,
+    DRAW_LINE,
+    SET_PIXEL,
+    GET_PIXEL,
+    DRAW_IMAGE,
+    DRAW_RECT,
+    DRAW_TEXT,
+    SLEEP,
+    STOP,
+    END,
 } syscall_t;
 
 static void vm_syscall(TangentMachine* vm, syscall_t syscall_number);
@@ -297,8 +408,29 @@ static psw_flags_t cmp_words(word a, word b) {
 // Syscall handler
 static void vm_syscall(TangentMachine* vm, syscall_t syscall_number) {
     switch (syscall_number) {
-        case DUMMY:
-            // Dummy syscall does nothing
+        case GET_ELEMENT_FIELD:
+            break;
+        case SET_ELEMENT_FIELD:
+            break;
+        case RENDER_ELEMENT:
+            break;
+        case DRAW_LINE:
+            break;
+        case SET_PIXEL:
+            break;
+        case GET_PIXEL:
+            break;
+        case DRAW_IMAGE:
+            break;
+        case DRAW_RECT:
+            break;
+        case DRAW_TEXT:
+            break;
+        case SLEEP:
+            break;
+        case STOP:
+            break;
+        case END:
             break;
         default:
             trigger_bsod(ERROR_VM_INVALID_SYSCALL);
@@ -387,6 +519,10 @@ void vm_step(TangentMachine* vm) {
 
     // Fetch instruction
     byte opcode = vm->code[vm->pc];
+    vm->pc++;
+    byte operand_whole = vm->code[vm->pc];
+    byte operand1 = operand_whole & 0x0F;
+    byte operand2 = (operand_whole >> 4) & 0x0F;
 
     switch(opcode) {
         case 0x67: // Test
