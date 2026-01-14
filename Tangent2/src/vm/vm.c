@@ -521,16 +521,29 @@ void vm_step(TangentMachine* vm) {
     byte opcode = vm->code[vm->pc];
     vm->pc++;
     byte operand_whole = vm->code[vm->pc];
-    byte operand1 = operand_whole & 0x0F;
-    byte operand2 = (operand_whole >> 4) & 0x0F;
+    byte operand1 = (operand_whole >> 4) & 0x0F;
+    byte operand2 = operand_whole & 0x0F;
 
     switch(opcode) {
+        case OP_MOV8_REG_REG:
+            {
+                vm->registers.rn[operand1] = vm->registers.rn[operand2];
+                vm->pc += 2;
+                vm->psw.raw  = 0;
+                vm->psw.field.zero = (vm->registers.rn[operand1] == 0);
+                break;
+            }
         case 0x67: // Test
             {
                 vm->ram[0]++;
                 vm->pc += 1;
+                break;
             }
-            break;
+        case 0x61:
+            {
+                vm->pc = 2;
+                break;
+            }
         default:
             trigger_bsod(ERROR_VM_INVALID_INSTRUCTION);
             break;
