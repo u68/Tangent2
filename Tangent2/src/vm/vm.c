@@ -30,16 +30,8 @@ static TangentMachine** vm_pool = 0;
 static word vm_capacity = 0;
 
 // Opcode definitions
-// 0x00 - 0x0F: Data movement
-// 0x10 - 0x1F: Stack operations
-// 0x20 - 0x2F: ALU operations
-// 0x30 - 0x3F: Logical operations
-// 0x40 - 0x4F: Misc Alu/Logical/Comparison
-// 0x50 - 0x5F: Control flow
-// 0x60 - 0x6F: 
 typedef enum {
     OP_MOV8_REG_REG, // Data movement
-    OP_MOV8_REG_IMM,
     OP_MOV16_REG_REG,
     OP_MOV16_REG_IMM,
     OP_LOAD8_REG_MREG,
@@ -50,9 +42,8 @@ typedef enum {
     OP_STORE8_MIMM_REG,
     OP_STORE16_MREG_REG,
     OP_STORE16_MIMM_REG,
-    // (4 more opcodes here if needed)
 
-    OP_PUSH8_REG = 0x10, // Stack operations
+    OP_PUSH8_REG, // Stack operations
     OP_PUSH8_IMM,
     OP_PUSH16_REG,
     OP_PUSH16_IMM,
@@ -62,43 +53,41 @@ typedef enum {
     OP_POP_PC,
     OP_PUSH_SP,
     OP_POP_SP,
-    // (6 more opcodes here if needed)
 
-    OP_ADD8_REG_REG = 0x20, // ALU operations
-    OP_ADD8_REG_IMM,
+    OP_ADD8_REG_REG, // ALU operations
     OP_ADD16_REG_REG,
     OP_ADD16_REG_IMM,
     OP_SUB8_REG_REG,
-    OP_SUB8_REG_IMM,
     OP_SUB16_REG_REG,
     OP_SUB16_REG_IMM,
+    OP_INC8_REG,
+    OP_INC16_REG,
+    OP_DEC8_REG,
+    OP_DEC16_REG,
     OP_MUL8_REG_REG,
-    OP_MUL8_REG_IMM,
     OP_MUL16_REG_REG,
     OP_MUL16_REG_IMM,
     OP_DIV8_REG_REG,
-    OP_DIV8_REG_IMM,
     OP_DIV16_REG_REG,
     OP_DIV16_REG_IMM,
+    OP_MOD8_REG_REG,
+    OP_MOD8_REG_IMM,
+    OP_MOD16_REG_REG,
+    OP_MOD16_REG_IMM,
     
     OP_AND8_REG_REG, // Logical operations
-    OP_AND8_REG_IMM,
     OP_AND16_REG_REG,
     OP_AND16_REG_IMM,
     OP_OR8_REG_REG,
-    OP_OR8_REG_IMM,
     OP_OR16_REG_REG,
     OP_OR16_REG_IMM,
     OP_XOR8_REG_REG,
-    OP_XOR8_REG_IMM,
     OP_XOR16_REG_REG,
     OP_XOR16_REG_IMM,
     OP_NOT8_REG,
     OP_NOT16_REG,
-    // (2 more opcodes here if needed)
     
     OP_CMP8_REG_REG, // Comparison operations
-    OP_CMP8_REG_IMM,
     OP_CMP16_REG_REG,
     OP_CMP16_REG_IMM,
     OP_SLL8_REG_REG, // Shift operations
@@ -114,7 +103,7 @@ typedef enum {
     OP_SRA16_REG_REG,
     OP_SRA16_REG_IMM,
 
-    OP_B_REG = 0x50, // Control flow
+    OP_B_REG, // Control flow
     OP_B_IMM,
     OP_BEQ_IMM,
     OP_BNE_IMM,
@@ -124,8 +113,18 @@ typedef enum {
     OP_BGE_IMM,
     OP_BL_REG, // Branch link, pc is saved to lr, then branch
     OP_BL_IMM,
-    // (6 more opcodes here if needed)
 
+    // The 16-aligned blocks below hold opcodes that modify a register and take an 8-bit immediate.
+    // Each listed constant is the base of a 16-entry block (dest register encoded in low nibble).
+    OP_MOV_RN_IMM = 0x50,
+    OP_ADD8_REG_IMM = 0x60,
+    OP_SUB8_REG_IMM = 0x70,
+    OP_MUL8_REG_IMM = 0x80,
+    OP_DIV8_REG_IMM = 0x90,
+    OP_AND8_REG_IMM = 0xA0,
+    OP_OR8_REG_IMM  = 0xB0,
+    OP_XOR8_REG_IMM = 0xC0,
+    OP_CMP8_REG_IMM = 0xD0,
 
 } opcode_t;
 
@@ -140,6 +139,7 @@ typedef enum {
     ALU_OP_DEC,
     ALU_OP_SLL,
     ALU_OP_SRL,
+    ALU_OP_SRA,
     ALU_OP_MUL,
     ALU_OP_DIV,
     ALU_OP_MOD,
@@ -223,12 +223,30 @@ static psw_flags_t alu_operation_byte(alu_op_t op, byte a, byte b, byte* result)
             flags.field.overflow = (a == 0x80);
             break;
         case ALU_OP_SLL:
-            res = a << 1;
+            res = a << b;
             flags.field.carry = (a & 0x80) != 0;
             break;
         case ALU_OP_SRL:
-            res = a >> 1;
+            res = a >> b;
             flags.field.carry = (a & 0x01) != 0;
+            break;
+        case ALU_OP_SRA:
+            res = (a >> b) | (a & 0x80);
+            flags.field.carry = (a & 0x01) != 0;
+            break;
+        case ALU_OP_MUL: {
+            unsigned int temp = (unsigned int)a * (unsigned int)b;
+            res = (byte)(temp & 0xFF);
+            flags.field.carry = (temp > 0xFF);
+            break;
+        }
+        case ALU_OP_DIV:
+            if (b == 0) trigger_bsod(ERROR_VM_INVALID_ALU_OPERATION);
+            else res = (byte)(a / b);
+            break;
+        case ALU_OP_MOD:
+            if (b == 0) trigger_bsod(ERROR_VM_INVALID_ALU_OPERATION);
+            else res = (byte)(a % b);
             break;
         default:
             trigger_bsod(ERROR_VM_INVALID_ALU_OPERATION);
@@ -284,12 +302,30 @@ static psw_flags_t alu_operation_word(alu_op_t op, word a, word b, word* result)
             flags.field.overflow = (a == 0x8000);
             break;
         case ALU_OP_SLL:
-            res = a << 1;
+            res = a << b;
             flags.field.carry = (a & 0x8000) != 0;
             break;
         case ALU_OP_SRL:
-            res = a >> 1;
+            res = a >> b;
             flags.field.carry = (a & 0x0001) != 0;
+            break;
+        case ALU_OP_SRA:
+            res = (a >> b) | (a & 0x8000);
+            flags.field.carry = (a & 0x0001) != 0;
+            break;
+        case ALU_OP_MUL: {
+            unsigned int temp = (unsigned int)a * (unsigned int)b;
+            res = (word)(temp & 0xFFFF);
+            flags.field.carry = (temp > 0xFFFF);
+            break;
+        }
+        case ALU_OP_DIV:
+            if (b == 0) res = 0;
+            else res = (word)(a / b);
+            break;
+        case ALU_OP_MOD:
+            if (b == 0) res = 0;
+            else res = (word)(a % b);
             break;
         default:
             trigger_bsod(ERROR_VM_INVALID_ALU_OPERATION);
@@ -362,7 +398,7 @@ static void push_stack_word(TangentMachine* vm, word value) {
 }
 
 static byte pop_stack_byte(TangentMachine* vm) {
-    if (vm->sp >= vm->vm_properties.ram_size) {
+    if (vm->sp >= vm->vm_properties.ram_size - 1) {
         trigger_bsod(ERROR_VM_STACK_UNDERFLOW);
         return 0;
     }
@@ -372,7 +408,7 @@ static byte pop_stack_byte(TangentMachine* vm) {
 }
 
 static word pop_stack_word(TangentMachine* vm) {
-    if (vm->sp + 1 >= vm->vm_properties.ram_size) {
+    if (vm->sp + 1 >= vm->vm_properties.ram_size - 2) {
         trigger_bsod(ERROR_VM_STACK_UNDERFLOW);
         return 0;
     }
@@ -455,10 +491,10 @@ void vm_init(TangentMachine* vm, byte* code) {
     vm->code = code;
     vm->vm_properties.code_size = *((word*)code);
     vm->vm_properties.ram_size = *((word*)(code + 2));
-    vm->vm_properties.uses_ram = 1; /* ensure memory ops are enabled */
+    vm->vm_properties.uses_ram = 1; // ensure memory ops are enabled
     vm->vm_properties.running = 1;
     vm->sp = vm->vm_properties.ram_size; // Stack pointer starts at top of RAM
-    vm->pc = 4; /* code starts after the 2-word header */
+    vm->pc = 4; // code starts after the 2-word header
 }
 
 // Create new VM from bytecode, add to pool, expand pool if needed
@@ -528,22 +564,900 @@ void vm_step(TangentMachine* vm) {
         case OP_MOV8_REG_REG:
             {
                 vm->registers.rn[operand1] = vm->registers.rn[operand2];
-                vm->pc += 2;
+                vm->pc += 1;
                 vm->psw.raw  = 0;
                 vm->psw.field.zero = (vm->registers.rn[operand1] == 0);
                 break;
             }
-        case 0x67: // Test
+        case OP_MOV16_REG_IMM:
             {
-                vm->ram[0]++;
+                byte dest = operand1 & 0x07;
+                word imm = (word)(vm->code[vm->pc + 1] | (vm->code[vm->pc + 2] << 8));
+                vm->registers.ern[dest] = imm;
+                vm->pc += 3;
+                vm->psw.raw = 0;
+                vm->psw.field.zero = (imm == 0);
+                break;
+            }
+        case OP_MOV16_REG_REG:
+            {
+                byte dest = operand1 & 0x07;
+                byte src = operand2 & 0x07;
+                vm->registers.ern[dest] = vm->registers.ern[src];
+                vm->pc += 1;
+                vm->psw.raw = 0;
+                vm->psw.field.zero = (vm->registers.ern[dest] == 0);
+                break;
+            }
+        case OP_LOAD8_REG_MREG:
+            {
+                byte dest = operand1;
+                byte addr_reg = operand2 & 0x07;
+                word address = vm->registers.ern[addr_reg];
+                byte value = read_memory_byte(vm, address);
+                vm->registers.rn[dest] = value;
+                vm->pc += 1;
+                vm->psw.raw = 0;
+                vm->psw.field.zero = (value == 0);
+                break;
+            }
+        case OP_LOAD8_REG_MIMM:
+            {
+                byte dest = operand1;
+                word address = (word)(vm->code[vm->pc + 1] | (vm->code[vm->pc + 2] << 8));
+                byte value = read_memory_byte(vm, address);
+                vm->registers.rn[dest] = value;
+                vm->pc += 3;
+                vm->psw.raw = 0;
+                vm->psw.field.zero = (value == 0);
+                break;
+            }
+        case OP_LOAD16_REG_MREG:
+            {
+                byte dest = operand1 & 0x07;
+                byte addr_reg = operand2 & 0x07;
+                word address = vm->registers.ern[addr_reg];
+                word value = read_memory_word(vm, address);
+                vm->registers.ern[dest] = value;
+                vm->pc += 1;
+                vm->psw.raw = 0;
+                vm->psw.field.zero = (value == 0);
+                break;
+            }
+        case OP_LOAD16_REG_MIMM:
+            {
+                byte dest = operand1 & 0x07;
+                word address = (word)(vm->code[vm->pc + 1] | (vm->code[vm->pc + 2] << 8));
+                word value = read_memory_word(vm, address);
+                vm->registers.ern[dest] = value;
+                vm->pc += 3;
+                vm->psw.raw = 0;
+                vm->psw.field.zero = (value == 0);
+                break;
+            }
+        case OP_STORE8_MREG_REG:
+            {
+                byte src = operand2;
+                byte addr_reg = operand1 & 0x07;
+                word address = vm->registers.ern[addr_reg];
+                byte value = vm->registers.rn[src];
+                write_memory_byte(vm, address, value);
                 vm->pc += 1;
                 break;
             }
-        case 0x61:
+        case OP_STORE8_MIMM_REG:
             {
-                vm->pc = 2;
+                byte src = operand2;
+                word address = (word)(vm->code[vm->pc + 1] | (vm->code[vm->pc + 2] << 8));
+                byte value = vm->registers.rn[src];
+                write_memory_byte(vm, address, value);
+                vm->pc += 3;
                 break;
             }
+        case OP_STORE16_MREG_REG:
+            {
+                byte src = operand2 & 0x07;
+                byte addr_reg = operand1 & 0x07;
+                word address = vm->registers.ern[addr_reg];
+                word value = vm->registers.ern[src];
+                write_memory_word(vm, address, value);
+                vm->pc += 1;
+                break;
+            }
+        case OP_STORE16_MIMM_REG:
+            {
+                byte src = operand2 & 0x07;
+                word address = (word)(vm->code[vm->pc + 1] | (vm->code[vm->pc + 2] << 8));
+                word value = vm->registers.ern[src];
+                write_memory_word(vm, address, value);
+                vm->pc += 3;
+                break;
+            }
+
+        case OP_PUSH8_REG:
+            {
+                byte src = operand1;
+                byte value = vm->registers.rn[src];
+                push_stack_byte(vm, value);
+                vm->pc += 1;
+                break;
+            }
+        case OP_PUSH8_IMM:
+            {
+                byte value = operand_whole;
+                push_stack_byte(vm, value);
+                vm->pc += 1;
+                break;
+            }
+        case OP_PUSH16_REG:
+            {
+                byte src = operand1 & 0x07;
+                word value = vm->registers.ern[src];
+                push_stack_word(vm, value);
+                vm->pc += 1;
+                break;
+            }
+        case OP_PUSH16_IMM:
+            {
+                word value = (word)(vm->code[vm->pc + 1] | (vm->code[vm->pc + 2] << 8));
+                push_stack_word(vm, value);
+                vm->pc += 3;
+                break;
+            }
+        case OP_POP8_REG:
+            {
+                byte dest = operand1;
+                byte value = pop_stack_byte(vm);
+                vm->registers.rn[dest] = value;
+                vm->pc += 1;
+                vm->psw.raw = 0;
+                vm->psw.field.zero = (value == 0);
+                break;
+            }
+        case OP_POP16_REG:
+            {
+                byte dest = operand1 & 0x07;
+                word value = pop_stack_word(vm);
+                vm->registers.ern[dest] = value;
+                vm->pc += 1;
+                vm->psw.raw = 0;
+                vm->psw.field.zero = (value == 0);
+                break;
+            }
+        case OP_PUSH_LR:
+            {
+                push_stack_word(vm, vm->lr);
+                vm->pc += 1;
+                break;
+            }
+        case OP_POP_PC:
+            {
+                word value = pop_stack_word(vm);
+                vm->pc = value;
+                break;
+            }
+        case OP_PUSH_SP:
+            {
+                push_stack_word(vm, vm->sp);
+                vm->pc += 1;
+                break;
+            }
+        case OP_POP_SP:
+            {
+                word value = pop_stack_word(vm);
+                vm->sp = value;
+                vm->pc += 1;
+                break;
+            }
+
+        case OP_ADD8_REG_REG:
+            {
+                byte dest = operand1;
+                byte src = operand2;
+                byte result = 0;
+                psw_flags_t flags = alu_operation_byte(ALU_OP_ADD, vm->registers.rn[dest], vm->registers.rn[src], &result);
+                vm->registers.rn[dest] = result;
+                vm->pc += 1;
+                vm->psw = flags;
+                break;
+            }
+        case OP_ADD16_REG_REG:
+            {
+                byte dest = operand1 & 0x07;
+                byte src = operand2 & 0x07;
+                word result = 0;
+                psw_flags_t flags = alu_operation_word(ALU_OP_ADD, vm->registers.ern[dest], vm->registers.ern[src], &result);
+                vm->registers.ern[dest] = result;
+                vm->pc += 1;
+                vm->psw = flags;
+                break;
+            }
+        case OP_ADD16_REG_IMM:
+            {
+                byte dest = operand1 & 0x07;
+                word imm = (word)(vm->code[vm->pc + 1] | (vm->code[vm->pc + 2] << 8));
+                word result = 0;
+                psw_flags_t flags = alu_operation_word(ALU_OP_ADD, vm->registers.ern[dest], imm, &result);
+                vm->registers.ern[dest] = result;
+                vm->pc += 3;
+                vm->psw = flags;
+                break;
+            }
+        case OP_SUB8_REG_REG:
+            {
+                byte dest = operand1;
+                byte src = operand2;
+                byte result = 0;
+                psw_flags_t flags = alu_operation_byte(ALU_OP_SUB, vm->registers.rn[dest], vm->registers.rn[src], &result);
+                vm->registers.rn[dest] = result;
+                vm->pc += 1;
+                vm->psw = flags;
+                break;
+            }
+        case OP_SUB16_REG_REG:
+            {
+                byte dest = operand1 & 0x07;
+                byte src = operand2 & 0x07;
+                word result = 0;
+                psw_flags_t flags = alu_operation_word(ALU_OP_SUB, vm->registers.ern[dest], vm->registers.ern[src], &result);
+                vm->registers.ern[dest] = result;
+                vm->pc += 1;
+                vm->psw = flags;
+                break;
+            }
+        case OP_SUB16_REG_IMM:
+            {
+                byte dest = operand1 & 0x07;
+                word imm = (word)(vm->code[vm->pc + 1] | (vm->code[vm->pc + 2] << 8));
+                word result = 0;
+                psw_flags_t flags = alu_operation_word(ALU_OP_SUB, vm->registers.ern[dest], imm, &result);
+                vm->registers.ern[dest] = result;
+                vm->pc += 3;
+                vm->psw = flags;
+                break;
+            }
+        case OP_INC8_REG:
+            {
+                byte dest = operand1;
+                byte result = 0;
+                psw_flags_t flags = alu_operation_byte(ALU_OP_INC, vm->registers.rn[dest], 0, &result);
+                vm->registers.rn[dest] = result;
+                vm->pc += 1;
+                vm->psw = flags;
+                break;
+            }
+        case OP_INC16_REG:
+            {
+                byte dest = operand1 & 0x07;
+                word result = 0;
+                psw_flags_t flags = alu_operation_word(ALU_OP_INC, vm->registers.ern[dest], 0, &result);
+                vm->registers.ern[dest] = result;
+                vm->pc += 1;
+                vm->psw = flags;
+                break;
+            }
+        case OP_DEC8_REG:
+            {
+                byte dest = operand1;
+                byte result = 0;
+                psw_flags_t flags = alu_operation_byte(ALU_OP_DEC, vm->registers.rn[dest], 0, &result);
+                vm->registers.rn[dest] = result;
+                vm->pc += 1;
+                vm->psw = flags;
+                break;
+            }
+        case OP_DEC16_REG:
+            {
+                byte dest = operand1 & 0x07;
+                word result = 0;
+                psw_flags_t flags = alu_operation_word(ALU_OP_DEC, vm->registers.ern[dest], 0, &result);
+                vm->registers.ern[dest] = result;
+                vm->pc += 1;
+                vm->psw = flags;
+                break;
+            }
+        case OP_MUL8_REG_REG:
+            {
+                byte dest = operand1;
+                byte src = operand2;
+                byte result = 0;
+                psw_flags_t flags = alu_operation_byte(ALU_OP_MUL, vm->registers.rn[dest], vm->registers.rn[src], &result);
+                vm->registers.rn[dest] = result;
+                vm->pc += 1;
+                vm->psw = flags;
+                break;
+            }
+        case OP_MUL16_REG_REG:
+            {
+                byte dest = operand1 & 0x07;
+                byte src = operand2 & 0x07;
+                word result = 0;
+                psw_flags_t flags = alu_operation_word(ALU_OP_MUL, vm->registers.ern[dest], vm->registers.ern[src], &result);
+                vm->registers.ern[dest] = result;
+                vm->pc += 1;
+                vm->psw = flags;
+                break;
+            }
+        case OP_MUL16_REG_IMM:
+            {
+                byte dest = operand1 & 0x07;
+                word imm = (word)(vm->code[vm->pc + 1] | (vm->code[vm->pc + 2] << 8));
+                word result = 0;
+                psw_flags_t flags = alu_operation_word(ALU_OP_MUL, vm->registers.ern[dest], imm, &result);
+                vm->registers.ern[dest] = result;
+                vm->pc += 3;
+                vm->psw = flags;
+                break;
+            }
+        case OP_DIV8_REG_REG:
+            {
+                byte dest = operand1;
+                byte src = operand2;
+                byte result = 0;
+                psw_flags_t flags = alu_operation_byte(ALU_OP_DIV, vm->registers.rn[dest], vm->registers.rn[src], &result);
+                vm->registers.rn[dest] = result;
+                vm->pc += 1;
+                vm->psw = flags;
+                break;
+            }
+        case OP_DIV16_REG_REG:
+            {
+                byte dest = operand1 & 0x07;
+                byte src = operand2 & 0x07;
+                word result = 0;
+                psw_flags_t flags = alu_operation_word(ALU_OP_DIV, vm->registers.ern[dest], vm->registers.ern[src], &result);
+                vm->registers.ern[dest] = result;
+                vm->pc += 1;
+                vm->psw = flags;
+                break;
+            }
+        case OP_DIV16_REG_IMM:
+            {
+                byte dest = operand1 & 0x07;
+                word imm = (word)(vm->code[vm->pc + 1] | (vm->code[vm->pc + 2] << 8));
+                word result = 0;
+                psw_flags_t flags = alu_operation_word(ALU_OP_DIV, vm->registers.ern[dest], imm, &result);
+                vm->registers.ern[dest] = result;
+                vm->pc += 3;
+                vm->psw = flags;
+                break;
+            }
+        case OP_MOD8_REG_REG:
+            {
+                byte dest = operand1;
+                byte src = operand2;
+                byte result = 0;
+                psw_flags_t flags = alu_operation_byte(ALU_OP_MOD, vm->registers.rn[dest], vm->registers.rn[src], &result);
+                vm->registers.rn[dest] = result;
+                vm->pc += 1;
+                vm->psw = flags;
+                break;
+            }
+        case OP_MOD8_REG_IMM:
+            {
+                byte dest = operand1;
+                byte imm = vm->code[vm->pc+1];
+                byte result = 0;
+                psw_flags_t flags = alu_operation_byte(ALU_OP_MOD, vm->registers.rn[dest], imm, &result);
+                vm->registers.rn[dest] = result;
+                vm->pc += 3;
+                vm->psw = flags;
+                break;
+            }
+        case OP_MOD16_REG_REG:
+            {
+                byte dest = operand1 & 0x07;
+                byte src = operand2 & 0x07;
+                word result = 0;
+                psw_flags_t flags = alu_operation_word(ALU_OP_MOD, vm->registers.ern[dest], vm->registers.ern[src], &result);
+                vm->registers.ern[dest] = result;
+                vm->pc += 1;
+                vm->psw = flags;
+                break;
+            }
+        case OP_MOD16_REG_IMM:
+            {
+                byte dest = operand1 & 0x07;
+                word imm = (word)(vm->code[vm->pc + 1] | (vm->code[vm->pc + 2] << 8));
+                word result = 0;
+                psw_flags_t flags = alu_operation_word(ALU_OP_MOD, vm->registers.ern[dest], imm, &result);
+                vm->registers.ern[dest] = result;
+                vm->pc += 3;
+                vm->psw = flags;
+                break;
+            }
+        case OP_AND8_REG_REG:
+            {
+                byte dest = operand1;
+                byte src = operand2;
+                byte result = 0;
+                psw_flags_t flags = alu_operation_byte(ALU_OP_AND, vm->registers.rn[dest], vm->registers.rn[src], &result);
+                vm->registers.rn[dest] = result;
+                vm->pc += 1;
+                vm->psw = flags;
+                break;
+            }
+        case OP_AND16_REG_REG:
+            {
+                byte dest = operand1 & 0x07;
+                byte src = operand2 & 0x07;
+                word result = 0;
+                psw_flags_t flags = alu_operation_word(ALU_OP_AND, vm->registers.ern[dest], vm->registers.ern[src], &result);
+                vm->registers.ern[dest] = result;
+                vm->pc += 1;
+                vm->psw = flags;
+                break;
+            }
+        case OP_AND16_REG_IMM:
+            {
+                byte dest = operand1 & 0x07;
+                word imm = (word)(vm->code[vm->pc + 1] | (vm->code[vm->pc + 2] << 8));
+                word result = 0;
+                psw_flags_t flags = alu_operation_word(ALU_OP_AND, vm->registers.ern[dest], imm, &result);
+                vm->registers.ern[dest] = result;
+                vm->pc += 3;
+                vm->psw = flags;
+                break;
+            }
+        case OP_OR8_REG_REG:
+            {
+                byte dest = operand1;
+                byte src = operand2;
+                byte result = 0;
+                psw_flags_t flags = alu_operation_byte(ALU_OP_OR, vm->registers.rn[dest], vm->registers.rn[src], &result);
+                vm->registers.rn[dest] = result;
+                vm->pc += 1;
+                vm->psw = flags;
+                break;
+            }
+        case OP_OR16_REG_REG:
+            {
+                byte dest = operand1 & 0x07;
+                byte src = operand2 & 0x07;
+                word result = 0;
+                psw_flags_t flags = alu_operation_word(ALU_OP_OR, vm->registers.ern[dest], vm->registers.ern[src], &result);
+                vm->registers.ern[dest] = result;
+                vm->pc += 1;
+                vm->psw = flags;
+                break;
+            }
+        case OP_OR16_REG_IMM:
+            {
+                byte dest = operand1 & 0x07;
+                word imm = (word)(vm->code[vm->pc + 1] | (vm->code[vm->pc + 2] << 8));
+                word result = 0;
+                psw_flags_t flags = alu_operation_word(ALU_OP_OR, vm->registers.ern[dest], imm, &result);
+                vm->registers.ern[dest] = result;
+                vm->pc += 3;
+                vm->psw = flags;
+                break;
+            }
+        case OP_XOR8_REG_REG:
+            {
+                byte dest = operand1;
+                byte src = operand2;
+                byte result = 0;
+                psw_flags_t flags = alu_operation_byte(ALU_OP_XOR, vm->registers.rn[dest], vm->registers.rn[src], &result);
+                vm->registers.rn[dest] = result;
+                vm->pc += 1;
+                vm->psw = flags;
+                break;
+            }
+        case OP_XOR16_REG_REG:
+            {
+                byte dest = operand1 & 0x07;
+                byte src = operand2 & 0x07;
+                word result = 0;
+                psw_flags_t flags = alu_operation_word(ALU_OP_XOR, vm->registers.ern[dest], vm->registers.ern[src], &result);
+                vm->registers.ern[dest] = result;
+                vm->pc += 1;
+                vm->psw = flags;
+                break;
+            }
+        case OP_XOR16_REG_IMM:
+            {
+                byte dest = operand1 & 0x07;
+                word imm = (word)(vm->code[vm->pc + 1] | (vm->code[vm->pc + 2] << 8));
+                word result = 0;
+                psw_flags_t flags = alu_operation_word(ALU_OP_XOR, vm->registers.ern[dest], imm, &result);
+                vm->registers.ern[dest] = result;
+                vm->pc += 3;
+                vm->psw = flags;
+                break;
+            }
+        case OP_NOT8_REG:
+            {
+                byte dest = operand1;
+                byte result = 0;
+                psw_flags_t flags = alu_operation_byte(ALU_OP_NOT, vm->registers.rn[dest], 0, &result);
+                vm->registers.rn[dest] = result;
+                vm->pc += 1;
+                vm->psw = flags;
+                break;
+            }
+        case OP_NOT16_REG:
+            {
+                byte dest = operand1 & 0x07;
+                word result = 0;
+                psw_flags_t flags = alu_operation_word(ALU_OP_NOT, vm->registers.ern[dest], 0, &result);
+                vm->registers.ern[dest] = result;
+                vm->pc += 1;
+                vm->psw = flags;
+                break;
+            }
+
+        case OP_CMP8_REG_REG:
+            {
+                byte reg1 = operand1;
+                byte reg2 = operand2;
+                psw_flags_t flags = cmp_bytes(vm->registers.rn[reg1], vm->registers.rn[reg2]);
+                vm->pc += 1;
+                vm->psw = flags;
+                break;
+            }
+        
+        case OP_CMP16_REG_REG:
+            {
+                byte reg1 = operand1 & 0x07;
+                byte reg2 = operand2 & 0x07;
+                psw_flags_t flags = cmp_words(vm->registers.ern[reg1], vm->registers.ern[reg2]);
+                vm->pc += 1;
+                vm->psw = flags;
+                break;
+            }
+        case OP_CMP16_REG_IMM:
+            {
+                byte reg1 = operand1 & 0x07;
+                word imm = (word)(vm->code[vm->pc + 1] | (vm->code[vm->pc + 2] << 8));
+                psw_flags_t flags = cmp_words(vm->registers.ern[reg1], imm);
+                vm->pc += 3;
+                vm->psw = flags;
+                break;
+            }
+        case OP_SLL8_REG_REG:
+            {
+                byte dest = operand1;
+                byte src = operand2;
+                byte result = 0;
+                psw_flags_t flags = alu_operation_byte(ALU_OP_SLL, vm->registers.rn[dest], vm->registers.rn[src], &result);
+                vm->registers.rn[dest] = result;
+                vm->pc += 1;
+                vm->psw = flags;
+                break;
+            }
+        case OP_SLL8_REG_IMM:
+            {
+                byte dest = operand1;
+                byte imm = operand2;
+                byte result = 0;
+                psw_flags_t flags = alu_operation_byte(ALU_OP_SLL, vm->registers.rn[dest], imm, &result);
+                vm->registers.rn[dest] = result;
+                vm->pc += 1;
+                vm->psw = flags;
+                break;
+            }
+        case OP_SLL16_REG_REG:
+            {
+                byte dest = operand1 & 0x07;
+                byte src = operand2 & 0x07;
+                word result = 0;
+                psw_flags_t flags = alu_operation_word(ALU_OP_SLL, vm->registers.ern[dest], vm->registers.ern[src], &result);
+                vm->registers.ern[dest] = result;
+                vm->pc += 1;
+                vm->psw = flags;
+                break;
+            }
+        case OP_SLL16_REG_IMM:
+            {
+                byte dest = operand1 & 0x07;
+                byte imm = operand2;
+                word result = 0;
+                psw_flags_t flags = alu_operation_word(ALU_OP_SLL, vm->registers.ern[dest], (word)imm, &result);
+                vm->registers.ern[dest] = result;
+                vm->pc += 1;
+                vm->psw = flags;
+                break;
+            }
+        case OP_SRL8_REG_REG:
+            {
+                byte dest = operand1;
+                byte src = operand2;
+                byte result = 0;
+                psw_flags_t flags = alu_operation_byte(ALU_OP_SRL, vm->registers.rn[dest], vm->registers.rn[src], &result);
+                vm->registers.rn[dest] = result;
+                vm->pc += 1;
+                vm->psw = flags;
+                break;
+            }
+        case OP_SRL8_REG_IMM:
+            {
+                byte dest = operand1;
+                byte imm = operand2;
+                byte result = 0;
+                psw_flags_t flags = alu_operation_byte(ALU_OP_SRL, vm->registers.rn[dest], imm, &result);
+                vm->registers.rn[dest] = result;
+                vm->pc += 1;
+                vm->psw = flags;
+                break;
+            }
+        case OP_SRL16_REG_REG:
+            {
+                byte dest = operand1 & 0x07;
+                byte src = operand2 & 0x07;
+                word result = 0;
+                psw_flags_t flags = alu_operation_word(ALU_OP_SRL, vm->registers.ern[dest], vm->registers.ern[src], &result);
+                vm->registers.ern[dest] = result;
+                vm->pc += 1;
+                vm->psw = flags;
+                break;
+            }
+        case OP_SRL16_REG_IMM:
+            {
+                byte dest = operand1 & 0x07;
+                byte imm = operand2;
+                word result = 0;
+                psw_flags_t flags = alu_operation_word(ALU_OP_SRL, vm->registers.ern[dest], (word)imm, &result);
+                vm->registers.ern[dest] = result;
+                vm->pc += 1;
+                vm->psw = flags;
+                break;
+            }
+        case OP_SRA8_REG_REG:
+            {
+                byte dest = operand1;
+                byte src = operand2;
+                byte result = 0;
+                psw_flags_t flags = alu_operation_byte(ALU_OP_SRA, vm->registers.rn[dest], vm->registers.rn[src], &result);
+                vm->registers.rn[dest] = result;
+                vm->pc += 1;
+                vm->psw = flags;
+                break;
+            }
+        case OP_SRA8_REG_IMM:
+            {
+                byte dest = operand1;
+                byte imm = operand2;
+                byte result = 0;
+                psw_flags_t flags = alu_operation_byte(ALU_OP_SRA, vm->registers.rn[dest], imm, &result);
+                vm->registers.rn[dest] = result;
+                vm->pc += 1;
+                vm->psw = flags;
+                break;
+            }
+        case OP_SRA16_REG_REG:
+            {
+                byte dest = operand1 & 0x07;
+                byte src = operand2 & 0x07;
+                word result = 0;
+                psw_flags_t flags = alu_operation_word(ALU_OP_SRA, vm->registers.ern[dest], vm->registers.ern[src], &result);
+                vm->registers.ern[dest] = result;
+                vm->pc += 1;
+                vm->psw = flags;
+                break;
+            }
+        case OP_SRA16_REG_IMM:
+            {
+                byte dest = operand1 & 0x07;
+                byte imm = operand2;
+                word result = 0;
+                psw_flags_t flags = alu_operation_word(ALU_OP_SRA, vm->registers.ern[dest], (word)imm, &result);
+                vm->registers.ern[dest] = result;
+                vm->pc += 1;
+                vm->psw = flags;
+                break;
+            }
+        case OP_B_REG:
+            {
+                byte addr_reg = operand1 & 0x07;
+                word address = vm->registers.ern[addr_reg];
+                vm->pc = address;
+                break;
+            }
+        case OP_B_IMM:
+            {
+                word address = (word)(vm->code[vm->pc] | (vm->code[vm->pc + 1] << 8));
+                vm->pc = address;
+                break;
+            }
+        case OP_BEQ_IMM:
+            {
+                word address = vm->pc - operand_whole;
+                if (UNSIGNED_EQ(vm->psw)) {
+                    vm->pc = address;
+                } else {
+                    vm->pc += 1;
+                }
+                break;
+            }
+        case OP_BNE_IMM:
+            {
+                word address = vm->pc - operand_whole;
+                if (UNSIGNED_NE(vm->psw)) {
+                    vm->pc = address;
+                } else {
+                    vm->pc += 1;
+                }
+                break;
+            }
+        case OP_BLT_IMM:
+            {
+                word address = vm->pc - operand_whole;
+                if (UNSIGNED_LT(vm->psw)) {
+                    vm->pc = address;
+                } else {
+                    vm->pc += 1;
+                }
+                break;
+            }
+        case OP_BLE_IMM:
+            {
+                word address = vm->pc - operand_whole;
+                if (UNSIGNED_LE(vm->psw)) {
+                    vm->pc = address;
+                } else {
+                    vm->pc += 1;
+                }
+                break;
+            }
+        case OP_BGT_IMM:
+            {
+                word address = vm->pc - operand_whole;
+                if (UNSIGNED_GT(vm->psw)) {
+                    vm->pc = address;
+                } else {
+                    vm->pc += 1;
+                }
+                break;
+            }
+        case OP_BGE_IMM:
+            {
+                word address = vm->pc - operand_whole;
+                if (UNSIGNED_GE(vm->psw)) {
+                    vm->pc = address;
+                } else {
+                    vm->pc += 1;
+                }
+                break;
+            }
+        case OP_BL_REG:
+            {
+                byte addr_reg = operand1 & 0x07;
+                word address = vm->registers.ern[addr_reg];
+                vm->lr = vm->pc;
+                vm->pc = address;
+                break;
+            }
+        case OP_BL_IMM:
+            {
+                word address = (word)(vm->code[vm->pc] | (vm->code[vm->pc + 1] << 8));
+                vm->lr = vm->pc + 2;
+                vm->pc = address;
+                break;
+            }
+
+        // OP_MOV_RN_IMM 0x50-0x5F
+        case 0x50: case 0x51: case 0x52: case 0x53: case 0x54: case 0x55: case 0x56: case 0x57:
+        case 0x58: case 0x59: case 0x5A: case 0x5B: case 0x5C: case 0x5D: case 0x5E: case 0x5F:
+            {
+                byte dest = opcode & 0x0F;
+                byte imm = operand_whole;
+                vm->registers.rn[dest] = imm;
+                vm->pc += 1;
+                vm->psw.raw = 0;
+                vm->psw.field.zero = (imm == 0);
+                break;
+            }
+
+        // OP_ADD8_REG_IMM 0x60-0x6F
+        case 0x60: case 0x61: case 0x62: case 0x63: case 0x64: case 0x65: case 0x66: case 0x67:
+        case 0x68: case 0x69: case 0x6A: case 0x6B: case 0x6C: case 0x6D: case 0x6E: case 0x6F:
+            {
+                byte dest = opcode & 0x0F;
+                byte imm = operand_whole;
+                byte result = 0;
+                psw_flags_t flags = alu_operation_byte(ALU_OP_ADD, vm->registers.rn[dest], imm, &result);
+                vm->registers.rn[dest] = result;
+                vm->pc += 1;
+                vm->psw = flags;
+                break;
+            }
+
+        // OP_SUB8_REG_IMM 0x70-0x7F
+        case 0x70: case 0x71: case 0x72: case 0x73: case 0x74: case 0x75: case 0x76: case 0x77:
+        case 0x78: case 0x79: case 0x7A: case 0x7B: case 0x7C: case 0x7D: case 0x7E: case 0x7F:
+            {
+                byte dest = opcode & 0x0F;
+                byte imm = operand_whole;
+                byte result = 0;
+                psw_flags_t flags = alu_operation_byte(ALU_OP_SUB, vm->registers.rn[dest], imm, &result);
+                vm->registers.rn[dest] = result;
+                vm->pc += 1;
+                vm->psw = flags;
+                break;
+            }
+
+        // OP_MUL8_REG_IMM 0x80-0x8F
+        case 0x80: case 0x81: case 0x82: case 0x83: case 0x84: case 0x85: case 0x86: case 0x87:
+        case 0x88: case 0x89: case 0x8A: case 0x8B: case 0x8C: case 0x8D: case 0x8E: case 0x8F:
+            {
+                byte dest = opcode & 0x0F;
+                byte imm = operand_whole;
+                byte result = 0;
+                psw_flags_t flags = alu_operation_byte(ALU_OP_MUL, vm->registers.rn[dest], imm, &result);
+                vm->registers.rn[dest] = result;
+                vm->pc += 1;
+                vm->psw = flags;
+                break;
+            }
+
+        // OP_DIV8_REG_IMM 0x90-0x9F
+        case 0x90: case 0x91: case 0x92: case 0x93: case 0x94: case 0x95: case 0x96: case 0x97:
+        case 0x98: case 0x99: case 0x9A: case 0x9B: case 0x9C: case 0x9D: case 0x9E: case 0x9F:
+            {
+                byte dest = opcode & 0x0F;
+                byte imm = operand_whole;
+                byte result = 0;
+                psw_flags_t flags = alu_operation_byte(ALU_OP_DIV, vm->registers.rn[dest], imm, &result);
+                vm->registers.rn[dest] = result;
+                vm->pc += 1;
+                vm->psw = flags;
+                break;
+            }
+
+        // OP_AND8_REG_IMM 0xA0-0xAF
+        case 0xA0: case 0xA1: case 0xA2: case 0xA3: case 0xA4: case 0xA5: case 0xA6: case 0xA7:
+        case 0xA8: case 0xA9: case 0xAA: case 0xAB: case 0xAC: case 0xAD: case 0xAE: case 0xAF:
+            {
+                byte dest = opcode & 0x0F;
+                byte imm = operand_whole;
+                byte result = 0;
+                psw_flags_t flags = alu_operation_byte(ALU_OP_AND, vm->registers.rn[dest], imm, &result);
+                vm->registers.rn[dest] = result;
+                vm->pc += 1;
+                vm->psw = flags;
+                break;
+            }
+
+        // OP_OR8_REG_IMM 0xB0-0xBF
+        case 0xB0: case 0xB1: case 0xB2: case 0xB3: case 0xB4: case 0xB5: case 0xB6: case 0xB7:
+        case 0xB8: case 0xB9: case 0xBA: case 0xBB: case 0xBC: case 0xBD: case 0xBE: case 0xBF:
+            {
+                byte dest = opcode & 0x0F;
+                byte imm = operand_whole;
+                byte result = 0;
+                psw_flags_t flags = alu_operation_byte(ALU_OP_OR, vm->registers.rn[dest], imm, &result);
+                vm->registers.rn[dest] = result;
+                vm->pc += 1;
+                vm->psw = flags;
+                break;
+            }
+
+        // OP_XOR8_REG_IMM 0xC0-0xCF
+        case 0xC0: case 0xC1: case 0xC2: case 0xC3: case 0xC4: case 0xC5: case 0xC6: case 0xC7:
+        case 0xC8: case 0xC9: case 0xCA: case 0xCB: case 0xCC: case 0xCD: case 0xCE: case 0xCF:
+            {
+                byte dest = opcode & 0x0F;
+                byte imm = operand_whole;
+                byte result = 0;
+                psw_flags_t flags = alu_operation_byte(ALU_OP_XOR, vm->registers.rn[dest], imm, &result);
+                vm->registers.rn[dest] = result;
+                vm->pc += 1;
+                vm->psw = flags;
+                break;
+            }    
+
+        // OP_CMP8_REG_IMM 0xD0-0xDF
+        case 0xD0: case 0xD1: case 0xD2: case 0xD3: case 0xD4: case 0xD5: case 0xD6: case 0xD7:
+        case 0xD8: case 0xD9: case 0xDA: case 0xDB: case 0xDC: case 0xDD: case 0xDE: case 0xDF:
+            {
+                byte dest = opcode & 0x0F;
+                byte imm = operand_whole;
+                psw_flags_t flags = cmp_bytes(vm->registers.rn[dest], imm);
+                vm->pc += 1;
+                vm->psw = flags;
+                break;
+            }
+
         default:
             trigger_bsod(ERROR_VM_INVALID_INSTRUCTION);
             break;
