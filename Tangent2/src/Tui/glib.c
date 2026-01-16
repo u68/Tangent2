@@ -107,7 +107,10 @@ void tml_render(TmlElement* root) {
 				transform_stack[stack_ptr].x = world_x;
 				transform_stack[stack_ptr].y = world_y;
 				transform_stack[stack_ptr].rotation = world_rot;
-				stack_ptr++;
+			if (stack_ptr >= TML_MAX_DEPTH) {
+				trigger_bsod(ERROR_TUI_INVALID_ELEMENT);
+				return;
+			}
 				
 				current = current->first_child;
 			} else {
@@ -436,7 +439,8 @@ TmlElement* tml_find_by_id(TmlElement* root, word id) {
 	TmlElement* stack[TML_MAX_DEPTH];
 	byte sp = 0;
 	
-	stack[sp++] = root;
+	if (sp >= TML_MAX_DEPTH) return 0;
+		stack[sp++] = root;
 	
 	while (sp > 0) {
 		TmlElement* current = stack[--sp];
@@ -445,9 +449,11 @@ TmlElement* tml_find_by_id(TmlElement* root, word id) {
 		
 		// Push siblings first (so children are processed first)
 		if (current->next_sibling) {
+			if (sp >= TML_MAX_DEPTH) return 0;
 			stack[sp++] = current->next_sibling;
 		}
 		if (current->first_child) {
+			if (sp >= TML_MAX_DEPTH) return 0;
 			stack[sp++] = current->first_child;
 		}
 	}

@@ -222,18 +222,40 @@ static psw_flags_t alu_operation_byte(alu_op_t op, byte a, byte b, byte* result)
             res = a - 1;
             flags.field.overflow = (a == 0x80);
             break;
-        case ALU_OP_SLL:
-            res = a << b;
-            flags.field.carry = (a & 0x80) != 0;
+        case ALU_OP_SLL: {
+            byte n = (byte)(b & 7);
+            if (n == 0) {
+                res = a;
+                flags.field.carry = 0;
+            } else {
+                res = (byte)(a << n);
+                flags.field.carry = (byte)((a >> (8 - n)) & 0x01);
+            }
             break;
-        case ALU_OP_SRL:
-            res = a >> b;
-            flags.field.carry = (a & 0x01) != 0;
+        }
+        case ALU_OP_SRL: {
+            byte n = (byte)(b & 7);
+            if (n == 0) {
+                res = a;
+                flags.field.carry = 0;
+            } else {
+                res = (byte)(a >> n);
+                flags.field.carry = (byte)((a >> (n - 1)) & 0x01);
+            }
             break;
-        case ALU_OP_SRA:
-            res = (a >> b) | (a & 0x80);
-            flags.field.carry = (a & 0x01) != 0;
+        }
+        case ALU_OP_SRA: {
+            byte n = (byte)(b & 7);
+            if (n == 0) {
+                res = a;
+                flags.field.carry = 0;
+            } else {
+                sbyte sa = (sbyte)a;
+                res = (byte)((sa >> n) & 0xFF);
+                flags.field.carry = (byte)((a >> (n - 1)) & 0x01);
+            }
             break;
+        }
         case ALU_OP_MUL: {
             unsigned int temp = (unsigned int)a * (unsigned int)b;
             res = (byte)(temp & 0xFF);
@@ -241,11 +263,11 @@ static psw_flags_t alu_operation_byte(alu_op_t op, byte a, byte b, byte* result)
             break;
         }
         case ALU_OP_DIV:
-            if (b == 0) trigger_bsod(ERROR_VM_INVALID_ALU_OPERATION);
+            if (b == 0) res = 0;
             else res = (byte)(a / b);
             break;
         case ALU_OP_MOD:
-            if (b == 0) trigger_bsod(ERROR_VM_INVALID_ALU_OPERATION);
+            if (b == 0) res = 0;
             else res = (byte)(a % b);
             break;
         default:
@@ -301,18 +323,40 @@ static psw_flags_t alu_operation_word(alu_op_t op, word a, word b, word* result)
             res = a - 1;
             flags.field.overflow = (a == 0x8000);
             break;
-        case ALU_OP_SLL:
-            res = a << b;
-            flags.field.carry = (a & 0x8000) != 0;
+        case ALU_OP_SLL: {
+            byte n = (byte)(b & 15);
+            if (n == 0) {
+                res = a;
+                flags.field.carry = 0;
+            } else {
+                res = (word)(a << n);
+                flags.field.carry = (word)((a >> (16 - n)) & 0x0001);
+            }
             break;
-        case ALU_OP_SRL:
-            res = a >> b;
-            flags.field.carry = (a & 0x0001) != 0;
+        }
+        case ALU_OP_SRL: {
+            byte n = (byte)(b & 15);
+            if (n == 0) {
+                res = a;
+                flags.field.carry = 0;
+            } else {
+                res = (word)(a >> n);
+                flags.field.carry = (word)((a >> (n - 1)) & 0x0001);
+            }
             break;
-        case ALU_OP_SRA:
-            res = (a >> b) | (a & 0x8000);
-            flags.field.carry = (a & 0x0001) != 0;
+        }
+        case ALU_OP_SRA: {
+            byte n = (byte)(b & 15);
+            if (n == 0) {
+                res = a;
+                flags.field.carry = 0;
+            } else {
+                sword sa = (sword)a;
+                res = (word)((sa >> n) & 0xFFFF);
+                flags.field.carry = (word)((a >> (n - 1)) & 0x0001);
+            }
             break;
+        }
         case ALU_OP_MUL: {
             unsigned int temp = (unsigned int)a * (unsigned int)b;
             res = (word)(temp & 0xFFFF);
@@ -398,7 +442,7 @@ static void push_stack_word(TangentMachine* vm, word value) {
 }
 
 static byte pop_stack_byte(TangentMachine* vm) {
-    if (vm->sp >= vm->vm_properties.ram_size - 1) {
+    if (vm->sp >= vm->vm_properties.ram_size) {
         trigger_bsod(ERROR_VM_STACK_UNDERFLOW);
         return 0;
     }
@@ -408,7 +452,7 @@ static byte pop_stack_byte(TangentMachine* vm) {
 }
 
 static word pop_stack_word(TangentMachine* vm) {
-    if (vm->sp + 1 >= vm->vm_properties.ram_size - 2) {
+    if (vm->sp + 1 >= vm->vm_properties.ram_size) {
         trigger_bsod(ERROR_VM_STACK_UNDERFLOW);
         return 0;
     }
@@ -483,19 +527,19 @@ void vm_init_system() {
 // Initialize individual VM structure with external code pointer and RAM pointers
 void vm_init(TangentMachine* vm, byte* code) {
     if (!vm || !code) return;
-    
+
     // RAM is allocated immediately after the VM structure
     vm->ram = (byte*)vm + sizeof(TangentMachine);
-    
-    // Code is external, just store the pointer
+
+    // Code pointer is external
     vm->code = code;
-    vm->vm_properties.code_size = *((word*)code);
-    vm->vm_properties.ram_size = *((word*)(code + 2));
-    vm->vm_properties.uses_ram = 1; // ensure memory ops are enabled
+
+    // Ensure uses_ram reflects ram_size (vm_spawn sets ram_size and code_size)
+    vm->vm_properties.uses_ram = (vm->vm_properties.ram_size > 0) ? 1 : 0;
     vm->vm_properties.running = 1;
     vm->sp = vm->vm_properties.ram_size; // Stack pointer starts at top of RAM
-    vm->pc = 4; // code starts after the 2-word header
-}
+    vm->pc = 4; // code starts after the 2-word (4-byte) header
+} 
 
 // Create new VM from bytecode, add to pool, expand pool if needed
 TangentMachine* vm_spawn(byte* code) {
@@ -521,18 +565,26 @@ TangentMachine* vm_spawn(byte* code) {
         slot = vm_capacity - MAX_VMS;
     }
 
-    // Get RAM size from code header
-    word ram_size = *((word*)(code + 2));
+    // Get code_size and RAM size from code header (explicit little-endian)
+    word code_size = (word)(code[0] | (code[1] << 8));
+    word ram_size = (word)(code[2] | (code[3] << 8));
     word total_size = sizeof(TangentMachine) + ram_size;
 
     // Allocate VM structure + RAM from heap (no code)
     TangentMachine* vm = (TangentMachine*)hcalloc(1, total_size);
     if (!vm) return 0;
 
-    // Initialize VM with external code pointer
+    // Store header info and initialize fields
+    vm->vm_properties.code_size = code_size;
+    vm->vm_properties.ram_size = ram_size;
+    vm->vm_properties.uses_ram = (ram_size > 0) ? 1 : 0;
+    vm->vm_properties.running = 1;
+    vm->code = code;
+
+    // Initialize VM with external code pointer and per-instance fields
     vm_init(vm, code);
     vm_pool[slot] = vm;
-    return vm;
+    return vm; 
 }
 
 // Free VM from heap and set its pool slot to NULL
@@ -553,6 +605,16 @@ void vm_destroy(TangentMachine* vm) {
 void vm_step(TangentMachine* vm) {
     if (!vm || !vm->vm_properties.running) return;
 
+    /* Code bounds: code bytes are located starting at offset 4, length vm->vm_properties.code_size */
+    word code_start = 4;
+    word code_end = (word)(vm->vm_properties.code_size + code_start); /* exclusive */
+
+    /* Ensure we have at least opcode+operand available */
+    if (vm->pc < code_start || vm->pc + 1 >= code_end) {
+        trigger_bsod(ERROR_VM_INVALID_INSTRUCTION);
+        return;
+    }
+
     // Fetch instruction
     byte opcode = vm->code[vm->pc];
     vm->pc++;
@@ -569,8 +631,11 @@ void vm_step(TangentMachine* vm) {
                 vm->psw.field.zero = (vm->registers.rn[operand1] == 0);
                 break;
             }
+
         case OP_MOV16_REG_IMM:
             {
+                /* need operand + 2 bytes */
+                if (vm->pc + 2 >= code_end) { trigger_bsod(ERROR_VM_INVALID_INSTRUCTION); return; }
                 byte dest = operand1 & 0x07;
                 word imm = (word)(vm->code[vm->pc + 1] | (vm->code[vm->pc + 2] << 8));
                 vm->registers.ern[dest] = imm;
@@ -579,6 +644,12 @@ void vm_step(TangentMachine* vm) {
                 vm->psw.field.zero = (imm == 0);
                 break;
             }
+
+
+
+
+
+
         case OP_MOV16_REG_REG:
             {
                 byte dest = operand1 & 0x07;
@@ -603,6 +674,7 @@ void vm_step(TangentMachine* vm) {
             }
         case OP_LOAD8_REG_MIMM:
             {
+                if (vm->pc + 2 >= code_end) { trigger_bsod(ERROR_VM_INVALID_INSTRUCTION); return; }
                 byte dest = operand1;
                 word address = (word)(vm->code[vm->pc + 1] | (vm->code[vm->pc + 2] << 8));
                 byte value = read_memory_byte(vm, address);
@@ -626,6 +698,7 @@ void vm_step(TangentMachine* vm) {
             }
         case OP_LOAD16_REG_MIMM:
             {
+                if (vm->pc + 2 >= code_end) { trigger_bsod(ERROR_VM_INVALID_INSTRUCTION); return; }
                 byte dest = operand1 & 0x07;
                 word address = (word)(vm->code[vm->pc + 1] | (vm->code[vm->pc + 2] << 8));
                 word value = read_memory_word(vm, address);
@@ -647,6 +720,7 @@ void vm_step(TangentMachine* vm) {
             }
         case OP_STORE8_MIMM_REG:
             {
+                if (vm->pc + 2 >= code_end) { trigger_bsod(ERROR_VM_INVALID_INSTRUCTION); return; }
                 byte src = operand2;
                 word address = (word)(vm->code[vm->pc + 1] | (vm->code[vm->pc + 2] << 8));
                 byte value = vm->registers.rn[src];
@@ -666,6 +740,7 @@ void vm_step(TangentMachine* vm) {
             }
         case OP_STORE16_MIMM_REG:
             {
+                if (vm->pc + 2 >= code_end) { trigger_bsod(ERROR_VM_INVALID_INSTRUCTION); return; }
                 byte src = operand2 & 0x07;
                 word address = (word)(vm->code[vm->pc + 1] | (vm->code[vm->pc + 2] << 8));
                 word value = vm->registers.ern[src];
@@ -699,6 +774,7 @@ void vm_step(TangentMachine* vm) {
             }
         case OP_PUSH16_IMM:
             {
+                if (vm->pc + 2 >= code_end) { trigger_bsod(ERROR_VM_INVALID_INSTRUCTION); return; }
                 word value = (word)(vm->code[vm->pc + 1] | (vm->code[vm->pc + 2] << 8));
                 push_stack_word(vm, value);
                 vm->pc += 3;
@@ -733,6 +809,8 @@ void vm_step(TangentMachine* vm) {
         case OP_POP_PC:
             {
                 word value = pop_stack_word(vm);
+                /* validate target address */
+                if (value < code_start || value + 1 >= code_end) { trigger_bsod(ERROR_VM_INVALID_INSTRUCTION); return; }
                 vm->pc = value;
                 break;
             }
@@ -774,6 +852,7 @@ void vm_step(TangentMachine* vm) {
             }
         case OP_ADD16_REG_IMM:
             {
+                if (vm->pc + 2 >= code_end) { trigger_bsod(ERROR_VM_INVALID_INSTRUCTION); return; }
                 byte dest = operand1 & 0x07;
                 word imm = (word)(vm->code[vm->pc + 1] | (vm->code[vm->pc + 2] << 8));
                 word result = 0;
@@ -807,6 +886,7 @@ void vm_step(TangentMachine* vm) {
             }
         case OP_SUB16_REG_IMM:
             {
+                if (vm->pc + 2 >= code_end) { trigger_bsod(ERROR_VM_INVALID_INSTRUCTION); return; }
                 byte dest = operand1 & 0x07;
                 word imm = (word)(vm->code[vm->pc + 1] | (vm->code[vm->pc + 2] << 8));
                 word result = 0;
@@ -880,6 +960,7 @@ void vm_step(TangentMachine* vm) {
             }
         case OP_MUL16_REG_IMM:
             {
+                if (vm->pc + 2 >= code_end) { trigger_bsod(ERROR_VM_INVALID_INSTRUCTION); return; }
                 byte dest = operand1 & 0x07;
                 word imm = (word)(vm->code[vm->pc + 1] | (vm->code[vm->pc + 2] << 8));
                 word result = 0;
@@ -913,6 +994,7 @@ void vm_step(TangentMachine* vm) {
             }
         case OP_DIV16_REG_IMM:
             {
+                if (vm->pc + 2 >= code_end) { trigger_bsod(ERROR_VM_INVALID_INSTRUCTION); return; }
                 byte dest = operand1 & 0x07;
                 word imm = (word)(vm->code[vm->pc + 1] | (vm->code[vm->pc + 2] << 8));
                 word result = 0;
@@ -935,6 +1017,7 @@ void vm_step(TangentMachine* vm) {
             }
         case OP_MOD8_REG_IMM:
             {
+                if (vm->pc + 2 >= code_end) { trigger_bsod(ERROR_VM_INVALID_INSTRUCTION); return; }
                 byte dest = operand1;
                 byte imm = vm->code[vm->pc+1];
                 byte result = 0;
@@ -957,6 +1040,7 @@ void vm_step(TangentMachine* vm) {
             }
         case OP_MOD16_REG_IMM:
             {
+                if (vm->pc + 2 >= code_end) { trigger_bsod(ERROR_VM_INVALID_INSTRUCTION); return; }
                 byte dest = operand1 & 0x07;
                 word imm = (word)(vm->code[vm->pc + 1] | (vm->code[vm->pc + 2] << 8));
                 word result = 0;
@@ -990,6 +1074,7 @@ void vm_step(TangentMachine* vm) {
             }
         case OP_AND16_REG_IMM:
             {
+                if (vm->pc + 2 >= code_end) { trigger_bsod(ERROR_VM_INVALID_INSTRUCTION); return; }
                 byte dest = operand1 & 0x07;
                 word imm = (word)(vm->code[vm->pc + 1] | (vm->code[vm->pc + 2] << 8));
                 word result = 0;
@@ -1023,6 +1108,7 @@ void vm_step(TangentMachine* vm) {
             }
         case OP_OR16_REG_IMM:
             {
+                if (vm->pc + 2 >= code_end) { trigger_bsod(ERROR_VM_INVALID_INSTRUCTION); return; }
                 byte dest = operand1 & 0x07;
                 word imm = (word)(vm->code[vm->pc + 1] | (vm->code[vm->pc + 2] << 8));
                 word result = 0;
@@ -1056,6 +1142,7 @@ void vm_step(TangentMachine* vm) {
             }
         case OP_XOR16_REG_IMM:
             {
+                if (vm->pc + 2 >= code_end) { trigger_bsod(ERROR_VM_INVALID_INSTRUCTION); return; }
                 byte dest = operand1 & 0x07;
                 word imm = (word)(vm->code[vm->pc + 1] | (vm->code[vm->pc + 2] << 8));
                 word result = 0;
@@ -1250,18 +1337,24 @@ void vm_step(TangentMachine* vm) {
             {
                 byte addr_reg = operand1 & 0x07;
                 word address = vm->registers.ern[addr_reg];
+                if (address < 4 || address + 1 >= (word)(vm->vm_properties.code_size + 4)) { trigger_bsod(ERROR_VM_INVALID_INSTRUCTION); return; }
                 vm->pc = address;
                 break;
             }
         case OP_B_IMM:
             {
+                if (vm->pc + 1 >= (word)(vm->vm_properties.code_size + 4)) { trigger_bsod(ERROR_VM_INVALID_INSTRUCTION); return; }
                 word address = (word)(vm->code[vm->pc] | (vm->code[vm->pc + 1] << 8));
+                if (address < 4 || address + 1 >= (word)(vm->vm_properties.code_size + 4)) { trigger_bsod(ERROR_VM_INVALID_INSTRUCTION); return; }
                 vm->pc = address;
                 break;
             }
         case OP_BEQ_IMM:
             {
-                word address = vm->pc - operand_whole;
+                sbyte off8 = (sbyte)operand_whole;
+                sword off16 = (sword)off8 * 2;
+                sword base = (sword)vm->pc - 1;
+                word address = (word)(base + off16);
                 if (UNSIGNED_EQ(vm->psw)) {
                     vm->pc = address;
                 } else {
@@ -1271,7 +1364,10 @@ void vm_step(TangentMachine* vm) {
             }
         case OP_BNE_IMM:
             {
-                word address = vm->pc - operand_whole;
+                sbyte off8 = (sbyte)operand_whole;
+                sword off16 = (sword)off8 * 2;
+                sword base = (sword)vm->pc - 1;
+                word address = (word)(base + off16);
                 if (UNSIGNED_NE(vm->psw)) {
                     vm->pc = address;
                 } else {
@@ -1281,7 +1377,10 @@ void vm_step(TangentMachine* vm) {
             }
         case OP_BLT_IMM:
             {
-                word address = vm->pc - operand_whole;
+                sbyte off8 = (sbyte)operand_whole;
+                sword off16 = (sword)off8 * 2;
+                sword base = (sword)vm->pc - 1;
+                word address = (word)(base + off16);
                 if (UNSIGNED_LT(vm->psw)) {
                     vm->pc = address;
                 } else {
@@ -1291,7 +1390,10 @@ void vm_step(TangentMachine* vm) {
             }
         case OP_BLE_IMM:
             {
-                word address = vm->pc - operand_whole;
+                sbyte off8 = (sbyte)operand_whole;
+                sword off16 = (sword)off8 * 2;
+                sword base = (sword)vm->pc - 1;
+                word address = (word)(base + off16);
                 if (UNSIGNED_LE(vm->psw)) {
                     vm->pc = address;
                 } else {
@@ -1301,7 +1403,10 @@ void vm_step(TangentMachine* vm) {
             }
         case OP_BGT_IMM:
             {
-                word address = vm->pc - operand_whole;
+                sbyte off8 = (sbyte)operand_whole;
+                sword off16 = (sword)off8 * 2;
+                sword base = (sword)vm->pc - 1;
+                word address = (word)(base + off16);
                 if (UNSIGNED_GT(vm->psw)) {
                     vm->pc = address;
                 } else {
@@ -1311,7 +1416,10 @@ void vm_step(TangentMachine* vm) {
             }
         case OP_BGE_IMM:
             {
-                word address = vm->pc - operand_whole;
+                sbyte off8 = (sbyte)operand_whole;
+                sword off16 = (sword)off8 * 2;
+                sword base = (sword)vm->pc - 1;
+                word address = (word)(base + off16);
                 if (UNSIGNED_GE(vm->psw)) {
                     vm->pc = address;
                 } else {
@@ -1323,13 +1431,16 @@ void vm_step(TangentMachine* vm) {
             {
                 byte addr_reg = operand1 & 0x07;
                 word address = vm->registers.ern[addr_reg];
+                if (address < 4 || address + 1 >= (word)(vm->vm_properties.code_size + 4)) { trigger_bsod(ERROR_VM_INVALID_INSTRUCTION); return; }
                 vm->lr = vm->pc;
                 vm->pc = address;
                 break;
             }
         case OP_BL_IMM:
             {
+                if (vm->pc + 1 >= (word)(vm->vm_properties.code_size + 4)) { trigger_bsod(ERROR_VM_INVALID_INSTRUCTION); return; }
                 word address = (word)(vm->code[vm->pc] | (vm->code[vm->pc + 1] << 8));
+                if (address < 4 || address + 1 >= (word)(vm->vm_properties.code_size + 4)) { trigger_bsod(ERROR_VM_INVALID_INSTRUCTION); return; }
                 vm->lr = vm->pc + 2;
                 vm->pc = address;
                 break;
