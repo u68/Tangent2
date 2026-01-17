@@ -493,24 +493,31 @@ static void vm_syscall(TangentMachine* vm, syscall_t syscall_number) {
         case SET_ELEMENT_FIELD:
             break;
         case RENDER_ELEMENT:
+            tml_render_element((TmlElement*)vm->registers.ern[0],(TmlTransform*)vm->registers.ern[1]);
             break;
         case DRAW_LINE:
+            tui_draw_line(vm->registers.rn[0],vm->registers.rn[1],vm->registers.rn[2],vm->registers.rn[3],vm->registers.rn[4],vm->registers.rn[5],vm->registers.rn[6]);
             break;
         case SET_PIXEL:
+            tui_set_pixel(vm->registers.rn[0],vm->registers.rn[1],vm->registers.rn[2],vm->registers.rn[3]);
             break;
         case GET_PIXEL:
             break;
         case DRAW_IMAGE:
+            tui_draw_image(vm->registers.rn[0],vm->registers.rn[1],vm->registers.rn[2],vm->registers.rn[3],(const byte*)vm->registers.ern[2],vm->registers.rn[6],vm->registers.rn[7],vm->registers.ern[4],vm->registers.rn[10]);
             break;
         case DRAW_RECT:
             break;
         case DRAW_TEXT:
+            tui_draw_text(vm->registers.rn[0],vm->registers.rn[1],(const char*)vm->registers.ern[1],vm->registers.rn[4],vm->registers.rn[5],vm->registers.rn[6],vm->registers.ern[4],vm->registers.rn[7]);
             break;
         case SLEEP:
             break;
         case STOP:
+            vm->vm_properties.running = 0;
             break;
         case END:
+            vm->vm_properties.running = 0;
             break;
         default:
             trigger_bsod(ERROR_VM_INVALID_SYSCALL);
