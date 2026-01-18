@@ -5,7 +5,7 @@
 **A custom operating system built from scratch for calculators**
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Platform](https://img.shields.io/badge/platform-ML620909-orange.svg)]()
+[![Platform](https://img.shields.io/badge/platform-CWX/CWII-orange.svg)]()
 [![Built with](https://img.shields.io/badge/SDK-Qt6-green.svg)]()
 
 ---
@@ -649,6 +649,7 @@ This project is licensed under the MIT License — see the [LICENSE](LICENSE) fi
 **[Report Bug](../../issues) · [Request Feature](../../issues)**
 
 </div>
+
 
 
 
