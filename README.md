@@ -545,10 +545,13 @@ Items at the top of the list have the highest priority and override items below 
 
 ```bash
 cd TangentSDK
-./build.sh
+# On Windows (MinGW/MSYS2):
+./build-mingw64.sh
+# On Linux:
+./build-linux.sh
 ```
 
-The build script will compile everything, and automatically launch the app when completed.
+Each script checks for required tools (DMD, CMake, Ninja) and will print a helpful error if a prerequisite is missing. The script will compile the build tools, build the IDE, and launch the app when completed.
 
 > **Note:** The OS itself has some compiler-specific dependencies that make standalone builds tricky. The SDK includes prebuilt OS binaries and will eventually support building the OS directly inside the SDK, allowing you to modify it to your needs.
 
