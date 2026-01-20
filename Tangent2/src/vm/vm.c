@@ -190,14 +190,14 @@ static psw_flags_t alu_operation_byte(alu_op_t op, byte a, byte b, byte* result)
 
     switch (op) {
         case ALU_OP_ADD: {
-            unsigned int temp = (unsigned int)a + (unsigned int)b;
+            dword temp = (dword)a + (dword)b;
             res = (byte)(temp & 0xFF);
             flags.field.carry = (temp > 0xFF);
             flags.field.overflow = (((a ^ res) & (b ^ res) & 0x80) != 0);
             break;
         }
         case ALU_OP_SUB: {
-            unsigned int temp = (unsigned int)a - (unsigned int)b;
+            dword temp = (dword)a - (dword)b;
             res = (byte)(temp & 0xFF);
             flags.field.carry = (a < b); // borrow
             flags.field.overflow = (((a ^ b) & (a ^ res) & 0x80) != 0);
@@ -258,7 +258,7 @@ static psw_flags_t alu_operation_byte(alu_op_t op, byte a, byte b, byte* result)
             break;
         }
         case ALU_OP_MUL: {
-            unsigned int temp = (unsigned int)a * (unsigned int)b;
+            dword temp = (dword)a * (dword)b;
             res = (byte)(temp & 0xFF);
             flags.field.carry = (temp > 0xFF);
             break;
@@ -291,14 +291,14 @@ static psw_flags_t alu_operation_word(alu_op_t op, word a, word b, word* result)
 
     switch (op) {
         case ALU_OP_ADD: {
-            unsigned int temp = (unsigned int)a + (unsigned int)b;
+            dword temp = (dword)a + (dword)b;
             res = (word)(temp & 0xFFFF);
             flags.field.carry = (temp > 0xFFFF);
             flags.field.overflow = (((a ^ res) & (b ^ res) & 0x8000) != 0);
             break;
         }
         case ALU_OP_SUB: {
-            unsigned int temp = (unsigned int)a - (unsigned int)b;
+            dword temp = (dword)a - (dword)b;
             res = (word)(temp & 0xFFFF);
             flags.field.carry = (a < b); // borrow
             flags.field.overflow = (((a ^ b) & (a ^ res) & 0x8000) != 0);
@@ -359,7 +359,7 @@ static psw_flags_t alu_operation_word(alu_op_t op, word a, word b, word* result)
             break;
         }
         case ALU_OP_MUL: {
-            unsigned int temp = (unsigned int)a * (unsigned int)b;
+            dword temp = (dword)a * (dword)b;
             res = (word)(temp & 0xFFFF);
             flags.field.carry = (temp > 0xFFFF);
             break;

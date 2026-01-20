@@ -6,6 +6,8 @@
  typedef signed char sbyte;
  typedef unsigned short word;
  typedef signed short sword;
+ typedef unsigned long dword;
+ typedef signed long sdword;
 
  #define deref(x) (*((__near byte*)(x)))
  #define derefw(x) (*((__near word*)(x)))

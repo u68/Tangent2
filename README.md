@@ -547,9 +547,13 @@ Items at the top of the list have the highest priority and override items below 
 cd TangentSDK
 # On Windows (MinGW/MSYS2):
 ./build-mingw64.sh
-# On Linux:
+# On Linux (non arm):
 ./build-linux.sh
 ```
+
+#### For building with arm:
+
+First, you need to use ldc instead of dmd for the build tools, and you also need to build your own discord rpc library from source or find it somewhere else, and for the Lapis build tools, you need to use wine and what not to run them (this goes for non arm linux too)
 
 Each script checks for required tools (DMD, CMake, Ninja) and will print a helpful error if a prerequisite is missing. The script will compile the build tools, build the IDE, and launch the app when completed.
 
