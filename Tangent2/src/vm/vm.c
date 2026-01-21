@@ -127,6 +127,8 @@ typedef enum {
     OP_XOR8_REG_IMM = 0xC0,
     OP_CMP8_REG_IMM = 0xD0,
 
+    OP_SYSCALL = 0xE0;
+
 } opcode_t;
 
 typedef enum {
@@ -1777,6 +1779,12 @@ void vm_step(TangentMachine* vm) {
                 psw_flags_t flags = cmp_bytes(vm->registers.rn[dest], imm);
                 vm->pc += 1;
                 vm->psw = flags;
+                break;
+            }
+        case OP_SYSCALL:
+            {
+                vm_syscall(vm, operand_whole);
+                vm->pc += 1;
                 break;
             }
 

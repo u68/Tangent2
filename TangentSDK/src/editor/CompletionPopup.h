@@ -4,6 +4,7 @@
 #include <QStringList>
 #include <QMap>
 #include <QStyledItemDelegate>
+#include <QFutureWatcher>
 
 class QPlainTextEdit;
 
@@ -29,6 +30,7 @@ public:
     };
     
     CompletionPopup(QWidget* parent);
+    ~CompletionPopup();
 
     void showAtCursor(const QRect& cursorRect);
     void setFileType(FileType type);
@@ -46,9 +48,15 @@ private:
     QStringList m_allCompletions;
     QMap<QString, QString> m_labelFileMap;  // label -> filename
     QPlainTextEdit* m_editor = nullptr;
-    
+
+    QFutureWatcher<QMap<QString,QString>>* m_labelWatcher = nullptr;
+    bool m_pendingLabelRefresh = false;
+
     void buildCompletionList();
     void insertCompletion();
     QString getCurrentWordPrefix();
     void addCompletionItem(const QString& text, const QString& fileInfo = QString());
+
+private slots:
+    void onLabelMapFinished();
 };
