@@ -6,6 +6,7 @@
 #include <QMap>
 #include <QColor>
 #include <QRegularExpression>
+#include <QFutureWatcher>
 
 class SyntaxHighlighter : public QSyntaxHighlighter {
     Q_OBJECT
@@ -13,7 +14,8 @@ public:
     enum FileType { Unknown, TASM, TML };
     
     SyntaxHighlighter(QTextDocument* doc);
-    
+    ~SyntaxHighlighter();
+
     void setFileType(const QString& filePath);
     void setFileTypeFromExtension(const QString& extension);
     void setProjectPath(const QString& projectPath);
@@ -21,6 +23,13 @@ public:
     
     // Load colors from settings and re-apply
     void reloadColorsFromSettings();
+
+private slots:
+    void onLabelScanFinished();
+
+private:
+    QFutureWatcher<QStringList>* m_labelWatcher = nullptr;
+    bool m_pendingLabelRefresh = false;
 
 protected:
     void highlightBlock(const QString& text) override;

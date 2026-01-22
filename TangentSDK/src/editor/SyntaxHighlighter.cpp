@@ -6,6 +6,8 @@
 #include <QDirIterator>
 #include <QFile>
 #include <QTextStream>
+#include <QtConcurrent/QtConcurrent>
+#include <QCoreApplication>
 
 SyntaxHighlighter::SyntaxHighlighter(QTextDocument* doc)
     : QSyntaxHighlighter(doc) {
@@ -125,46 +127,107 @@ void SyntaxHighlighter::setFileTypeFromExtension(const QString& extension) {
 }
 
 void SyntaxHighlighter::setProjectPath(const QString& projectPath) {
+    // Avoid redundant rescans
+    if (m_projectPath == projectPath) return;
     m_projectPath = projectPath;
     refreshProjectLabels();
 }
 
 void SyntaxHighlighter::refreshProjectLabels() {
-    m_projectLabels.clear();
-    
+    // If no project path, clear and rehighlight immediately
     if (m_projectPath.isEmpty()) {
+        m_projectLabels.clear();
         rehighlight();
         return;
     }
-    
-    // Extract labels from all .tasm files in the project
-    QDirIterator it(m_projectPath, QStringList() << "*.tasm", 
-                    QDir::Files, QDirIterator::Subdirectories);
-    QRegularExpression labelExpr("^\\s*([a-zA-Z_][a-zA-Z0-9_]*):");
-    
-    while (it.hasNext()) {
-        QString filePath = it.next();
-        // Skip files in build folder
-        if (filePath.contains("/build/") || filePath.contains("\\build\\")) continue;
-        
-        QFile file(filePath);
-        if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-            QTextStream in(&file);
-            while (!in.atEnd()) {
-                QString line = in.readLine();
-                QRegularExpressionMatch match = labelExpr.match(line);
-                if (match.hasMatch()) {
-                    QString label = match.captured(1);
-                    if (!m_projectLabels.contains(label)) {
-                        m_projectLabels.append(label);
+
+    // If a scan is already running, mark a pending refresh and return
+    if (m_labelWatcher && m_labelWatcher->isRunning()) {
+        m_pendingLabelRefresh = true;
+        return;
+    }
+
+    // Lazily create watcher
+    if (!m_labelWatcher) {
+        m_labelWatcher = new QFutureWatcher<QStringList>(this);
+        connect(m_labelWatcher, &QFutureWatcher<QStringList>::finished, this, &SyntaxHighlighter::onLabelScanFinished);
+    }
+
+    const QString projectPathCopy = m_projectPath;
+
+    // Run the scan in a background thread
+    qDebug() << "SyntaxHighlighter: starting label scan for" << projectPathCopy;
+    auto future = QtConcurrent::run([projectPathCopy]() -> QStringList {
+        QStringList labels;
+        QDirIterator it(projectPathCopy, QStringList() << "*.tasm", QDir::Files, QDirIterator::Subdirectories);
+        QRegularExpression labelExpr("^\\s*([a-zA-Z_][a-zA-Z0-9_]*):");
+        while (it.hasNext()) {
+            QString filePath = it.next();
+            // Skip files in build folder
+            if (filePath.contains("/build/") || filePath.contains("\\build\\")) continue;
+            QFile file(filePath);
+            if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+                QTextStream in(&file);
+                while (!in.atEnd()) {
+                    QString line = in.readLine();
+                    QRegularExpressionMatch match = labelExpr.match(line);
+                    if (match.hasMatch()) {
+                        QString label = match.captured(1);
+                        if (!labels.contains(label)) labels.append(label);
                     }
                 }
+                file.close();
             }
-            file.close();
         }
+        // Keep list sorted and unique
+        labels.removeDuplicates();
+        labels.sort(Qt::CaseInsensitive);
+        return labels;
+    });
+
+    m_labelWatcher->setFuture(future);
+    qDebug() << "SyntaxHighlighter: label scan scheduled";
+}
+
+void SyntaxHighlighter::onLabelScanFinished() {
+    if (!m_labelWatcher) return;
+
+    qDebug() << "SyntaxHighlighter: label scan finished";
+
+    // If the future was canceled, ignore the result
+    if (m_labelWatcher->isCanceled()) {
+        qDebug() << "SyntaxHighlighter: label scan was canceled";
+        if (m_pendingLabelRefresh) {
+            m_pendingLabelRefresh = false;
+            refreshProjectLabels();
+        }
+        return;
     }
-    
+
+    QStringList newLabels = m_labelWatcher->result();
+
+    m_projectLabels = newLabels;
     rehighlight();
+
+    // If a refresh was requested while scanning, run it now
+    if (m_pendingLabelRefresh) {
+        m_pendingLabelRefresh = false;
+        refreshProjectLabels();
+    }
+}
+
+SyntaxHighlighter::~SyntaxHighlighter() {
+    // Ensure any running scan finishes/cancels before destruction to avoid wait condition errors
+    if (m_labelWatcher) {
+        if (m_labelWatcher->isRunning()) {
+            m_labelWatcher->cancel();
+            m_labelWatcher->waitForFinished();
+        }
+        // disconnect signals to be safe
+        m_labelWatcher->disconnect(this);
+        m_labelWatcher->deleteLater();
+        m_labelWatcher = nullptr;
+    }
 }
 
 void SyntaxHighlighter::highlightBlock(const QString& text) {

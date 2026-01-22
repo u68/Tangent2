@@ -6,8 +6,10 @@ class TabEditorWidget;
 class ConsoleWidget;
 class ProjectExplorer;
 class QDockWidget;
+class QAction;
+class QMenu;
 class DiscordRPCManager;
-class SettingsDialog;
+class SettingsDialog; 
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -36,6 +38,8 @@ private slots:
     void onCurrentFileChanged(const QString& filePath);
     void onColorsChanged();
     void onDiscordSettingsChanged();
+    void onOpenOsSourceToggled(bool checked);
+    void onBuildOsSource(); 
 
 private:
     TabEditorWidget* tabEditor;
@@ -45,6 +49,10 @@ private:
     QDockWidget* consoleDock;
     QString m_workspacePath;
     DiscordRPCManager* m_discordRPC;
+    QAction* m_openOsSourceAction;
+    QAction* m_buildOsSourceAction;
+    QMenu* m_projectMenu = nullptr;
+    QString m_previousWorkspacePath;
 
     void setupDocking();
     void setupMenus();
@@ -55,5 +63,6 @@ private:
     void applyColors();
     QString getPasswordHexString() const;
     QString getClockspeedHexString() const;
+    QString findTangent2SrcPath() const; 
 };
 

@@ -11,6 +11,7 @@
 #include <QScreen>
 #include <QPainter>
 #include <QFontDatabase>
+#include <QtConcurrent/QtConcurrent>
 
 // CompletionItemDelegate implementation
 CompletionItemDelegate::CompletionItemDelegate(QObject* parent)
@@ -108,8 +109,43 @@ void CompletionPopup::setFileType(FileType type) {
 }
 
 void CompletionPopup::setProjectPath(const QString& projectPath) {
+    // Avoid re-scanning if unchanged
+    if (m_projectPath == projectPath) return;
     m_projectPath = projectPath;
+
+    // Kick off building completion list (fast parts)
     buildCompletionList();
+
+    // Start async fetch of project labels (may be slow for large trees)
+    if (!m_projectPath.isEmpty()) {
+        if (!m_labelWatcher) {
+            m_labelWatcher = new QFutureWatcher<QMap<QString,QString>>(this);
+            connect(m_labelWatcher, &QFutureWatcher<QMap<QString,QString>>::finished,
+                    this, &CompletionPopup::onLabelMapFinished);
+        }
+
+        // If a scan is running, set pending flag
+        if (m_labelWatcher->isRunning()) {
+            m_pendingLabelRefresh = true;
+            return;
+        }
+
+        qDebug() << "CompletionPopup: starting label map scan for" << m_projectPath;
+        auto future = QtConcurrent::run([path = m_projectPath]() -> QMap<QString,QString> {
+            QMap<QString,QString> map;
+            // Reuse SyntaxDefinition helper
+            QMap<QString, QString> labels = SyntaxDefinition::getProjectLabelsWithFiles(path);
+            for (auto it = labels.begin(); it != labels.end(); ++it) {
+                map.insert(it.key(), it.value());
+            }
+            return map;
+        });
+        m_labelWatcher->setFuture(future);
+        qDebug() << "CompletionPopup: label map scan scheduled";
+    } else {
+        // clear label map if project path empty
+        m_labelFileMap.clear();
+    }
 }
 
 void CompletionPopup::refreshCompletions() {
@@ -118,22 +154,20 @@ void CompletionPopup::refreshCompletions() {
 
 void CompletionPopup::buildCompletionList() {
     m_allCompletions.clear();
-    m_labelFileMap.clear();
     
     SyntaxDefinition& def = SyntaxDefinition::instance();
     
     if (m_fileType == TASM) {
         m_allCompletions << def.getAllCompletions("tasm");
-        // Add project labels with file info
-        m_labelFileMap = SyntaxDefinition::getProjectLabelsWithFiles(m_projectPath);
-        m_allCompletions << m_labelFileMap.keys();
     } else if (m_fileType == TML) {
         m_allCompletions << def.getAllCompletions("tml");
-        // Add project labels from TASM files with file info
-        m_labelFileMap = SyntaxDefinition::getProjectLabelsWithFiles(m_projectPath);
+    }
+
+    // If label map is already available, include its keys
+    if (!m_labelFileMap.isEmpty()) {
         m_allCompletions << m_labelFileMap.keys();
     }
-    
+
     m_allCompletions.removeDuplicates();
     m_allCompletions.sort(Qt::CaseInsensitive);
 }
@@ -172,17 +206,17 @@ void CompletionPopup::updateFilter(const QString& prefix) {
 
 void CompletionPopup::showAtCursor(const QRect& r) {
     if (!m_editor) return;
-    
+
     buildCompletionList();
     QString prefix = getCurrentWordPrefix();
     updateFilter(prefix);
-    
+
     if (count() == 0 && !prefix.isEmpty()) {
         // No matches found, don't show
         hide();
         return;
     }
-    
+
     if (count() == 0) {
         // Show all completions if prefix is empty
         for (const QString& item : m_allCompletions) {
@@ -190,23 +224,23 @@ void CompletionPopup::showAtCursor(const QRect& r) {
             addCompletionItem(item, fileInfo);
         }
     }
-    
+
     if (count() > 0) {
         setCurrentRow(0);
-        
+
         // Position below cursor in global coordinates
         QPoint pos = m_editor->mapToGlobal(r.bottomLeft());
-        
+
         // Make sure popup doesn't go off screen
         QRect screenRect = QApplication::primaryScreen()->availableGeometry();
-        
+
         // Resize to fit content
         int itemHeight = sizeHintForRow(0);
         if (itemHeight <= 0) itemHeight = 22; // fallback matching delegate
         int visibleItems = qMin(count(), 10);
         int popupHeight = itemHeight * visibleItems + 4;
         int popupWidth = qMax(280, sizeHintForColumn(0) + 100); // wider for file info
-        
+
         // Adjust if popup would go off screen
         if (pos.x() + popupWidth > screenRect.right()) {
             pos.setX(screenRect.right() - popupWidth);
@@ -216,11 +250,11 @@ void CompletionPopup::showAtCursor(const QRect& r) {
             pos = m_editor->mapToGlobal(r.topLeft());
             pos.setY(pos.y() - popupHeight);
         }
-        
+
         setFixedHeight(popupHeight);
         setFixedWidth(popupWidth);
         move(pos);
-        
+
         show();
         raise();
     } else {
@@ -228,6 +262,7 @@ void CompletionPopup::showAtCursor(const QRect& r) {
     }
 }
 
+// If label map is still loading, we will receive onLabelMapFinished and update the list then
 void CompletionPopup::insertCompletion() {
     QListWidgetItem* item = currentItem();
     if (!item || !m_editor) {
@@ -248,27 +283,75 @@ void CompletionPopup::insertCompletion() {
     hide();
 }
 
+void CompletionPopup::onLabelMapFinished() {
+    if (!m_labelWatcher) return;
+
+    if (m_labelWatcher->isCanceled()) {
+        if (m_pendingLabelRefresh) {
+            m_pendingLabelRefresh = false;
+            // Restart scan
+            setProjectPath(m_projectPath);
+        }
+        return;
+    }
+
+    QMap<QString, QString> result = m_labelWatcher->result();
+
+    m_labelFileMap = result;
+
+    // Rebuild completions to include labels
+    buildCompletionList();
+
+    // If popup is visible, refresh displayed items
+    if (isVisible()) {
+        QString prefix = getCurrentWordPrefix();
+        updateFilter(prefix);
+    }
+
+    if (m_pendingLabelRefresh) {
+        m_pendingLabelRefresh = false;
+        // Restart scan
+        setProjectPath(m_projectPath);
+    }
+}
+
+CompletionPopup::~CompletionPopup() {
+    if (m_labelWatcher) {
+        if (m_labelWatcher->isRunning()) {
+            m_labelWatcher->cancel();
+            m_labelWatcher->waitForFinished();
+        }
+        m_labelWatcher->disconnect(this);
+        m_labelWatcher->deleteLater();
+        m_labelWatcher = nullptr;
+    }
+}
+
 void CompletionPopup::keyPressEvent(QKeyEvent* event) {
+    // Handle key presses when the popup itself has focus
     switch (event->key()) {
         case Qt::Key_Escape:
             hide();
-            m_editor->setFocus();
-            break;
+            if (m_editor) m_editor->setFocus();
+            return;
         case Qt::Key_Return:
         case Qt::Key_Enter:
         case Qt::Key_Tab:
             insertCompletion();
-            break;
-        case Qt::Key_Up:
-        case Qt::Key_Down:
-            QListWidget::keyPressEvent(event);
-            break;
+            return;
+        case Qt::Key_Up: {
+            int row = currentRow();
+            if (row > 0) setCurrentRow(row - 1);
+            return;
+        }
+        case Qt::Key_Down: {
+            int row = currentRow();
+            if (row < count() - 1) setCurrentRow(row + 1);
+            return;
+        }
         default:
-            // Pass other keys to editor
-            hide();
-            m_editor->setFocus();
-            QCoreApplication::sendEvent(m_editor, event);
-            break;
+            QListWidget::keyPressEvent(event);
+            return;
     }
 }
 
