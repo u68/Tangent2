@@ -3,9 +3,8 @@
  * Implementation of you know what
  * Virtual Machine speed test
  *  Created on: Jan 4, 2026
- *  	Author: harma
- *
-*/
+ *      Author: harma
+ */
 
 #include "base.h"
 #include "heap/heap.h"
@@ -21,7 +20,7 @@ void custom_break() {
 	}
 }
 
-#define num_vms 10
+#define num_vms 2
 
 // Main entry point
 int main() {
@@ -30,56 +29,129 @@ int main() {
 	get_regs_snapshot(snap);
 	bsod_show(ERROR_VM_INVALID_INSTRUCTION, snap);
 	custom_break();*/
+	for (word i = 0x9000; i < 0xE000; i++) {
+				hw_deref(i) = 0;
+	}
     Write2RealScreen = 0;
     tui_clear_screen();
 
     hinit();
 
     vm_init_system();
-    // Example VM program: compute Fibonacci(n) into ram[0]
-    static const byte example_program[] = {
-        30, 0,  // code size
-        2, 0,   // ram size
-        0x02, 0x00, 0x00, 0x00, // MOV16_REG_IMM er0, 0
-        0x02, 0x10, 0x01, 0x00, // MOV16_REG_IMM er1, 1
-        0x56, 0x17,             // MOV_RN_IMM r6, 23
-		0x1D, 0x60, 		   	// DEC8_REG r6 (zero index stuff)
-        // loop:
-        0x01, 0x20, // MOV16_REG_REG er2, er0
-        0x16, 0x21, // ADD16_REG_REG er2, er1
-        0x01, 0x01, // MOV16_REG_REG er0, er1
-        0x01, 0x12, // MOV16_REG_REG er1, er2
-        0x1D, 0x60, // DEC8_REG r6
-        0xD6, 0x00, // CMP8_REG_IMM r6, 0
-        0x46, -6,   // BNE_IMM back to loop
-        0x0A, 0x01, 0x00, 0x00 // STORE16_MIMM_REG ern1, 0x0000
-    };
+	static const byte example_program[] = {
+		//head
+		0xFF,00,
+		0xFF,00,
+		//mov r0, #0
+		OP_MOV8_REG_IMM, 0,
+		//fill_loop:
+			//cmp r0, #20
+			OP_CMP8_REG_IMM, 20,
+			//bge fill_end
+			OP_BGE_IMM, 0x0A,
+			//mov er3, er0
+			OP_MOV16_REG_REG, 0x30,
+			//mov r7, #0
+			OP_MOV8_REG_IMM+7, 0,
+			//add er3, #17
+			OP_ADD16_REG_IMM, 0x30, 17, 0,
+			//st [er3], #2
+			OP_STORE8_MREG_IMM, 0x03, 2, 0,
+			//inc r0
+			OP_INC8_REG, 0x00,
+			//b fill_loop
+			OP_B_IMM, 0x00, 0x06, 0x00,
+		//fill_end:
+		//st #17, '3'
+		OP_STORE8_MIMM_IMM, '3', 0, 0,
+		//st #18, '.'
+		OP_STORE8_MIMM_IMM, '.', 1, 0,
+		//mov r0, #2
+		OP_MOV8_REG_IMM, 2,
+		//pi_loop:
+			//cmp r0, #17
+			OP_CMP8_REG_IMM, 17,
+			//bge pi_end
+			OP_BGE_IMM, 35,
+			//mov r3, #0
+			OP_MOV8_REG_IMM+3, 0,
+			//mov r1, #0
+			OP_MOV8_REG_IMM+1, 0,
+			//proc_loop:
+				//cmp r1, #20
+				OP_CMP8_REG_IMM+1, 20,
+				//bge proc_end
+				OP_BGE_IMM, 20,
+				//mov er3, er0
+				OP_MOV16_REG_REG, 0x30,
+				//srl er3, #8
+				OP_SRL16_REG_IMM, 0x38,
+				//add er3, #17
+				OP_ADD16_REG_IMM, 0x30, 17, 0,
+				//l r4, [er3]
+				OP_LOAD8_REG_MREG, 0x43,
+				//mul r4, #10
+				OP_MUL8_REG_IMM+4, 10,
+				//mov r2, r4
+				OP_MOV8_REG_REG, 0x24,
+				//add r2, r3
+				OP_ADD8_REG_REG, 0x23,
+				//mov r3, r2
+				OP_MOV8_REG_REG, 0x32,
+				//srl r3, #4
+				OP_SRL8_REG_IMM, 0x34,
+				//and r2, #15
+				OP_AND8_REG_IMM+2, 15,
+				//mov er3, er0
+				OP_MOV16_REG_REG, 0x30,
+				//srl er3, #8
+				OP_SRL16_REG_IMM, 0x38,
+				//add er3, #17
+				OP_ADD16_REG_IMM, 0x30, 17, 0,
+				//st [er3], r2
+				OP_STORE8_MREG_REG, 0x32,
+				//inc r1
+				OP_INC8_REG, 0x10,
+				//b proc_loop
+				OP_B_IMM, 0, 0x30, 0,
+			//proc_end:
+			//l r5, #17
+			OP_LOAD8_REG_MIMM, 0x50, 17, 0,
+			//add r5, '0'
+			OP_ADD8_REG_IMM+5, '0',
+			//mov er3, er0
+			OP_MOV16_REG_REG, 0x30,
+			//mov r7, #0
+			OP_MOV8_REG_IMM+7, 0,
+			//st [er3], r5
+			OP_STORE8_MREG_REG, 0x35,
+			//inc r0
+			OP_INC8_REG, 0,
+			//OP_END, 0x00,
+			//b pi_loop
+			OP_B_IMM, 0, 0x28, 0,
+		//pi_end:
+		//end
+		OP_STORE8_MIMM_REG, 0x00, 0x06, 0,
+		OP_STORE8_MIMM_IMM, 0xFF, 0x07, 0,
+		OP_STORE8_MIMM_REG, 0x00, 0x06, 0,
+		OP_END, 0,
+
+	};
 
     TangentMachine* vms[num_vms];
-    for (int i = 0; i < num_vms; i++) {
-        vms[i] = vm_spawn((byte*)example_program);
+    for (byte i = 0; i < num_vms; i++) {
+        vms[i] = vm_spawn(example_program);
     }
 
-    while(1) {
-    	if (deref(0xE010) == 0x67) {
-while (vms[0]->pc < (vms[0]->vm_properties.code_size + 4)) {
-    			vm_step_all();
-    		}
-
-    		deref(0xE010) = 0x00;
-    	}
-    	if (deref(0xE010) == 0x68) {
-			break;
-    	}
-    }
-    /*for (int step = 0; step < 5; step++) {
+    for (word step = 0; step < 50000; step++) {
             vm_step_all();
-        }*/
+            deref(0x9A00) = step;
+        }
 
     // Store each VM's ram into E000...
-    for (int i = 0; i < num_vms; i++) {
-        deref(0xE000 + (i<<1)) = vms[i] ? vms[i]->ram[0] : 0;
-        deref(0xE000 + (i<<1)+1) = vms[i] ? vms[i]->ram[1] : 0;
+    for (byte i = 0; i < 18; i++) {
+        deref(0x9B60 + i) = vms[0]->ram[i];
     }
 	return 0;
 }

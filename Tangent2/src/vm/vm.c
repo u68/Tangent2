@@ -31,105 +31,7 @@ static TangentMachine** vm_pool = 0;
 static word vm_capacity = 0;
 
 // Opcode definitions
-typedef enum {
-    OP_MOV8_REG_REG, // Data movement
-    OP_MOV16_REG_REG,
-    OP_MOV16_REG_IMM,
-    OP_LOAD8_REG_MREG,
-    OP_LOAD8_REG_MIMM,
-    OP_LOAD16_REG_MREG,
-    OP_LOAD16_REG_MIMM,
-    OP_STORE8_MREG_REG,
-    OP_STORE8_MIMM_REG,
-    OP_STORE16_MREG_REG,
-    OP_STORE16_MIMM_REG,
 
-    OP_PUSH8_REG, // Stack operations
-    OP_PUSH8_IMM,
-    OP_PUSH16_REG,
-    OP_PUSH16_IMM,
-    OP_POP8_REG,
-    OP_POP16_REG,
-    OP_PUSH_LR,
-    OP_POP_PC,
-    OP_PUSH_SP,
-    OP_POP_SP,
-
-    OP_ADD8_REG_REG, // ALU operations
-    OP_ADD16_REG_REG,
-    OP_ADD16_REG_IMM,
-    OP_SUB8_REG_REG,
-    OP_SUB16_REG_REG,
-    OP_SUB16_REG_IMM,
-    OP_INC8_REG,
-    OP_INC16_REG,
-    OP_DEC8_REG,
-    OP_DEC16_REG,
-    OP_MUL8_REG_REG,
-    OP_MUL16_REG_REG,
-    OP_MUL16_REG_IMM,
-    OP_DIV8_REG_REG,
-    OP_DIV16_REG_REG,
-    OP_DIV16_REG_IMM,
-    OP_MOD8_REG_REG,
-    OP_MOD8_REG_IMM,
-    OP_MOD16_REG_REG,
-    OP_MOD16_REG_IMM,
-    
-    OP_AND8_REG_REG, // Logical operations
-    OP_AND16_REG_REG,
-    OP_AND16_REG_IMM,
-    OP_OR8_REG_REG,
-    OP_OR16_REG_REG,
-    OP_OR16_REG_IMM,
-    OP_XOR8_REG_REG,
-    OP_XOR16_REG_REG,
-    OP_XOR16_REG_IMM,
-    OP_NOT8_REG,
-    OP_NOT16_REG,
-    
-    OP_CMP8_REG_REG, // Comparison operations
-    OP_CMP16_REG_REG,
-    OP_CMP16_REG_IMM,
-    OP_SLL8_REG_REG, // Shift operations
-    OP_SLL8_REG_IMM,
-    OP_SLL16_REG_REG,
-    OP_SLL16_REG_IMM,
-    OP_SRL8_REG_REG,
-    OP_SRL8_REG_IMM,
-    OP_SRL16_REG_REG,
-    OP_SRL16_REG_IMM,
-    OP_SRA8_REG_REG,
-    OP_SRA8_REG_IMM,
-    OP_SRA16_REG_REG,
-    OP_SRA16_REG_IMM,
-
-    OP_B_REG, // Control flow
-    OP_B_IMM,
-    OP_BEQ_IMM,
-    OP_BNE_IMM,
-    OP_BLT_IMM,
-    OP_BLE_IMM,
-    OP_BGT_IMM,
-    OP_BGE_IMM,
-    OP_BL_REG, // Branch link, pc is saved to lr, then branch
-    OP_BL_IMM,
-
-    // The 16-aligned blocks below hold opcodes that modify a register and take an 8-bit immediate.
-    // Each listed constant is the base of a 16-entry block (dest register encoded in low nibble).
-    OP_MOV_RN_IMM = 0x50,
-    OP_ADD8_REG_IMM = 0x60,
-    OP_SUB8_REG_IMM = 0x70,
-    OP_MUL8_REG_IMM = 0x80,
-    OP_DIV8_REG_IMM = 0x90,
-    OP_AND8_REG_IMM = 0xA0,
-    OP_OR8_REG_IMM  = 0xB0,
-    OP_XOR8_REG_IMM = 0xC0,
-    OP_CMP8_REG_IMM = 0xD0,
-
-    OP_SYSCALL = 0xE0;
-
-} opcode_t;
 
 typedef enum {
     ALU_OP_ADD,
@@ -688,7 +590,7 @@ static void vm_syscall(TangentMachine* vm, syscall_t syscall_number) {
                 if (tr_addr < 4 || tr_addr >= (word)(vm->vm_properties.code_size + 4)) { trigger_bsod(ERROR_TUI_INVALID_ELEMENT); return; }
                 transform = (TmlTransform*)(vm->code + tr_addr);
             }
-            tml_render_element(elem, transform);
+            //tml_render_element(elem, transform);
             break;
         }
         case DRAW_LINE:
@@ -755,7 +657,7 @@ void vm_init(TangentMachine* vm, byte* code) {
 } 
 
 // Create new VM from bytecode, add to pool, expand pool if needed
-TangentMachine* vm_spawn(byte* code) {
+TangentMachine* vm_spawn(const byte* code) {
     if (!code) return 0;
     
     // Find first NULL slot in pool
@@ -844,7 +746,6 @@ void vm_step(TangentMachine* vm) {
                 vm->psw.field.zero = (vm->registers.rn[operand1] == 0);
                 break;
             }
-
         case OP_MOV16_REG_IMM:
             {
                 /* need operand + 2 bytes */
@@ -857,12 +758,6 @@ void vm_step(TangentMachine* vm) {
                 vm->psw.field.zero = (imm == 0);
                 break;
             }
-
-
-
-
-
-
         case OP_MOV16_REG_REG:
             {
                 byte dest = operand1 & 0x07;
@@ -931,12 +826,31 @@ void vm_step(TangentMachine* vm) {
                 vm->pc += 1;
                 break;
             }
+        case OP_STORE8_MREG_IMM:
+            {
+                if (vm->pc + 2 >= code_end) { trigger_bsod(ERROR_VM_INVALID_INSTRUCTION); return; }
+                byte src = operand2 & 0x07;
+                word value = vm->code[vm->pc + 1];
+                byte address = vm->registers.ern[src];
+                write_memory_byte(vm, address, value);
+                vm->pc += 3;
+                break;
+            }
         case OP_STORE8_MIMM_REG:
             {
                 if (vm->pc + 2 >= code_end) { trigger_bsod(ERROR_VM_INVALID_INSTRUCTION); return; }
                 byte src = operand2;
                 word address = (word)(vm->code[vm->pc + 1] | (vm->code[vm->pc + 2] << 8));
                 byte value = vm->registers.rn[src];
+                write_memory_byte(vm, address, value);
+                vm->pc += 3;
+                break;
+            }
+        case OP_STORE8_MIMM_IMM:
+            {
+                if (vm->pc + 4 >= code_end) { trigger_bsod(ERROR_VM_INVALID_INSTRUCTION); return; }
+                word address = (word)(vm->code[vm->pc + 1] | (vm->code[vm->pc + 2] << 8));
+                byte value = operand_whole;
                 write_memory_byte(vm, address, value);
                 vm->pc += 3;
                 break;
@@ -951,6 +865,16 @@ void vm_step(TangentMachine* vm) {
                 vm->pc += 1;
                 break;
             }
+        case OP_STORE16_MREG_IMM:
+            {
+                if (vm->pc + 2 >= code_end) { trigger_bsod(ERROR_VM_INVALID_INSTRUCTION); return; }
+                byte src = operand2 & 0x07;
+                word address = vm->registers.ern[src];
+                word value = (word)(vm->code[vm->pc + 1] | (vm->code[vm->pc + 2] << 8));
+                write_memory_word(vm, address, value);
+                vm->pc += 3;
+                break;
+            }
         case OP_STORE16_MIMM_REG:
             {
                 if (vm->pc + 2 >= code_end) { trigger_bsod(ERROR_VM_INVALID_INSTRUCTION); return; }
@@ -959,6 +883,15 @@ void vm_step(TangentMachine* vm) {
                 word value = vm->registers.ern[src];
                 write_memory_word(vm, address, value);
                 vm->pc += 3;
+                break;
+            }
+        case OP_STORE16_MIMM_IMM:
+            {
+                if (vm->pc + 4 >= code_end) { trigger_bsod(ERROR_VM_INVALID_INSTRUCTION); return; }
+                word address = (word)(vm->code[vm->pc + 1] | (vm->code[vm->pc + 2] << 8));
+                word value = (word)(vm->code[vm->pc + 3] | (vm->code[vm->pc + 4] << 8));
+                write_memory_word(vm, address, value);
+                vm->pc += 5;
                 break;
             }
 
@@ -1556,6 +1489,7 @@ void vm_step(TangentMachine* vm) {
             }
         case OP_B_IMM:
             {
+                vm->pc += 1;
                 if (vm->pc + 1 >= (word)(vm->vm_properties.code_size + 4)) { trigger_bsod(ERROR_VM_INVALID_INSTRUCTION); return; }
                 word address = (word)(vm->code[vm->pc] | (vm->code[vm->pc + 1] << 8));
                 if (address < 4 || address + 1 >= (word)(vm->vm_properties.code_size + 4)) { trigger_bsod(ERROR_VM_INVALID_INSTRUCTION); return; }
@@ -1651,6 +1585,7 @@ void vm_step(TangentMachine* vm) {
             }
         case OP_BL_IMM:
             {
+                vm->pc += 1;
                 if (vm->pc + 1 >= (word)(vm->vm_properties.code_size + 4)) { trigger_bsod(ERROR_VM_INVALID_INSTRUCTION); return; }
                 word address = (word)(vm->code[vm->pc] | (vm->code[vm->pc + 1] << 8));
                 if (address < 4 || address + 1 >= (word)(vm->vm_properties.code_size + 4)) { trigger_bsod(ERROR_VM_INVALID_INSTRUCTION); return; }
@@ -1659,9 +1594,11 @@ void vm_step(TangentMachine* vm) {
                 break;
             }
 
-        // OP_MOV_RN_IMM 0x50-0x5F
-        case 0x50: case 0x51: case 0x52: case 0x53: case 0x54: case 0x55: case 0x56: case 0x57:
-        case 0x58: case 0x59: case 0x5A: case 0x5B: case 0x5C: case 0x5D: case 0x5E: case 0x5F:
+        // OP_MOV8_REG_IMM 0x50-0x5F
+        case OP_MOV8_REG_IMM + 0: case OP_MOV8_REG_IMM + 1: case OP_MOV8_REG_IMM + 2: case OP_MOV8_REG_IMM + 3:
+        case OP_MOV8_REG_IMM + 4: case OP_MOV8_REG_IMM + 5: case OP_MOV8_REG_IMM + 6: case OP_MOV8_REG_IMM + 7:
+        case OP_MOV8_REG_IMM + 8: case OP_MOV8_REG_IMM + 9: case OP_MOV8_REG_IMM + 10: case OP_MOV8_REG_IMM + 11:
+        case OP_MOV8_REG_IMM + 12: case OP_MOV8_REG_IMM + 13: case OP_MOV8_REG_IMM + 14: case OP_MOV8_REG_IMM + 15:
             {
                 byte dest = opcode & 0x0F;
                 byte imm = operand_whole;
@@ -1673,8 +1610,10 @@ void vm_step(TangentMachine* vm) {
             }
 
         // OP_ADD8_REG_IMM 0x60-0x6F
-        case 0x60: case 0x61: case 0x62: case 0x63: case 0x64: case 0x65: case 0x66: case 0x67:
-        case 0x68: case 0x69: case 0x6A: case 0x6B: case 0x6C: case 0x6D: case 0x6E: case 0x6F:
+        case OP_ADD8_REG_IMM + 0: case OP_ADD8_REG_IMM + 1: case OP_ADD8_REG_IMM + 2: case OP_ADD8_REG_IMM + 3:
+        case OP_ADD8_REG_IMM + 4: case OP_ADD8_REG_IMM + 5: case OP_ADD8_REG_IMM + 6: case OP_ADD8_REG_IMM + 7:
+        case OP_ADD8_REG_IMM + 8: case OP_ADD8_REG_IMM + 9: case OP_ADD8_REG_IMM + 10: case OP_ADD8_REG_IMM + 11:
+        case OP_ADD8_REG_IMM + 12: case OP_ADD8_REG_IMM + 13: case OP_ADD8_REG_IMM + 14: case OP_ADD8_REG_IMM + 15:
             {
                 byte dest = opcode & 0x0F;
                 byte imm = operand_whole;
@@ -1687,8 +1626,10 @@ void vm_step(TangentMachine* vm) {
             }
 
         // OP_SUB8_REG_IMM 0x70-0x7F
-        case 0x70: case 0x71: case 0x72: case 0x73: case 0x74: case 0x75: case 0x76: case 0x77:
-        case 0x78: case 0x79: case 0x7A: case 0x7B: case 0x7C: case 0x7D: case 0x7E: case 0x7F:
+        case OP_SUB8_REG_IMM + 0: case OP_SUB8_REG_IMM + 1: case OP_SUB8_REG_IMM + 2: case OP_SUB8_REG_IMM + 3:
+        case OP_SUB8_REG_IMM + 4: case OP_SUB8_REG_IMM + 5: case OP_SUB8_REG_IMM + 6: case OP_SUB8_REG_IMM + 7:
+        case OP_SUB8_REG_IMM + 8: case OP_SUB8_REG_IMM + 9: case OP_SUB8_REG_IMM + 10: case OP_SUB8_REG_IMM + 11:
+        case OP_SUB8_REG_IMM + 12: case OP_SUB8_REG_IMM + 13: case OP_SUB8_REG_IMM + 14: case OP_SUB8_REG_IMM + 15:
             {
                 byte dest = opcode & 0x0F;
                 byte imm = operand_whole;
@@ -1701,8 +1642,10 @@ void vm_step(TangentMachine* vm) {
             }
 
         // OP_MUL8_REG_IMM 0x80-0x8F
-        case 0x80: case 0x81: case 0x82: case 0x83: case 0x84: case 0x85: case 0x86: case 0x87:
-        case 0x88: case 0x89: case 0x8A: case 0x8B: case 0x8C: case 0x8D: case 0x8E: case 0x8F:
+        case OP_MUL8_REG_IMM + 0: case OP_MUL8_REG_IMM + 1: case OP_MUL8_REG_IMM + 2: case OP_MUL8_REG_IMM + 3:
+        case OP_MUL8_REG_IMM + 4: case OP_MUL8_REG_IMM + 5: case OP_MUL8_REG_IMM + 6: case OP_MUL8_REG_IMM + 7:
+        case OP_MUL8_REG_IMM + 8: case OP_MUL8_REG_IMM + 9: case OP_MUL8_REG_IMM + 10: case OP_MUL8_REG_IMM + 11:
+        case OP_MUL8_REG_IMM + 12: case OP_MUL8_REG_IMM + 13: case OP_MUL8_REG_IMM + 14: case OP_MUL8_REG_IMM + 15:
             {
                 byte dest = opcode & 0x0F;
                 byte imm = operand_whole;
@@ -1715,8 +1658,10 @@ void vm_step(TangentMachine* vm) {
             }
 
         // OP_DIV8_REG_IMM 0x90-0x9F
-        case 0x90: case 0x91: case 0x92: case 0x93: case 0x94: case 0x95: case 0x96: case 0x97:
-        case 0x98: case 0x99: case 0x9A: case 0x9B: case 0x9C: case 0x9D: case 0x9E: case 0x9F:
+        case OP_DIV8_REG_IMM + 0: case OP_DIV8_REG_IMM + 1: case OP_DIV8_REG_IMM + 2: case OP_DIV8_REG_IMM + 3:
+        case OP_DIV8_REG_IMM + 4: case OP_DIV8_REG_IMM + 5: case OP_DIV8_REG_IMM + 6: case OP_DIV8_REG_IMM + 7:
+        case OP_DIV8_REG_IMM + 8: case OP_DIV8_REG_IMM + 9: case OP_DIV8_REG_IMM + 10: case OP_DIV8_REG_IMM + 11:
+        case OP_DIV8_REG_IMM + 12: case OP_DIV8_REG_IMM + 13: case OP_DIV8_REG_IMM + 14: case OP_DIV8_REG_IMM + 15:
             {
                 byte dest = opcode & 0x0F;
                 byte imm = operand_whole;
@@ -1729,8 +1674,10 @@ void vm_step(TangentMachine* vm) {
             }
 
         // OP_AND8_REG_IMM 0xA0-0xAF
-        case 0xA0: case 0xA1: case 0xA2: case 0xA3: case 0xA4: case 0xA5: case 0xA6: case 0xA7:
-        case 0xA8: case 0xA9: case 0xAA: case 0xAB: case 0xAC: case 0xAD: case 0xAE: case 0xAF:
+        case OP_AND8_REG_IMM + 0: case OP_AND8_REG_IMM + 1: case OP_AND8_REG_IMM + 2: case OP_AND8_REG_IMM + 3:
+        case OP_AND8_REG_IMM + 4: case OP_AND8_REG_IMM + 5: case OP_AND8_REG_IMM + 6: case OP_AND8_REG_IMM + 7:
+        case OP_AND8_REG_IMM + 8: case OP_AND8_REG_IMM + 9: case OP_AND8_REG_IMM + 10: case OP_AND8_REG_IMM + 11:
+        case OP_AND8_REG_IMM + 12: case OP_AND8_REG_IMM + 13: case OP_AND8_REG_IMM + 14: case OP_AND8_REG_IMM + 15:
             {
                 byte dest = opcode & 0x0F;
                 byte imm = operand_whole;
@@ -1743,8 +1690,10 @@ void vm_step(TangentMachine* vm) {
             }
 
         // OP_OR8_REG_IMM 0xB0-0xBF
-        case 0xB0: case 0xB1: case 0xB2: case 0xB3: case 0xB4: case 0xB5: case 0xB6: case 0xB7:
-        case 0xB8: case 0xB9: case 0xBA: case 0xBB: case 0xBC: case 0xBD: case 0xBE: case 0xBF:
+        case OP_OR8_REG_IMM + 0: case OP_OR8_REG_IMM + 1: case OP_OR8_REG_IMM + 2: case OP_OR8_REG_IMM + 3:
+        case OP_OR8_REG_IMM + 4: case OP_OR8_REG_IMM + 5: case OP_OR8_REG_IMM + 6: case OP_OR8_REG_IMM + 7:
+        case OP_OR8_REG_IMM + 8: case OP_OR8_REG_IMM + 9: case OP_OR8_REG_IMM + 10: case OP_OR8_REG_IMM + 11:
+        case OP_OR8_REG_IMM + 12: case OP_OR8_REG_IMM + 13: case OP_OR8_REG_IMM + 14: case OP_OR8_REG_IMM + 15:
             {
                 byte dest = opcode & 0x0F;
                 byte imm = operand_whole;
@@ -1757,8 +1706,10 @@ void vm_step(TangentMachine* vm) {
             }
 
         // OP_XOR8_REG_IMM 0xC0-0xCF
-        case 0xC0: case 0xC1: case 0xC2: case 0xC3: case 0xC4: case 0xC5: case 0xC6: case 0xC7:
-        case 0xC8: case 0xC9: case 0xCA: case 0xCB: case 0xCC: case 0xCD: case 0xCE: case 0xCF:
+        case OP_XOR8_REG_IMM + 0: case OP_XOR8_REG_IMM + 1: case OP_XOR8_REG_IMM + 2: case OP_XOR8_REG_IMM + 3:
+        case OP_XOR8_REG_IMM + 4: case OP_XOR8_REG_IMM + 5: case OP_XOR8_REG_IMM + 6: case OP_XOR8_REG_IMM + 7:
+        case OP_XOR8_REG_IMM + 8: case OP_XOR8_REG_IMM + 9: case OP_XOR8_REG_IMM + 10: case OP_XOR8_REG_IMM + 11:
+        case OP_XOR8_REG_IMM + 12: case OP_XOR8_REG_IMM + 13: case OP_XOR8_REG_IMM + 14: case OP_XOR8_REG_IMM + 15:
             {
                 byte dest = opcode & 0x0F;
                 byte imm = operand_whole;
@@ -1771,8 +1722,10 @@ void vm_step(TangentMachine* vm) {
             }    
 
         // OP_CMP8_REG_IMM 0xD0-0xDF
-        case 0xD0: case 0xD1: case 0xD2: case 0xD3: case 0xD4: case 0xD5: case 0xD6: case 0xD7:
-        case 0xD8: case 0xD9: case 0xDA: case 0xDB: case 0xDC: case 0xDD: case 0xDE: case 0xDF:
+        case OP_CMP8_REG_IMM + 0: case OP_CMP8_REG_IMM + 1: case OP_CMP8_REG_IMM + 2: case OP_CMP8_REG_IMM + 3:
+        case OP_CMP8_REG_IMM + 4: case OP_CMP8_REG_IMM + 5: case OP_CMP8_REG_IMM + 6: case OP_CMP8_REG_IMM + 7:
+        case OP_CMP8_REG_IMM + 8: case OP_CMP8_REG_IMM + 9: case OP_CMP8_REG_IMM + 10: case OP_CMP8_REG_IMM + 11:
+        case OP_CMP8_REG_IMM + 12: case OP_CMP8_REG_IMM + 13: case OP_CMP8_REG_IMM + 14: case OP_CMP8_REG_IMM + 15:
             {
                 byte dest = opcode & 0x0F;
                 byte imm = operand_whole;
@@ -1787,6 +1740,11 @@ void vm_step(TangentMachine* vm) {
                 vm->pc += 1;
                 break;
             }
+        case OP_END:
+			{
+				vm->vm_properties.running = 0;
+				break;
+			}
 
         default:
             trigger_bsod(ERROR_VM_INVALID_INSTRUCTION);
