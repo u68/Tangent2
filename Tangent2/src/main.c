@@ -144,7 +144,7 @@ int main() {
         vms[i] = vm_spawn(example_program);
     }
 
-    for (word step = 0; step < 50000; step++) {
+    for (word step = 0; step < 1000; step++) {
             vm_step_all();
             deref(0x9A00) = step;
         }
