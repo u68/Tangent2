@@ -818,8 +818,8 @@ void vm_step(TangentMachine* vm) {
             }
         case OP_STORE8_MREG_REG:
             {
-                byte src = operand2;
                 byte addr_reg = operand1 & 0x07;
+                byte src = operand2;
                 word address = vm->registers.ern[addr_reg];
                 byte value = vm->registers.rn[src];
                 write_memory_byte(vm, address, value);
@@ -828,10 +828,10 @@ void vm_step(TangentMachine* vm) {
             }
         case OP_STORE8_MREG_IMM:
             {
-                if (vm->pc + 2 >= code_end) { trigger_bsod(ERROR_VM_INVALID_INSTRUCTION); return; }
-                byte src = operand2 & 0x07;
-                word value = vm->code[vm->pc + 1];
-                byte address = vm->registers.ern[src];
+                if (vm->pc + 1 >= code_end) { trigger_bsod(ERROR_VM_INVALID_INSTRUCTION); return; }
+                byte addr_reg = operand1 & 0x07;
+                word address = vm->registers.ern[addr_reg];
+                byte value = vm->code[vm->pc + 1];
                 write_memory_byte(vm, address, value);
                 vm->pc += 3;
                 break;
@@ -848,7 +848,7 @@ void vm_step(TangentMachine* vm) {
             }
         case OP_STORE8_MIMM_IMM:
             {
-                if (vm->pc + 4 >= code_end) { trigger_bsod(ERROR_VM_INVALID_INSTRUCTION); return; }
+                if (vm->pc + 2 >= code_end) { trigger_bsod(ERROR_VM_INVALID_INSTRUCTION); return; }
                 word address = (word)(vm->code[vm->pc + 1] | (vm->code[vm->pc + 2] << 8));
                 byte value = operand_whole;
                 write_memory_byte(vm, address, value);
@@ -1340,6 +1340,7 @@ void vm_step(TangentMachine* vm) {
             }
         case OP_CMP16_REG_IMM:
             {
+                if (vm->pc + 2 >= code_end) { trigger_bsod(ERROR_VM_INVALID_INSTRUCTION); return; }
                 byte reg1 = operand1 & 0x07;
                 word imm = (word)(vm->code[vm->pc + 1] | (vm->code[vm->pc + 2] << 8));
                 psw_flags_t flags = cmp_words(vm->registers.ern[reg1], imm);
@@ -1594,7 +1595,7 @@ void vm_step(TangentMachine* vm) {
                 break;
             }
 
-        // OP_MOV8_REG_IMM 0x50-0x5F
+        // OP_MOV8_REG_IMM 0x60-0x6F
         case OP_MOV8_REG_IMM + 0: case OP_MOV8_REG_IMM + 1: case OP_MOV8_REG_IMM + 2: case OP_MOV8_REG_IMM + 3:
         case OP_MOV8_REG_IMM + 4: case OP_MOV8_REG_IMM + 5: case OP_MOV8_REG_IMM + 6: case OP_MOV8_REG_IMM + 7:
         case OP_MOV8_REG_IMM + 8: case OP_MOV8_REG_IMM + 9: case OP_MOV8_REG_IMM + 10: case OP_MOV8_REG_IMM + 11:
@@ -1609,7 +1610,7 @@ void vm_step(TangentMachine* vm) {
                 break;
             }
 
-        // OP_ADD8_REG_IMM 0x60-0x6F
+        // OP_ADD8_REG_IMM 0x70-0x7F
         case OP_ADD8_REG_IMM + 0: case OP_ADD8_REG_IMM + 1: case OP_ADD8_REG_IMM + 2: case OP_ADD8_REG_IMM + 3:
         case OP_ADD8_REG_IMM + 4: case OP_ADD8_REG_IMM + 5: case OP_ADD8_REG_IMM + 6: case OP_ADD8_REG_IMM + 7:
         case OP_ADD8_REG_IMM + 8: case OP_ADD8_REG_IMM + 9: case OP_ADD8_REG_IMM + 10: case OP_ADD8_REG_IMM + 11:
@@ -1625,7 +1626,7 @@ void vm_step(TangentMachine* vm) {
                 break;
             }
 
-        // OP_SUB8_REG_IMM 0x70-0x7F
+        // OP_SUB8_REG_IMM 0x80-0x8F
         case OP_SUB8_REG_IMM + 0: case OP_SUB8_REG_IMM + 1: case OP_SUB8_REG_IMM + 2: case OP_SUB8_REG_IMM + 3:
         case OP_SUB8_REG_IMM + 4: case OP_SUB8_REG_IMM + 5: case OP_SUB8_REG_IMM + 6: case OP_SUB8_REG_IMM + 7:
         case OP_SUB8_REG_IMM + 8: case OP_SUB8_REG_IMM + 9: case OP_SUB8_REG_IMM + 10: case OP_SUB8_REG_IMM + 11:
@@ -1641,7 +1642,7 @@ void vm_step(TangentMachine* vm) {
                 break;
             }
 
-        // OP_MUL8_REG_IMM 0x80-0x8F
+        // OP_MUL8_REG_IMM 0x90-0x9F
         case OP_MUL8_REG_IMM + 0: case OP_MUL8_REG_IMM + 1: case OP_MUL8_REG_IMM + 2: case OP_MUL8_REG_IMM + 3:
         case OP_MUL8_REG_IMM + 4: case OP_MUL8_REG_IMM + 5: case OP_MUL8_REG_IMM + 6: case OP_MUL8_REG_IMM + 7:
         case OP_MUL8_REG_IMM + 8: case OP_MUL8_REG_IMM + 9: case OP_MUL8_REG_IMM + 10: case OP_MUL8_REG_IMM + 11:
@@ -1657,7 +1658,7 @@ void vm_step(TangentMachine* vm) {
                 break;
             }
 
-        // OP_DIV8_REG_IMM 0x90-0x9F
+        // OP_DIV8_REG_IMM 0xA0-0xAF
         case OP_DIV8_REG_IMM + 0: case OP_DIV8_REG_IMM + 1: case OP_DIV8_REG_IMM + 2: case OP_DIV8_REG_IMM + 3:
         case OP_DIV8_REG_IMM + 4: case OP_DIV8_REG_IMM + 5: case OP_DIV8_REG_IMM + 6: case OP_DIV8_REG_IMM + 7:
         case OP_DIV8_REG_IMM + 8: case OP_DIV8_REG_IMM + 9: case OP_DIV8_REG_IMM + 10: case OP_DIV8_REG_IMM + 11:
@@ -1673,7 +1674,7 @@ void vm_step(TangentMachine* vm) {
                 break;
             }
 
-        // OP_AND8_REG_IMM 0xA0-0xAF
+        // OP_AND8_REG_IMM 0xB0-0xBF
         case OP_AND8_REG_IMM + 0: case OP_AND8_REG_IMM + 1: case OP_AND8_REG_IMM + 2: case OP_AND8_REG_IMM + 3:
         case OP_AND8_REG_IMM + 4: case OP_AND8_REG_IMM + 5: case OP_AND8_REG_IMM + 6: case OP_AND8_REG_IMM + 7:
         case OP_AND8_REG_IMM + 8: case OP_AND8_REG_IMM + 9: case OP_AND8_REG_IMM + 10: case OP_AND8_REG_IMM + 11:
@@ -1689,7 +1690,7 @@ void vm_step(TangentMachine* vm) {
                 break;
             }
 
-        // OP_OR8_REG_IMM 0xB0-0xBF
+        // OP_OR8_REG_IMM 0xC0-0xCF
         case OP_OR8_REG_IMM + 0: case OP_OR8_REG_IMM + 1: case OP_OR8_REG_IMM + 2: case OP_OR8_REG_IMM + 3:
         case OP_OR8_REG_IMM + 4: case OP_OR8_REG_IMM + 5: case OP_OR8_REG_IMM + 6: case OP_OR8_REG_IMM + 7:
         case OP_OR8_REG_IMM + 8: case OP_OR8_REG_IMM + 9: case OP_OR8_REG_IMM + 10: case OP_OR8_REG_IMM + 11:
@@ -1705,7 +1706,7 @@ void vm_step(TangentMachine* vm) {
                 break;
             }
 
-        // OP_XOR8_REG_IMM 0xC0-0xCF
+        // OP_XOR8_REG_IMM 0xD0-0xDF
         case OP_XOR8_REG_IMM + 0: case OP_XOR8_REG_IMM + 1: case OP_XOR8_REG_IMM + 2: case OP_XOR8_REG_IMM + 3:
         case OP_XOR8_REG_IMM + 4: case OP_XOR8_REG_IMM + 5: case OP_XOR8_REG_IMM + 6: case OP_XOR8_REG_IMM + 7:
         case OP_XOR8_REG_IMM + 8: case OP_XOR8_REG_IMM + 9: case OP_XOR8_REG_IMM + 10: case OP_XOR8_REG_IMM + 11:
@@ -1721,7 +1722,7 @@ void vm_step(TangentMachine* vm) {
                 break;
             }    
 
-        // OP_CMP8_REG_IMM 0xD0-0xDF
+        // OP_CMP8_REG_IMM 0xE0-0xEF
         case OP_CMP8_REG_IMM + 0: case OP_CMP8_REG_IMM + 1: case OP_CMP8_REG_IMM + 2: case OP_CMP8_REG_IMM + 3:
         case OP_CMP8_REG_IMM + 4: case OP_CMP8_REG_IMM + 5: case OP_CMP8_REG_IMM + 6: case OP_CMP8_REG_IMM + 7:
         case OP_CMP8_REG_IMM + 8: case OP_CMP8_REG_IMM + 9: case OP_CMP8_REG_IMM + 10: case OP_CMP8_REG_IMM + 11:

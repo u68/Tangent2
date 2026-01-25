@@ -129,7 +129,7 @@ int main() {
 			OP_INC8_REG, 0,
 			//OP_END, 0x00,
 			//b pi_loop
-			OP_B_IMM, 0, 0x28, 0,
+			OP_B_IMM, 0, 0x26, 0,
 		//pi_end:
 		//end
 		OP_STORE8_MIMM_REG, 0x00, 0x06, 0,

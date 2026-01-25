@@ -53,15 +53,15 @@ Words in memory and headers are always stored little-endian when read/written by
 
 ## Registers and PSW
 Registers (nomenclature used in code):
-- `rn[8]` — eight 8-bit general registers (byte-sized)
+- `rn[16]` — sixteen 8-bit general registers (byte-sized)
 - `ern[8]` — eight 16-bit general registers (word-sized) used for addresses and wide arithmetic
 - `sp` — stack pointer (word), initialized to `ram_size` (top of RAM)
 - `pc` — program counter (word), initialized to 4 (first instruction)
 - `lr` — link register (word), used by branch-and-link operations
 - `psw` — processor status word (flags) represented as `psw_flags_t` with fields:
   - `zero` — set when result == 0
-  - `carry` — carry for unsigned ops / borrow for subtraction
   - `neg` — sign bit set (MSB) of result
+  - `carry` — carry for unsigned ops / borrow for subtraction
   - `overflow` — signed overflow indicator
 
 Helper macros in the source provide signed/unsigned comparisons using `psw` (for example `SIGNED_LT(psw)`).
@@ -80,15 +80,15 @@ Each instruction is a 1-byte opcode followed by an operand byte (packed nibbles)
 - Many instructions interpret the two operands differently (e.g., dest/src registers, or dest/reg + immediate).
 
 - Some opcodes use special ranges where the low nibble encodes a destination register and the instruction has a single-byte immediate following the opcode (16-entry blocks):
-  - `OP_MOV_RN_IMM = 0x50` (0x50–0x5F)
-  - `OP_ADD8_REG_IMM = 0x60` (0x60–0x6F)
-  - `OP_SUB8_REG_IMM = 0x70` (0x70–0x7F)
-  - `OP_MUL8_REG_IMM = 0x80` (0x80–0x8F)
-  - `OP_DIV8_REG_IMM = 0x90` (0x90–0x9F)
-  - `OP_AND8_REG_IMM = 0xA0` (0xA0–0xAF)
-  - `OP_OR8_REG_IMM  = 0xB0` (0xB0–0xBF)
-  - `OP_XOR8_REG_IMM = 0xC0` (0xC0–0xCF)
-  - `OP_CMP8_REG_IMM = 0xD0` (0xD0–0xDF)
+  - `OP_MOV8_REG_IMM = 0x60` (0x60–0x6F)
+  - `OP_ADD8_REG_IMM = 0x70` (0x70–0x7F)
+  - `OP_SUB8_REG_IMM = 0x80` (0x80–0x8F)
+  - `OP_MUL8_REG_IMM = 0x90` (0x90–0x9F)
+  - `OP_DIV8_REG_IMM = 0xA0` (0xA0–0xAF)
+  - `OP_AND8_REG_IMM = 0xB0` (0xB0–0xBF)
+  - `OP_OR8_REG_IMM  = 0xC0` (0xC0–0xCF)
+  - `OP_XOR8_REG_IMM = 0xD0` (0xD0–0xDF)
+  - `OP_CMP8_REG_IMM = 0xE0` (0xE0–0xEF)
 
 - For multi-byte immediates (16-bit), the instruction reads the next two code bytes as a little-endian word.
 
@@ -120,7 +120,7 @@ This project defines many opcodes. Below are the broad categories and examples (
   - Branch-and-link (`OP_BL_REG`, `OP_BL_IMM`) saves `pc` to `lr` before jumping
 
 - Immediate-modifying registers
-  - The 16-entry blocks (0x50–0xDF ranges) provide compact immediate forms for common byte ops.
+  - The 16-entry blocks (0x60–0xEF ranges) provide compact immediate forms for common byte ops.
 
 Semantics: after an instruction executes, `vm->pc` is advanced to the next instruction; many instructions update `vm->psw` based on the result.
 
@@ -146,9 +146,13 @@ A quick index of all opcodes (click a name to jump to its detailed entry):
   - [OP_LOAD16_REG_MREG](#op_load16_reg_mreg)
   - [OP_LOAD16_REG_MIMM](#op_load16_reg_mimm)
   - [OP_STORE8_MREG_REG](#op_store8_mreg_reg)
+  - [OP_STORE8_MREG_IMM](#op_store16_mreg_imm)
   - [OP_STORE8_MIMM_REG](#op_store8_mimm_reg)
+  - [OP_STORE8_MIMM_IMM](#op_store8_mimm_imm)
   - [OP_STORE16_MREG_REG](#op_store16_mreg_reg)
+  - [OP_STORE16_MREG_IMM](#op_store16_mreg_imm)
   - [OP_STORE16_MIMM_REG](#op_store16_mimm_reg)
+  - [OP_STORE16_MIMM_IMM](#op_store16_mimm_imm)
 
 - **Stack**
   - [OP_PUSH8_REG](#op_push8_reg)
@@ -220,25 +224,25 @@ A quick index of all opcodes (click a name to jump to its detailed entry):
 - **Control flow**
   - [OP_B_REG](#op_b_reg)
   - [OP_B_IMM](#op_b_imm)
-  - [OP_BEQ_IMM](#op_beq_imm)
-  - [OP_BNE_IMM](#op_bne_imm)
-  - [OP_BLT_IMM](#op_blt_imm)
-  - [OP_BLE_IMM](#op_ble_imm)
-  - [OP_BGT_IMM](#op_bgt_imm)
-  - [OP_BGE_IMM](#op_bge_imm)
+  - [OP_BEQ_IMM](#short-conditional-branches)
+  - [OP_BNE_IMM](#short-conditional-branches)
+  - [OP_BLT_IMM](#short-conditional-branches)
+  - [OP_BLE_IMM](#short-conditional-branches)
+  - [OP_BGT_IMM](#short-conditional-branches)
+  - [OP_BGE_IMM](#short-conditional-branches)
   - [OP_BL_REG](#op_bl_reg)
   - [OP_BL_IMM](#op_bl_imm)
 
-- **Compact immediate forms (ranges)**
-  - [OP_MOV_RN_IMM (0x50..0x5F)](#op_mov_rn_imm)
-  - [OP_ADD8_REG_IMM (0x60..0x6F)](#op_add8_reg_imm)
-  - [OP_SUB8_REG_IMM (0x70..0x7F)](#op_sub8_reg_imm)
-  - [OP_MUL8_REG_IMM (0x80..0x8F)](#op_mul8_reg_imm)
-  - [OP_DIV8_REG_IMM (0x90..0x9F)](#op_div8_reg_imm)
-  - [OP_AND8_REG_IMM (0xA0..0xAF)](#op_and8_reg_imm)
-  - [OP_OR8_REG_IMM (0xB0..0xBF)](#op_or8_reg_imm)
-  - [OP_XOR8_REG_IMM (0xC0..0xCF)](#op_xor8_reg_imm)
-  - [OP_CMP8_REG_IMM (0xD0..0xDF)](#op_cmp8_reg_imm)
+- **Compact immediate forms (16 byte ranges)**
+  - [OP_MOV8_REG_IMM](#op_mov8_reg_imm)
+  - [OP_ADD8_REG_IMM](#op_add8_reg_imm)
+  - [OP_SUB8_REG_IMM](#op_sub8_reg_imm)
+  - [OP_MUL8_REG_IMM](#op_mul8_reg_imm)
+  - [OP_DIV8_REG_IMM](#op_div8_reg_imm)
+  - [OP_AND8_REG_IMM](#op_and8_reg_imm)
+  - [OP_OR8_REG_IMM](#op_or8_reg_imm)
+  - [OP_XOR8_REG_IMM](#op_xor8_reg_imm)
+  - [OP_CMP8_REG_IMM](#op_cmp8_reg_imm)
 
 ### Data movement
 This section documents the data movement instructions in detail. Each entry includes pseudocode, the exact PSW behavior, an example, and notes about bounds/errors.
@@ -392,6 +396,24 @@ write_memory_byte(vm, address, val);
   - Errors: `ERROR_VM_OUT_OF_BOUNDS_MEMORY_ACCESS`
   - Notes: useful for writing single-byte values like colours or flags.
 
+#### OP_STORE8_MREG_IMM
+- Encoding: [opcode][operand][imm]
+- Operands: src = operand2 & 0x07 (rn index used to select address register), imm = next code byte
+- Behavior:
+
+```c
+/* STORE8_MREG_IMM */
+byte src = operand2 & 0x07;
+word address = ern[src];
+word value = code[pc+1];
+write_memory_byte(vm, address, value);
+```
+
+  - PSW: unchanged
+  - PC: +3
+  - Errors: `ERROR_VM_INVALID_INSTRUCTION` if immediate byte isn't available, `ERROR_VM_OUT_OF_BOUNDS_MEMORY_ACCESS` for invalid address
+  - Notes: follows the implementation in `src/vm/vm.c` exactly (reads one immediate byte and uses the `ern[]` register selected by `operand2` as the destination address).
+
 #### OP_STORE8_MIMM_REG
 - Encoding: [opcode][operand][addr_lo][addr_hi]
 - Operands: src = operand2, addr = immediate word
@@ -411,6 +433,23 @@ write_memory_byte(vm, addr, val);
   - PC: +3
   - Errors: invalid code length / memory bounds
 
+#### OP_STORE8_MIMM_IMM
+- Encoding: [opcode][operand][addr_lo][addr_hi]
+- Operands: addr = immediate word from the next two code bytes, value = full operand byte (`operand_whole`)
+- Behavior:
+
+```c
+/* STORE8_MIMM_IMM */
+word address = code[pc+1] | (code[pc+2] << 8);
+byte value = operand_whole;
+write_memory_byte(vm, address, value);
+```
+
+  - PSW: unchanged
+  - PC: +3
+  - Errors: `ERROR_VM_INVALID_INSTRUCTION` if immediate bytes aren't available, `ERROR_VM_OUT_OF_BOUNDS_MEMORY_ACCESS` for invalid address
+  - Notes: per `src/vm/vm.c` the opcode uses the operand byte as the value and reads a two-byte address following the operand; the implementation advances `pc` by 3.
+
 #### OP_STORE16_MREG_REG
 - Encoding: [opcode][operand]
 - Operands: addr_reg = operand1 & 0x07, src = operand2 & 0x07
@@ -428,6 +467,24 @@ write_memory_word(vm, address, val);
   - PSW: unchanged
   - PC: +1
   - Errors: `ERROR_VM_OUT_OF_BOUNDS_MEMORY_ACCESS`
+
+#### OP_STORE16_MREG_IMM
+- Encoding: [opcode][operand][imm_lo][imm_hi]
+- Operands: src = operand2 & 0x07 (index into `ern[]` to select address register), imm = little-endian word immediate
+- Behavior:
+
+```c
+/* STORE16_MREG_IMM */
+byte src = operand2 & 0x07;
+word address = vm->registers.ern[src];
+word value = (word)(code[pc+1] | (code[pc+2] << 8));
+write_memory_word(vm, address, value);
+```
+
+  - PSW: unchanged
+  - PC: +3
+  - Errors: `ERROR_VM_INVALID_INSTRUCTION` if immediate bytes aren't available, `ERROR_VM_OUT_OF_BOUNDS_MEMORY_ACCESS` for invalid address
+  - Notes: per `src/vm/vm.c` the opcode reads a 16-bit immediate value and writes it to the address held in `ern[operand2 & 0x07]`.
 
 #### OP_STORE16_MIMM_REG
 - Encoding: [opcode][operand][addr_lo][addr_hi]
@@ -448,6 +505,23 @@ write_memory_word(vm, addr, val);
   - PC: +3
   - Errors: invalid code length / out-of-bounds memory
   - Notes: use for storing pointers or 16-bit values to RAM.
+
+#### OP_STORE16_MIMM_IMM
+- Encoding: [opcode][operand][addr_lo][addr_hi][val_lo][val_hi]
+- Operands: addr = little-endian word from the next two code bytes, value = little-endian word from the following two code bytes
+- Behavior:
+
+```c
+/* STORE16_MIMM_IMM */
+word address = code[pc+1] | (code[pc+2] << 8);
+word value = (word)(code[pc+3] | (code[pc+4] << 8));
+write_memory_word(vm, address, value);
+```
+
+  - PSW: unchanged
+  - PC: +5
+  - Errors: `ERROR_VM_INVALID_INSTRUCTION` if immediate bytes aren't available, `ERROR_VM_OUT_OF_BOUNDS_MEMORY_ACCESS` for invalid address
+  - Notes: implementation in `src/vm/vm.c` advances `pc` by 5 after writing the 16-bit immediate value to the specified address.
 
 ### Stack operations
 All stack operations operate on the VM's RAM using `sp` as a byte index. The stack grows downward: pushes decrement `sp`, pops increment `sp`. All stack pushes check for overflow (insufficient space at lower addresses), and pops check for underflow (reading beyond top-of-RAM).
@@ -1173,8 +1247,6 @@ ern[operand1 & 0x07] = res;
 - PC: +1
 - Notes: `NOT` is useful for bit masks and clearing flags in-place.
 
-
-
 ### Comparisons
 Comparison instructions compute flags using subtraction semantics without storing the result. They are the canonical way to prepare `psw` for conditional branching.
 
@@ -1283,7 +1355,7 @@ rn[operand1] = res;
 ```c
 /* OP_SLL8_REG_IMM */
 byte a = rn[operand1];
-dword n = code[pc+1] & 7;
+dword n = operand2 & 7;
 byte res;
 byte carry;
 if (n == 0) { res = a; carry = 0; }
@@ -1452,7 +1524,8 @@ Control-flow instructions perform absolute and relative jumps with validation an
   - PC: pc is set to address; instruction consumes the two immediate bytes during fetch
   - Errors: insufficient code bytes or invalid target -> `ERROR_VM_INVALID_INSTRUCTION`
 
-- **Short conditional branches (OP_BEQ_IMM, OP_BNE_IMM, OP_BLT_IMM, OP_BLE_IMM, OP_BGT_IMM, OP_BGE_IMM)**
+#### Short conditional branches
+**(OP_BEQ_IMM, OP_BNE_IMM, OP_BLT_IMM, OP_BLE_IMM, OP_BGT_IMM, OP_BGE_IMM)**
   - Encoding: [opcode][rel8]
   - Behavior:
     - rel8 = (sbyte)operand_whole
@@ -1489,27 +1562,27 @@ Control-flow instructions perform absolute and relative jumps with validation an
   - PC: overwrites pc with target; `lr` set so a return can be performed
   - Errors: invalid immediate or invalid target
 
-### Compact immediate forms (0x50–0xDF)
+### Compact immediate forms (0x60–0xEF)
 The 16-entry opcode blocks encode the destination register in the opcode low nibble and place the 8-bit immediate in the operand byte. General pattern:
-- opcode = BASE | dest  (BASE = 0x50, 0x60, ..., 0xD0)
+- opcode = BASE | dest  (BASE = 0x60, 0x70, ..., 0xE0)
 - operand = imm (full 8-bit immediate)
 - instruction consumes one operand byte and advances PC by +1
 
 Concrete behaviors and PSW effects (compact immediate blocks):
 
 General encoding pattern for these blocks:
-- opcode = BASE | dest (BASE is 0x50, 0x60, ..., 0xD0)
+- opcode = BASE | dest (BASE is 0x60, 0x70, ..., 0xE0)
 - operand byte contains the 8-bit immediate `imm`
 - dest = opcode & 0x0F (index into `rn[]`)
 - instructions consume the operand byte and advance `pc` by +1
 
-#### OP_MOV_RN_IMM
-- Range: 0x50..0x5F
-- Encoding: [opcode = 0x50 + dest][operand = imm]
+#### OP_MOV8_REG_IMM
+- Range: 0x60..0x6F
+- Encoding: [opcode = 0x60 + dest][operand = imm]
 - Pseudocode:
 
 ```c
-/* OP_MOV_RN_IMM (compact) */
+/* OP_MOV8_REG_IMM (compact) */
 dword dest = opcode & 0x0F;
 byte imm = code[pc+1];
 rn[dest] = imm;
@@ -1520,8 +1593,8 @@ rn[dest] = imm;
   - Notes: efficient immediate load into 8-bit register.
 
 #### OP_ADD8_REG_IMM
-- Range: 0x60..0x6F
-- Encoding: [0x60 + dest][imm]
+- Range: 0x70..0x7F
+- Encoding: [0x70 + dest][imm]
 - Pseudocode:
 
 ```c
@@ -1542,15 +1615,15 @@ rn[dest] = res;
   - PC: +1
 
 #### OP_SUB8_REG_IMM
-- Range: 0x70..0x7F
-- Encoding: [0x70 + dest][imm]
+- Range: 0x80..0x8F
+- Encoding: [0x80 + dest][imm]
 - Pseudocode: dest = (byte)(rn[dest] - imm)
 - PSW exacts per `ALU_OP_SUB` (borrow encoded in `carry`, overflow via two's-complement formula, `neg` and `zero` from result)
 - PC: +1
 
 #### OP_MUL8_REG_IMM
-- Range: 0x80..0x8F
-- Encoding: [0x80 + dest][imm]
+- Range: 0x90..0x9F
+- Encoding: [0x90 + dest][imm]
 - Behavior: res = low 8 bits of (rn[dest] * imm)
   - PSW exacts:
     - `carry` = product > 0xFF
@@ -1558,36 +1631,36 @@ rn[dest] = res;
   - PC: +1
 
 #### OP_DIV8_REG_IMM
-- Range: 0x90..0x9F
-- Encoding: [0x90 + dest][imm]
+- Range: 0xA0..0xAF
+- Encoding: [0xA0 + dest][imm]
 - Behavior: if imm == 0 -> res = 0 else res = rn[dest] / imm
   - PSW: `zero`/`neg` from result
   - PC: +1
 
 #### OP_AND8_REG_IMM
-- Range: 0xA0..0xAF
-- Encoding: [0xA0 + dest][imm]
+- Range: 0xB0..0xBF
+- Encoding: [0xB0 + dest][imm]
 - Behavior: res = rn[dest] & imm
   - PSW: `zero` = (res == 0); `neg` from MSB; `carry`/`overflow` cleared
   - PC: +1
 
 #### OP_OR8_REG_IMM
-- Range: 0xB0..0xBF
-- Encoding: [0xB0 + dest][imm]
+- Range: 0xC0..0xCF
+- Encoding: [0xC0 + dest][imm]
 - Behavior: res = rn[dest] | imm
   - PSW: `zero`/`neg` from result
   - PC: +1
 
 #### OP_XOR8_REG_IMM
-- Range: 0xC0..0xCF
-- Encoding: [0xC0 + dest][imm]
+- Range: 0xD0..0xDF
+- Encoding: [0xD0 + dest][imm]
 - Behavior: res = rn[dest] ^ imm
   - PSW: `zero`/`neg` from result
   - PC: +1
 
 #### OP_CMP8_REG_IMM
-- Range: 0xD0..0xDF
-- Encoding: [0xD0 + dest][imm]
+- Range: 0xE0..0xEF
+- Encoding: [0xE0 + dest][imm]
 - Behavior: compute flags for `rn[dest] - imm` using `cmp_bytes` (no register written)
   - PSW exacts:
     - `zero` = ((rn[dest] - imm) == 0)
