@@ -3,7 +3,7 @@
  * Implementation of you know what
  * Virtual Machine speed test
  *  Created on: Jan 4, 2026
- *      Author: harma
+ *      Author: harma 
  */
 
 #include "base.h"
@@ -151,7 +151,7 @@ int main() {
 
     // Store each VM's ram into E000...
     for (byte i = 0; i < 18; i++) {
-        deref(0x9B60 + i) = vms[0]->ram[i];
+        deref(0x9B00 + i) = vms[0]->ram[i];
     }
 	return 0;
 }

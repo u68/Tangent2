@@ -376,8 +376,68 @@ void MainWindow::onOpenOsSourceToggled(bool checked) {
 }
 
 void MainWindow::onBuildOsSource() {
-    // Framework placeholder for building the OS source
-    console->appendOutput("Build OS Source - Not yet implemented.\n");
+    QString osSrc = findTangent2SrcPath();
+    if (osSrc.isEmpty()) {
+        QMessageBox::warning(this, "OS Source Not Found", "Could not locate Tangent2/src directory.");
+        return;
+    }
+
+    // Ensure Release folder exists
+    QString releaseDir = osSrc + "/Release";
+    QDir releaseQDir(releaseDir);
+    if (!releaseQDir.exists()) {
+        console->appendOutput("Release folder not found. Creating: " + releaseDir + "\n");
+        releaseQDir.mkpath(".");
+    }
+
+    QString batchPath = releaseDir + "/build_os.bat";
+    QFileInfo bf(batchPath);
+    if (!bf.exists()) {
+        console->appendError("Build script not found: " + batchPath + "\n");
+        QMessageBox::warning(this, "Build Script Missing", "Build script not found:\n" + batchPath);
+        return;
+    }
+
+    // Save all open files in the editor before building
+    if (tabEditor) tabEditor->saveAllFiles();
+
+    console->clear();
+    console->appendOutput("=== Building OS Source ===\n");
+
+    QProcess proc;
+    proc.setWorkingDirectory(releaseDir);
+
+    // Start from the real system environment
+    QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
+
+    // FORCE COMSPEC (Explorer always has this)
+    env.insert("COMSPEC", "C:\\Windows\\System32\\cmd.exe");
+
+    proc.setProcessEnvironment(env);
+
+    // Launch exactly like Explorer
+    QString cmd = env.value("COMSPEC");
+    QStringList args;
+    args << "/C" << "build_os.bat";
+
+    proc.start(cmd, args);
+
+    if (!proc.waitForFinished(-1)) {
+        console->appendError("Build process timed out or failed to start.\n");
+    }
+
+    QString out = proc.readAllStandardOutput();
+    QString err = proc.readAllStandardError();
+    if (!out.isEmpty()) console->appendOutput(out);
+    if (!err.isEmpty()) console->appendError(err);
+
+    if (proc.exitCode() != 0) {
+        console->appendError("=== Build Failed (exit code " + QString::number(proc.exitCode()) + ") ===\n");
+    } else {
+        console->appendSuccess("=== Build Script Completed Successfully ===\n");
+    }
+
+    projectExplorer->refresh();
 }
 
 QString MainWindow::findTangent2SrcPath() const {
