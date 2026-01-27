@@ -44,13 +44,13 @@ struct TmlElement;
 
 // Element-specific data for TEXT elements
 typedef struct {
-	const char*  text;
+	const char *text;
 	byte         font_size;
 } TmlTextData;
 
 // Element-specific data for BUTTON elements
 typedef struct {
-	const char*  text;
+	const char *text;
 	byte         font_size;
 	byte         width;
 	byte         height;
@@ -105,9 +105,9 @@ typedef struct {
 // Main element structure
 typedef struct TmlElement {
 	// Tree structure pointers
-	struct TmlElement*  parent;        // Parent element (NULL for root)
-	struct TmlElement*  first_child;   // First child element (NULL if leaf)
-	struct TmlElement*  next_sibling;  // Next sibling element (NULL if last)
+	struct TmlElement *parent;        // Parent element (NULL for root)
+	struct TmlElement *first_child;   // First child element (NULL if leaf)
+	struct TmlElement *next_sibling;  // Next sibling element (NULL if last)
 	
 	// Common properties
 	byte         type;            // TmlElementType
@@ -140,31 +140,31 @@ typedef struct {
 } TmlTransform;
 
 // Rendering
-void tml_render(TmlElement* root);
-void tml_render_element(TmlElement* elem, TmlTransform* transform);
+void tml_render(TmlElement *root);
+void tml_render_element(TmlElement *elem, TmlTransform *transform);
 
 // Element initialization - user provides storage, library initializes it
-void tml_init_root(TmlElement* elem);
-void tml_init_text(TmlElement* elem, word id, byte x, byte y, const char* text, byte font_size, byte colour);
-void tml_init_button(TmlElement* elem, word id, byte x, byte y, byte w, byte h, const char* text, byte font_size, byte colour);
-void tml_init_div(TmlElement* elem, word id, byte x, byte y, byte w, byte h, byte colour, byte thickness, byte style);
-void tml_init_line(TmlElement* elem, word id, byte x, byte y, byte x1, byte y1, byte colour, byte thickness, byte style);
-void tml_init_checkbox(TmlElement* elem, word id, byte x, byte y, byte size, byte colour, byte checked);
-void tml_init_radio(TmlElement* elem, word id, byte x, byte y, byte size, byte colour, byte selected);
+void tml_init_root(TmlElement *elem);
+void tml_init_text(TmlElement *elem, word id, byte x, byte y, const char *text, byte font_size, byte colour);
+void tml_init_button(TmlElement *elem, word id, byte x, byte y, byte w, byte h, const char *text, byte font_size, byte colour);
+void tml_init_div(TmlElement *elem, word id, byte x, byte y, byte w, byte h, byte colour, byte thickness, byte style);
+void tml_init_line(TmlElement *elem, word id, byte x, byte y, byte x1, byte y1, byte colour, byte thickness, byte style);
+void tml_init_checkbox(TmlElement *elem, word id, byte x, byte y, byte size, byte colour, byte checked);
+void tml_init_radio(TmlElement *elem, word id, byte x, byte y, byte size, byte colour, byte selected);
 
 // Tree manipulation
-void tml_add_child(TmlElement* parent, TmlElement* child);
-void tml_add_sibling(TmlElement* elem, TmlElement* sibling);
-TmlElement* tml_find_by_id(TmlElement* root, word id);
+void tml_add_child(TmlElement *parent, TmlElement *child);
+void tml_add_sibling(TmlElement *elem, TmlElement *sibling);
+TmlElement *tml_find_by_id(TmlElement *root, word id);
 
 // Element property setters
-void tml_set_position(TmlElement* elem, byte x, byte y);
-void tml_set_rotation(TmlElement* elem, word rotation);
-void tml_set_anchor(TmlElement* elem, byte ax, byte ay);
-void tml_set_colour(TmlElement* elem, byte colour);
+void tml_set_position(TmlElement *elem, byte x, byte y);
+void tml_set_rotation(TmlElement *elem, word rotation);
+void tml_set_anchor(TmlElement *elem, byte ax, byte ay);
+void tml_set_colour(TmlElement *elem, byte colour);
 
 // Splash screen utility
-void tml_splash(const byte* image_data, word duration);
+void tml_splash(const byte *image_data, word duration);
 
 // Structure markers
 #define TML_START      '<'
@@ -194,7 +194,7 @@ typedef enum {
 } TmlField;
 
 // Parse data array into element tree, returns root element
-TmlElement* tml_parse(const byte* data, TmlElement* elements, byte max_elems);
+TmlElement *tml_parse(const byte *data, TmlElement *elements, byte max_elems);
 
 // Legacy stuff (probably will be removed later, after all, you shouldn't be manually making byte arrays)
 #define TML_ROOT      TML_TYPE_ROOT

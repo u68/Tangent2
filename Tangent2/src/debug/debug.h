@@ -33,7 +33,7 @@ extern void test_regs(void); // Function is stored in startup.asm, it stores all
 
 void print_error(error_t error_code);
 void trigger_bsod(error_t error_code);
-void get_regs_snapshot(byte* buffer); // Will trip operation, since snapshot is hardcoded to 0x9100 (see startup.asm)
+void get_regs_snapshot(byte *buffer); // Will trip operation, since snapshot is hardcoded to 0x9100 (see startup.asm)
 
 const char* error_to_string(error_t error_code);
 

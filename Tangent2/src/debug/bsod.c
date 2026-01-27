@@ -43,7 +43,7 @@ static void format_reg_line(byte idx, byte* regs, char* out) {
 }
 
 // Show BSOD with error code and registers snapshot
-void bsod_show(error_t error_code, byte* regs_snapshot) {
+void bsod_show(error_t error_code, byte *regs_snapshot) {
 	Write2RealScreen = 1;
     char buf[32];
     

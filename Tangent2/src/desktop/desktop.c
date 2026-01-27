@@ -158,23 +158,23 @@ static const byte desktop_ui_data[] = {
 };
 
 // Initialize desktop UI and return root element
-TmlElement* desktop_init(void) {
+TmlElement *desktop_init(void) {
 	const byte max_elems = 14;
-	TmlElement* elements = (TmlElement*)hcalloc(max_elems, sizeof(TmlElement));
+	TmlElement *elements = (TmlElement *)hcalloc(max_elems, sizeof(TmlElement));
 	return tml_parse(desktop_ui_data, elements, max_elems);
 }
 
 // Render desktop UI elements
-void desktop_render(TmlElement* root) {
+void desktop_render(TmlElement *root) {
 	tml_render(root);
 }
 
 // Get window element by ID
-TmlElement* desktop_get_window(TmlElement* root) {
+TmlElement *desktop_get_window(TmlElement *root) {
 	return tml_find_by_id(root, ID_WINDOW);
 }
 
 // Get time text element by ID
-TmlElement* desktop_get_time_text(TmlElement* root) {
+TmlElement *desktop_get_time_text(TmlElement *root) {
 	return tml_find_by_id(root, ID_TIME);
 }

@@ -3,7 +3,7 @@
  * Implementation of you know what
  * Virtual Machine speed test
  *  Created on: Jan 4, 2026
- *      Author: harma 
+ *      Author: harma
  */
 
 #include "base.h"
@@ -20,24 +20,24 @@ void custom_break(void) {
 	}
 }
 
-#define num_vms 2
+#define NUM_VMS 2
 
 // Main entry point
 int main(void) {
 	/*
-	byte* snap = 0;
+	byte *snap = 0;
 	get_regs_snapshot(snap);
 	bsod_show(ERROR_VM_INVALID_INSTRUCTION, snap);
 	custom_break();*/
 	for (word i = 0x9000; i < 0xE000; i++) {
-				hw_deref(i) = 0;
+		hw_deref(i) = 0;
 	}
-    Write2RealScreen = 0;
-    tui_clear_screen();
+	Write2RealScreen = 0;
+	tui_clear_screen();
 
-    hinit();
+	hinit();
+	vm_init_system();
 
-    vm_init_system();
 	static const byte example_program[] = {
 		//head
 		0xFF,00,
@@ -139,20 +139,21 @@ int main(void) {
 
 	};
 
-    TangentMachine* vms[num_vms];
-    for (byte i = 0; i < num_vms; i++) {
-        vms[i] = vm_spawn(example_program);
-    }
 
-    for (word step = 0; step < 1000; step++) {
-            vm_step_all();
-            deref(0x9A00) = step;
-        }
+	TangentMachine *vms[NUM_VMS];
+	for (byte i = 0; i < NUM_VMS; i++) {
+		vms[i] = vm_spawn(example_program);
+	}
 
-    // Store each VM's ram into E000...
-    for (byte i = 0; i < 18; i++) {
-        deref(0x9B00 + i) = vms[0]->ram[i];
-    }
+	for (word step = 0; step < 1000; step++) {
+		vm_step_all();
+		deref(0x9A00) = step;
+	}
+
+	// Store each VM's RAM into E000...
+	for (byte i = 0; i < 18; i++) {
+		deref(0x9B00 + i) = vms[0]->ram[i];
+	}
 	return 0;
 }
 

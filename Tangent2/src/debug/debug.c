@@ -42,10 +42,10 @@ void trigger_bsod(error_t error_code) {
 }
 
 // Get registers snapshot into provided buffer
-void get_regs_snapshot(byte* buffer) {
+void get_regs_snapshot(byte *buffer) {
     if (!buffer) return;
     test_regs(); // Store registers to 0x9100
-    byte* regs_snapshot = (byte*)0x9100;
+    byte *regs_snapshot = (byte *)0x9100;
     for (int i = 0; i < 24; i++) {
         buffer[i] = regs_snapshot[i];
     }

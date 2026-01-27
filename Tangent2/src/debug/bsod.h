@@ -13,6 +13,6 @@
 // Forward declaration
 typedef enum error_t error_t;
 
-void bsod_show(error_t error_code, byte* regs_snapshot);
+void bsod_show(error_t error_code, byte *regs_snapshot);
 
 #endif /* BSOD_H_ */

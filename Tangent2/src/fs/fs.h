@@ -59,18 +59,18 @@ typedef struct fs_extent {
 void fs_init(void);
 
 // Node operations
-fs_node_t* fs_create_file(fs_node_t* parent, const char* name, fs_perms_t perms);
-fs_node_t* fs_create_directory(fs_node_t* parent, const char* name, fs_perms_t perms);
-fs_node_t* fs_get_node_from_path(const char* path, fs_node_t* start);
+fs_node_t *fs_create_file(fs_node_t *parent, const char *name, fs_perms_t perms);
+fs_node_t *fs_create_directory(fs_node_t *parent, const char *name, fs_perms_t perms);
+fs_node_t *fs_get_node_from_path(const char *path, fs_node_t *start);
 
 // Node manipulation
-byte fs_delete_node(fs_node_t* node);
-byte fs_move_node(fs_node_t* node, fs_node_t* new_parent);
-byte fs_rename_node(fs_node_t* node, const char* new_name);
-byte fs_chmod_node(fs_node_t* node, fs_perms_t new_perms);
+byte fs_delete_node(fs_node_t *node);
+byte fs_move_node(fs_node_t *node, fs_node_t *new_parent);
+byte fs_rename_node(fs_node_t *node, const char *new_name);
+byte fs_chmod_node(fs_node_t *node, fs_perms_t new_perms);
 
 // File operations
-byte fs_write_file(fs_node_t* file, const void* data, word size);
-word fs_read_file(fs_node_t* file, void* buffer, word buffer_size);
+byte fs_write_file(fs_node_t *file, const void *data, word size);
+word fs_read_file(fs_node_t *file, void *buffer, word buffer_size);
 
 #endif /* FS_H_ */

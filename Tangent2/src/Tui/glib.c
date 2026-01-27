@@ -10,12 +10,12 @@
 #include "../debug/debug.h"
 
 // Internal stuff
-static void render_text(TmlElement* elem, byte world_x, byte world_y, word world_rot);
-static void render_button(TmlElement* elem, byte world_x, byte world_y, word world_rot);
-static void render_div(TmlElement* elem, byte world_x, byte world_y, word world_rot);
-static void render_line(TmlElement* elem, byte world_x, byte world_y, word world_rot);
-static void render_checkbox(TmlElement* elem, byte world_x, byte world_y, word world_rot);
-static void render_radio(TmlElement* elem, byte world_x, byte world_y, word world_rot);
+static void render_text(TmlElement *elem, byte world_x, byte world_y, word world_rot);
+static void render_button(TmlElement *elem, byte world_x, byte world_y, word world_rot);
+static void render_div(TmlElement *elem, byte world_x, byte world_y, word world_rot);
+static void render_line(TmlElement *elem, byte world_x, byte world_y, word world_rot);
+static void render_checkbox(TmlElement *elem, byte world_x, byte world_y, word world_rot);
+static void render_radio(TmlElement *elem, byte world_x, byte world_y, word world_rot);
 
 // Transform helper
 static void apply_transform(byte parent_wx, byte parent_wy, word parent_rot,

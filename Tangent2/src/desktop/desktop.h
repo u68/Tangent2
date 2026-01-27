@@ -13,9 +13,9 @@
 /* Forward declaration to avoid pulling in the entire TUI header */
 typedef struct TmlElement TmlElement;
 
-TmlElement* desktop_init(void);
-void desktop_render(TmlElement* root);
-TmlElement* desktop_get_window(TmlElement* root);
-TmlElement* desktop_get_time_text(TmlElement* root);
+TmlElement *desktop_init(void);
+void desktop_render(TmlElement *root);
+TmlElement *desktop_get_window(TmlElement *root);
+TmlElement *desktop_get_time_text(TmlElement *root);
 
 #endif
