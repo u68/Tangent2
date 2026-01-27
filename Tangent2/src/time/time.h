@@ -38,9 +38,9 @@ void get_time_string(format_t format, char* out);
 
 // TODO: alarms
 
-void rtc_reset();
-void rtc_enable();
-void rtc_disable();
+void rtc_reset(void);
+void rtc_enable(void);
+void rtc_disable(void);
 
 void rtc_set_time(byte hours, byte minutes, byte seconds);
 void rtc_set_seconds(byte seconds);

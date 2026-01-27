@@ -12,8 +12,8 @@
 #include "../debug/debug.h"
 
 // Internal static defs
-static void __tui_clear_screen_real_buf_2();
-static void __tui_clear_screen_real_buf_1();
+static void __tui_clear_screen_real_buf_2(void);
+static void __tui_clear_screen_real_buf_1(void);
 static void __tui_set_pixel_real(byte x, byte y, byte colour);
 static void __tui_set_pixel(byte x, byte y, byte colour);
 
@@ -114,7 +114,7 @@ void tui_pattern_draw_line(byte pattern, byte x0, byte y0, byte x1, byte y1, byt
 }
 
 // Draw the contents of the VRAM buffer to the real VRAM
-void tui_render_buffer() {
+void tui_render_buffer(void) {
 	word i = 0;
 	word j = 0;
 	// Lower bitplane
@@ -143,7 +143,7 @@ void tui_render_buffer() {
 }
 
 // An attempt to work around compiler optimization issues
-static void __tui_clear_screen_real_buf_2() {
+static void __tui_clear_screen_real_buf_2(void) {
 	word i;
 	hw_deref(0xF037) = 4; // hw_deref using volatile to prevent optimization issues
 	for (i = 0; i < 0x800; i+=2) {
@@ -152,7 +152,7 @@ static void __tui_clear_screen_real_buf_2() {
 	}
 }
 
-static void __tui_clear_screen_real_buf_1() {
+static void __tui_clear_screen_real_buf_1(void) {
 	word i;
 	hw_deref(0xF037) = 0; // hw_deref using volatile to prevent optimization issues
 	for (i = 0; i < 0x800; i+=2) {
@@ -162,7 +162,7 @@ static void __tui_clear_screen_real_buf_1() {
 }
 
 // I wonder what this does
-void tui_clear_screen() {
+void tui_clear_screen(void) {
 	// Determine whether to clear real screen or buffer
 	if (Write2RealScreen) {
 		__tui_clear_screen_real_buf_1();

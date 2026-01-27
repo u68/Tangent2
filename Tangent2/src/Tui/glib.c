@@ -9,10 +9,6 @@
 #include "glib.h"
 #include "../debug/debug.h"
 
-// Declare external asm functions
-extern void __DI();
-extern void __EI();
-
 // Internal stuff
 static void render_text(TmlElement* elem, byte world_x, byte world_y, word world_rot);
 static void render_button(TmlElement* elem, byte world_x, byte world_y, word world_rot);

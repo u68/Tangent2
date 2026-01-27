@@ -1,0 +1,26 @@
+File system for Tangent yay!!!!
+
+File system will start after the heap, as the heap is basically for programs + other stuff, heap shouldn't need to be super big, and in theory you will be able to use the file system for swap just in case you run out of heap for your programs!
+
+memory layout
+
+[FS Header, 2 bytes]
+free_list_head : 2 bytes
+
+[Node Table, 5100 bytes]
+perms : 1 byte
+name : 12 bytes
+parent : 1 byte
+first_child : 1 byte
+next_sibling : 1 byte
+size : 2 bytes
+data_offset : 2 bytes
+--------------------
+per node : 20 bytes
+255 nodes
+
+[Data Pool, 9234 bytes]
+[Extent Header, 4 bytes per free extent]
+size : 2 bytes
+next : 2 bytes
+[File Data, variable]

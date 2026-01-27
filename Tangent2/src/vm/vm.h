@@ -149,11 +149,11 @@ typedef enum opcode_t {
 
 } opcode_t;
 
-void vm_init_system();
+void vm_init_system(void);
 void vm_init(TangentMachine* vm, byte* code);
 TangentMachine* vm_spawn(const byte* code);
 void vm_destroy(TangentMachine* vm);
 void vm_step(TangentMachine* vm);
-void vm_step_all();
+void vm_step_all(void);
 
 #endif /* VM_H_ */

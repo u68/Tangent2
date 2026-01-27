@@ -7,16 +7,6 @@
 
 #include "heap.h"
 
-#define HEAP_START_ADDR 0x9C04
-#define HEAP_MAX_SIZE   0x2000
-#define HEAP_BLOCK_ALIGN 2
-
-typedef struct block {
-    word size;
-    struct block *next;
-    byte free;
-} block_t;
-
 // Get user data pointer from block header
 static void *hdata(block_t *b) {
     return (void *)((byte *)b + sizeof(block_t));
@@ -36,7 +26,7 @@ static word halign(word size) {
 }
 
 // Initialize heap with single free block
-void hinit() {
+void hinit(void) {
     block_t *initial_block = (block_t *)HEAP_START_ADDR;
     initial_block->size = HEAP_MAX_SIZE - sizeof(block_t);
     initial_block->next = 0;
@@ -54,7 +44,7 @@ static void hsplit(block_t *b, word size) {
 }
 
 // Merge free blocks
-void hmerge() {
+void hmerge(void) {
     block_t *current = (block_t *)HEAP_START_ADDR;
     while (current && current->next) {
         if (current->free && current->next->free) {

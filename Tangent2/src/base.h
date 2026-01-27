@@ -110,7 +110,11 @@
 #define KeyboardOutMask *((volatile __near byte *)0xF044)
 #define KeyboardOut *((volatile __near byte *)0xF046)
 
-void __DI();
-void __EI();
+#ifndef __DI
+extern void __DI(void);
+#endif
+#ifndef __EI
+extern void __EI(void);
+#endif
 #endif
 

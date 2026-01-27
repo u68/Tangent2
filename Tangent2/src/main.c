@@ -14,7 +14,7 @@
 #include "debug/bsod.h"
 
 // Custom breakpoint handler (called when BRK executed in asm)
-void custom_break() {
+void custom_break(void) {
 	while (1) {
 		deref(0x9000) += 1;
 	}
@@ -23,7 +23,7 @@ void custom_break() {
 #define num_vms 2
 
 // Main entry point
-int main() {
+int main(void) {
 	/*
 	byte* snap = 0;
 	get_regs_snapshot(snap);

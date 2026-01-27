@@ -634,7 +634,7 @@ static void vm_syscall(TangentMachine* vm, syscall_t syscall_number) {
 }
 
 // Initialize VM system with heap-allocated pool of NULL pointers
-void vm_init_system() {
+void vm_init_system(void) {
     vm_capacity = MAX_VMS;
     vm_pool = (TangentMachine**)hcalloc(vm_capacity, sizeof(TangentMachine*));
 }
@@ -1754,7 +1754,7 @@ void vm_step(TangentMachine* vm) {
 }
 
 // Execute single instruction for all active VMs in pool
-void vm_step_all() {
+void vm_step_all(void) {
     for (word i = 0; i < vm_capacity; i++) {
         if (vm_pool[i] != 0) {
             vm_step(vm_pool[i]);
@@ -1763,7 +1763,7 @@ void vm_step_all() {
 }
 
 // Destroy all VMs and free the pool array
-void vm_shutdown() {
+void vm_shutdown(void) {
     // Destroy all VMs in pool
     for (word i = 0; i < vm_capacity; i++) {
         if (vm_pool[i] != 0) {

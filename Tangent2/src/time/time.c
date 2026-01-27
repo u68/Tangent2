@@ -102,7 +102,7 @@ void get_time_string(format_t format, char* out) {
 }
 
 // Reset RTC to default state
-void rtc_reset() {
+void rtc_reset(void) {
     RTC_ENABLE = 0;
     RTC_SECONDS = 0;
     RTC_MINUTES = 0;
@@ -114,12 +114,12 @@ void rtc_reset() {
 }
 
 // Enable RTC
-void rtc_enable() {
+void rtc_enable(void) {
     RTC_ENABLE = 1;
 }
 
 // Disable RTC
-void rtc_disable() {
+void rtc_disable(void) {
     RTC_ENABLE = 0;
 }
 

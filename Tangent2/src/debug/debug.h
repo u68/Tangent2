@@ -29,7 +29,7 @@ typedef enum error_t {
     ERROR_TUI_INVALID_TEXT_ALIGNMENT,
 } error_t;
 
-extern void test_regs(); // Function is stored in startup.asm, it stores all registers to 0x9100
+extern void test_regs(void); // Function is stored in startup.asm, it stores all registers to 0x9100
 
 void print_error(error_t error_code);
 void trigger_bsod(error_t error_code);
