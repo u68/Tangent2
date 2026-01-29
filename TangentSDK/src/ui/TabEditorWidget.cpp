@@ -6,12 +6,13 @@
 
 TabEditorWidget::TabEditorWidget(QWidget* parent)
     : QTabWidget(parent) {
-    
-    setTabsClosable(true);
+    setTabsClosable(false); // we use custom close buttons per-tab
     setMovable(true);
     setDocumentMode(true);
 
-    // Make tabs rounded with border, hover effects, non-active tabs lower
+    // Use our SharpTabBar (controls height) and make tabs flat rectangular
+    setTabBar(new SharpTabBar(this));
+
     setStyleSheet(
         "QTabWidget::pane {"
         "    border: none;"
@@ -19,39 +20,37 @@ TabEditorWidget::TabEditorWidget(QWidget* parent)
         "}"
         "QTabBar {"
         "    background: transparent;"
+        "    spacing: 0px;"
         "}"
         "QTabBar::tab {"
-        "    height: 20px;"
-        "    padding: 2px 8px;"
-        "    border: 1px solid #555555;"
-        "    border-bottom: none;"
-        "    border-top-left-radius: 6px;"
-        "    border-top-right-radius: 6px;"
-        "    margin-right: 2px;"
-        "    background-color: #2d2d2d;"
+        "    height: 22px;"
+        "    padding: 0 10px;"                      /* center titles vertically */
+        "    border: 1px solid #3b3b3b;"
+        "    margin-right: 0px;"                    /* remove gaps between tabs */
+        "    background-color: #2b2b2b;"
+        "    color: #bfbfbf;"
+        "    border-top-left-radius: 0px;"
+        "    border-top-right-radius: 0px;"
         "}"
         "QTabBar::tab:selected {"
-        "    background-color: #585858;"
+        "    background-color: #1e1e1e;"
+        "    color: #ffffff;"
         "    margin-top: 0px;"
-        "    margin-bottom: -1px;"
-        "    padding-bottom: 3px;"
+        "    border-top: 1px solid #6a6a6a;"        /* always show 1px top border on selected */
         "}"
         "QTabBar::tab:!selected {"
-        "    background-color: #2d2d2d;"
-        "    margin-top: 3px;"
+        "    background-color: #262626;"
+        "    color: #9a9a9a;"
         "}"
         "QTabBar::tab:hover {"
-        "    background-color: #4a4a4a;"
+        "    background-color: #333333;"
         "}"
         "QTabBar::tab:selected:hover {"
-        "    background-color: #585858;"
+        "    background-color: #1e1e1e;"            /* ensure hovering selected doesn't change look */
+        "    border-top: 1px solid #6a6a6a;"
         "}"
         "QTabBar::close-button {"
-        "    subcontrol-position: right;"
-        "}"
-        "QTabBar::close-button:hover {"
-        "    background-color: #ff5555;"
-        "    border-radius: 3px;"
+        "    image: none;"
         "}"
     );
 
@@ -88,6 +87,22 @@ EditorWidget* TabEditorWidget::openFile(const QString& filePath) {
     QString fileName = QFileInfo(filePath).fileName();
     int tabIndex = addTab(editor, fileName);
     setCurrentIndex(tabIndex);
+
+    // Create a small close button with a simple glyph and no heavy hover overlay
+    QToolButton* closeBtn = new QToolButton(this);
+    closeBtn->setText(QString::fromUtf8("✕"));
+    closeBtn->setAutoRaise(true);
+    closeBtn->setCursor(Qt::PointingHandCursor);
+    closeBtn->setStyleSheet(
+        "QToolButton { color: #bfbfbf; background: transparent; border: none; padding: 0 6px; }"
+        "QToolButton:hover { color: #ff5555; }"
+    );
+    // Close the tab that contains this file when clicked
+    connect(closeBtn, &QToolButton::clicked, this, [this, filePath]() {
+        int idx = findTabByPath(filePath);
+        if (idx != -1) closeTab(idx);
+    });
+    if (tabBar()) tabBar()->setTabButton(tabIndex, QTabBar::RightSide, closeBtn);
 
     return editor;
 }
@@ -222,6 +237,8 @@ bool TabEditorWidget::promptSaveChanges(int tabIndex) {
         case QMessageBox::Save:
             return editor->saveFile();
         case QMessageBox::Discard:
+            // Reload file from disk to discard changes
+            editor->openFile(editor->currentFilePath());
             return true;
         case QMessageBox::Cancel:
         default:
@@ -310,6 +327,42 @@ void TabEditorWidget::closeTabByPath(const QString& filePath) {
             editor->deleteLater();
         }
     }
+}
+
+bool TabEditorWidget::renameOpenFile(const QString& oldPath, const QString& newPath) {
+    int index = findTabByPath(oldPath);
+    if (index == -1) return false;
+
+    EditorWidget* editor = qobject_cast<EditorWidget*>(widget(index));
+    if (!editor) return false;
+
+    // Update editor internal path and highlighter
+    editor->updateFilePath(newPath);
+
+    // Update tab title
+    updateTabTitle(index);
+
+    // Replace close button lambda to reference the new path
+    if (tabBar()) {
+        QWidget* existing = tabBar()->tabButton(index, QTabBar::RightSide);
+        if (existing) existing->deleteLater();
+
+        QToolButton* closeBtn = new QToolButton(this);
+        closeBtn->setText(QString::fromUtf8("✕"));
+        closeBtn->setAutoRaise(true);
+        closeBtn->setCursor(Qt::PointingHandCursor);
+        closeBtn->setStyleSheet(
+            "QToolButton { color: #bfbfbf; background: transparent; border: none; padding: 0 6px; }"
+            "QToolButton:hover { color: #ff5555; }"
+        );
+        connect(closeBtn, &QToolButton::clicked, this, [this, newPath]() {
+            int idx = findTabByPath(newPath);
+            if (idx != -1) closeTab(idx);
+        });
+        tabBar()->setTabButton(index, QTabBar::RightSide, closeBtn);
+    }
+
+    return true;
 }
 
 bool TabEditorWidget::saveFile(const QString& filePath) {

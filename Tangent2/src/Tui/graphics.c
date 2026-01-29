@@ -365,8 +365,8 @@ void tui_draw_line(byte x0, byte y0, byte x1, byte y1, byte colour, byte thickne
 	case TUI_STYLE_DOUBLE:
 		break;
 	default:
-		trigger_bsod(ERROR_TUI_INVALID_LINE_STYLE);
-		return;
+		pattern = style; // Assume custom pattern
+		break;
 	}
 	tui_pattern_draw_line(pattern, x0, y0, x1, y1, colour, thickness);
 }
@@ -387,10 +387,13 @@ void tui_draw_rectangle(byte x, byte y, byte width, byte height, sbyte ax, sbyte
 	if (rotation) {
 		// Rotate all points around x, y
 		if (ax || ay) {
-			tui_rotate_point(x, y, x - ax, y - ay, rotation, &nx0, &ny0);
+			tui_rotate_point(x, y, x - ax, y - ay, rotation, &nx0, &ny0); // Optimizationg because usually ax and ay are 0, so the top left corner doesn't need rotation
 		}
+		// Top right
 		tui_rotate_point(x, y, x + width - ax, y - ay, rotation, &nx1, &ny1);
+		// Bottom left
 		tui_rotate_point(x, y, x - ax, y - ay + height, rotation, &nx2, &ny2);
+		// Bottom right
 		tui_rotate_point(x, y, x + width - ax, y - ay + height, rotation, &nx3, &ny3);
 	}
 	// Draw lines between points
@@ -492,12 +495,12 @@ void tui_draw_text(byte x, byte y, const char* text, byte font_size, sbyte ax, s
 	// Get character dimensions
 	tui_get_font_size(font_size, &cwidth, &cheight);
 	while (text[i]) {
-		if (rotation) tui_rotate_point(x, y, ox - ax, y - ay, rotation, &tx, &ty);
+		if (rotation) tui_rotate_point(x, y, ox - ax, y - ay, rotation, &tx, &ty); // Rotate around anchor
 		else {
-			tx = ox - ax;
+			tx = ox - ax; // No rotation, just offset by anchor
 			ty = y - ay;
 		}
-		// Draw character, anchor x, y isn't really used but whatever
+		// Draw character, anchor x, y isn't really used since it was done before but whatever
 		tui_draw_char(tx, ty, text[i], font_size, 0, 0, rotation, colour);
 		ox += cwidth;
 		i++;
@@ -509,6 +512,7 @@ void tui_draw_byte(byte x, byte y, byte data, byte data2, byte mask) {
 	if (x > 191 || y > 63) {
 		return;
 	}
+	// Prepare bit-shifted data
 	byte bitpos = x & 7;
 	byte lbyte = data >> bitpos;
 	byte hbyte = data << (8 - bitpos);
@@ -518,7 +522,7 @@ void tui_draw_byte(byte x, byte y, byte data, byte data2, byte mask) {
 	byte hmask = mask << (8 - bitpos);
 	byte temp;
 	word addr;
-	// Determine starting address
+	// Determine starting address based on real screen or buffer flag
 	if (Write2RealScreen) {
 		addr = (y << 5) + (x >> 3) + 0xF800;
 	} else {
@@ -529,6 +533,7 @@ void tui_draw_byte(byte x, byte y, byte data, byte data2, byte mask) {
 		if (Write2RealScreen) {
 			BufSelSFR = 0;
 		}
+		// Draw first bitplane high byte
 		temp = deref(addr + 1);
 		temp &= ~hmask;
 		temp |= (hbyte & hmask);
@@ -538,6 +543,7 @@ void tui_draw_byte(byte x, byte y, byte data, byte data2, byte mask) {
 		} else {
 			addr += 0x600;
 		}
+		// Draw second bitplane high byte
 		temp = deref(addr + 1);
 		temp &= ~hmask;
 		temp |= (hbyte2 & hmask);
@@ -549,7 +555,7 @@ void tui_draw_byte(byte x, byte y, byte data, byte data2, byte mask) {
 	if (Write2RealScreen) {
 		BufSelSFR = 0;
 	}
-	// Draw low bytes
+	// Draw low byte (first bitplane)
 	temp = deref(addr);
 	temp &= ~lmask;
 	temp |= (lbyte & lmask);
@@ -559,6 +565,7 @@ void tui_draw_byte(byte x, byte y, byte data, byte data2, byte mask) {
 	} else {
 		addr += 0x600;
 	}
+	// Draw low byte (second bitplane)
 	temp = deref(addr);
 	temp &= ~lmask;
 	temp |= (lbyte2 & lmask);
@@ -566,7 +573,7 @@ void tui_draw_byte(byte x, byte y, byte data, byte data2, byte mask) {
 }
 
 // Helper functions to get min and max of 4 bytes
-byte tui_min4(byte a, byte b, byte c, byte d) {
+static byte tui_min4(byte a, byte b, byte c, byte d) {
 	byte m = a;
 	if (b < m) m = b;
 	if (c < m) m = c;
@@ -574,14 +581,13 @@ byte tui_min4(byte a, byte b, byte c, byte d) {
 	return m;
 }
 
-byte tui_max4(byte a, byte b, byte c, byte d) {
+static byte tui_max4(byte a, byte b, byte c, byte d) {
 	byte m = a;
 	if (b > m) m = b;
 	if (c > m) m = c;
 	if (d > m) m = d;
 	return m;
 }
-
 
 // Draw an image bitmap with rotation around anchor point
 void tui_draw_image(byte x, byte y, byte width, byte height, const byte* bitmap, sbyte ax, sbyte ay, word rotation, byte colour) {
@@ -591,19 +597,19 @@ void tui_draw_image(byte x, byte y, byte width, byte height, const byte* bitmap,
 	word mapindex;
 
 	if (!rotation) {
-		byte osf = (width & 7) ? 1 : 0;
-		byte rem = width & 7;
-		byte last_mask = rem ? (0xFF << (8 - rem)) : 0xFF;
-		// No rotation, simple blit, but it's massive (https://x.com/Ninja/status/1862933454767239616) becuase doing the switch when it comes to draw the byte increases the amount of cycles
+		byte osf = (width & 7) ? 1 : 0; // If size is not a multiple of 8
+		byte rem = width & 7; // Remaining bits in last byte
+		byte last_mask = rem ? (0xFF << (8 - rem)) : 0xFF; // Mask for last byte
+		// No rotation, simple blit, but it's massive becuase doing the switch when it comes to draw the byte decreases the amount of cycles
 		switch (colour) {
 		case TUI_COLOUR_WHITE:
 			return;
 		case TUI_COLOUR_LIGHT_GREY:
 			for (iy = 0; iy < height; iy++) {
 				for (ix = 0; ix < bwidth; ix++) {
-					mapindex = iy * bwidth + ix;
-					byte mask = (ix == bwidth - osf && osf) ? last_mask : 0xFF;
-					tui_draw_byte(x + (ix << 3) - ax, y - ay + iy, bitmap[mapindex], 0, mask);
+					mapindex = iy * bwidth + ix; // Calculate index in bitmap
+					byte mask = (ix == bwidth - osf && osf) ? last_mask : 0xFF; // If it is the last byte and there is an offset, use last mask
+					tui_draw_byte(x + (ix << 3) - ax, y - ay + iy, bitmap[mapindex], 0, mask); // The draw byte function is surprisingly complicated
 				}
 			}
 			return;
@@ -656,17 +662,19 @@ void tui_draw_image(byte x, byte y, byte width, byte height, const byte* bitmap,
 		// For each pixel in bounding box, rotate backwards and sample from bitmap, that way there are no gaps
 		for (byte i = bx; i < rx; i++) {
 			for (byte j = by; j < ry; j++) {
-				tui_rotate_point(x, y, i, j, 360 - rotation, &hx, &hy);
+				tui_rotate_point(x, y, i, j, 360 - rotation, &hx, &hy); // Rotate backwards to get sample point
 				hx -= (x - ax);
 				hy -= (y - ay);
+				// When out of bounds, skip to not write junk data
 				if (hx < 0 || hy < 0 || hx >= width || hy >= height) {
 					continue;
 				}
 				byte col = 0;
-				word addr = hy * bwidth + (hx >> 3);
-				byte bdata = bitmap[addr];
-				byte bdata2 = (colour == TUI_COLOUR_IMAGE) ? bitmap[addr + psize] : 0;
-				byte bmask = 0x80 >> (hx & 7);
+				word addr = hy * bwidth + (hx >> 3); // Calculate address in bitmap
+				byte bdata = bitmap[addr]; // Get byte from bitmap
+				byte bdata2 = (colour == TUI_COLOUR_IMAGE) ? bitmap[addr + psize] : 0; // Get second bitplane if needed
+				byte bmask = 0x80 >> (hx & 7); // Calculate bitmask for pixel
+				// Determine colour based on bitplanes and requested colour
 				if (colour == TUI_COLOUR_IMAGE) {
 					if (bdata2 & bmask) {
 						col |= 2;
@@ -679,7 +687,7 @@ void tui_draw_image(byte x, byte y, byte width, byte height, const byte* bitmap,
 						col |= 1;
 					}
 				}
-				tui_set_pixel(i, j, col, 1);
+				tui_set_pixel(i, j, col, 1); // Finally set the pixel
 			}
 		}
 	}
@@ -731,9 +739,15 @@ void tui_draw_char(byte x, byte y, char c, byte font_size, sbyte ax, sbyte ay, w
 		trigger_bsod(ERROR_TUI_INVALID_FONT_SIZE);
 		return;
 	}
-	tui_draw_image(x, y, font_width, font_height, &font_data[(byte)c * (font_height * ((font_width + 7) >> 3))], ax, ay, rotation, colour);
+	// Font data is selected based on the given font_size
+	// Draw the character using draw_image
+	// Font data is extracted by subtracting the character byte 32 (first printable ascii (" "))
+	// And then it is multiplied by the height of the character, times the width in bytes (width + 7) >> 3
+	// And then that is used as the index into the font data
+	tui_draw_image(x, y, font_width, font_height, &font_data[(byte)(c - 32) * (font_height * ((font_width + 7) >> 3))], ax, ay, rotation, colour);
 }
 
+// Real simple full image draw for fast stuff
 void tui_draw_full_image(const word* bitmap, byte colour) {
 	word i = 0;
 	word j = 0;
@@ -785,5 +799,4 @@ void tui_draw_full_image(const word* bitmap, byte colour) {
 			}
 		}
 	}
-	
 }

@@ -50,6 +50,7 @@ public:
     // Get language by extension
     LanguageDefinition* getLanguageByExtension(const QString& extension);
     QString getLanguageNameByExtension(const QString& extension) const;
+    QString getLanguageKeyByExtension(const QString& extension) const;
     
     // Get all language names
     QStringList getLanguageNames() const;
@@ -109,6 +110,8 @@ public:
     
     // Open extension file for editing
     static void openExtensionInEditor(const QString& filePath);
+    // Load a JSON file directly into the definitions (useful as a dev fallback)
+    void loadFromJsonFile(const QString& filePath, bool isOverride = false);
     
 private:
     SyntaxDefinition();

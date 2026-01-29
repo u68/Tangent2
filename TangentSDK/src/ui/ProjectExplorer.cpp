@@ -26,6 +26,9 @@ ProjectExplorer::ProjectExplorer(QWidget* parent)
     model->setRootPath("");
     model->setReadOnly(false);
 
+    // Watch for model rename events so we can update open editors immediately
+    connect(model, &QFileSystemModel::fileRenamed, this, &ProjectExplorer::onFileRenamed);
+
     setModel(model);
     setRootIndex(model->index(QDir::currentPath()));
 
@@ -239,6 +242,18 @@ void ProjectExplorer::onItemClicked(const QModelIndex& index) {
 void ProjectExplorer::renameSelected() {
     QModelIndex index = currentIndex();
     if (index.isValid()) {
+        QString path = model->filePath(index);
+        // If file is open and has unsaved changes, prompt before allowing rename
+        if (m_tabEditor) {
+            if (!m_tabEditor->checkAndPromptSave(path)) {
+                // User cancelled the save/rename flow
+                return;
+            }
+        }
+
+        // Remember which index/path we're editing so we can react when finished
+        m_editingIndex = index;
+        m_oldEditingPath = path;
         setEditTriggers(QAbstractItemView::AllEditTriggers);
         edit(index);
         setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -344,6 +359,72 @@ void ProjectExplorer::pasteSelected() {
 
 void ProjectExplorer::onRenameFinished() {
     // This is called when inline editing is finished
+    if (!m_editingIndex.isValid()) return;
+
+    QString newPath = model->filePath(m_editingIndex);
+    QString oldPath = m_oldEditingPath;
+
+    // No-op if path didn't change
+    if (newPath == oldPath) {
+        m_editingIndex = QModelIndex();
+        m_oldEditingPath.clear();
+        return;
+    }
+
+    // If the file is open in the editor and has unsaved changes, prompt
+    if (m_tabEditor) {
+        bool isOpen = (m_tabEditor->hasUnsavedChanges(oldPath) || m_tabEditor->hasUnsavedChanges());
+        // If the specific file is open and modified, ask to save/discard/cancel
+        if (m_tabEditor->hasUnsavedChanges(oldPath)) {
+            bool ok = m_tabEditor->checkAndPromptSave(oldPath);
+            if (!ok) {
+                // User cancelled. Try to revert the rename on disk.
+                if (QFile::exists(newPath)) {
+                    if (!QFile::rename(newPath, oldPath)) {
+                        QMessageBox::warning(this, "Rename Revert Failed", "Could not revert rename after cancellation.");
+                    }
+                }
+                refresh();
+                m_editingIndex = QModelIndex();
+                m_oldEditingPath.clear();
+                return;
+            }
+        }
+
+        // Update editor tabs if file was open
+        if (m_tabEditor->renameOpenFile(oldPath, newPath)) {
+            // success
+        }
+    }
+
+    emit fileMoved(oldPath, newPath);
+
+    m_editingIndex = QModelIndex();
+    m_oldEditingPath.clear();
+}
+
+void ProjectExplorer::onFileRenamed(const QString& path, const QString& oldName, const QString& newName) {
+    // Build full paths
+    QDir d(path);
+    QString oldPath = d.filePath(oldName);
+    QString newPath = d.filePath(newName);
+
+    // Set editing index to the new file so onRenameFinished can reuse logic
+    QModelIndex newIndex = model->index(newPath);
+    if (!newIndex.isValid()) {
+        // If model didn't index it yet, just emit moved and attempt tab update
+        if (m_tabEditor) {
+            m_tabEditor->renameOpenFile(oldPath, newPath);
+        }
+        emit fileMoved(oldPath, newPath);
+        return;
+    }
+
+    m_editingIndex = newIndex;
+    m_oldEditingPath = oldPath;
+
+    // Now run the existing rename finish path
+    onRenameFinished();
 }
 
 void ProjectExplorer::finishInlineEdit() {

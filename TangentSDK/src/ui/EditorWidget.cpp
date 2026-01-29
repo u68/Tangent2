@@ -161,6 +161,12 @@ void EditorWidget::reloadSyntaxColors() {
     lineNumberArea->update();
 }
 
+void EditorWidget::updateFilePath(const QString& newPath) {
+    m_filePath = newPath;
+    // Update highlighter file type based on new extension
+    if (highlighter) highlighter->setFileType(newPath);
+}
+
 bool EditorWidget::openFile(const QString& filePath) {
     QFile file(filePath);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
@@ -192,6 +198,9 @@ bool EditorWidget::openFile(const QString& filePath) {
     } else if (ext == "tml") {
         m_fileType = TML;
         completion->setFileType(CompletionPopup::TML);
+    } else if (ext == "c" || ext == "h") {
+        m_fileType = C;
+        completion->setFileType(CompletionPopup::C);
     } else {
         m_fileType = Unknown;
         completion->setFileType(CompletionPopup::Unknown);

@@ -40,6 +40,7 @@ protected:
 private slots:
     void onItemClicked(const QModelIndex& index);
     void onRenameFinished();
+    void onFileRenamed(const QString& path, const QString& oldName, const QString& newName);
     void deleteSelected();
     void renameSelected();
     void copySelected();
@@ -56,6 +57,7 @@ private:
     QString m_clipboard;
     bool m_isCut = false;
     QModelIndex m_editingIndex;
+    QString m_oldEditingPath;
 
     void startInlineEdit(const QString& parentPath, bool isFile);
     void finishInlineEdit();

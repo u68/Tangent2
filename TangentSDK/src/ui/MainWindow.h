@@ -1,6 +1,7 @@
 #pragma once
 #include <QMainWindow>
 #include <QCloseEvent>
+#include <QProcess>
 
 class TabEditorWidget;
 class ConsoleWidget;
@@ -40,6 +41,9 @@ private slots:
     void onDiscordSettingsChanged();
     void onOpenOsSourceToggled(bool checked);
     void onBuildOsSource(); 
+    void onBuildOsProcessReadyStdout();
+    void onBuildOsProcessReadyStderr();
+    void onBuildOsProcessFinished(int exitCode, QProcess::ExitStatus exitStatus);
 
 private:
     TabEditorWidget* tabEditor;
@@ -51,6 +55,7 @@ private:
     DiscordRPCManager* m_discordRPC;
     QAction* m_openOsSourceAction;
     QAction* m_buildOsSourceAction;
+    QProcess* m_buildProcess = nullptr;
     QMenu* m_projectMenu = nullptr;
     QString m_previousWorkspacePath;
 

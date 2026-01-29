@@ -17,6 +17,7 @@
 #define FS_NAME_MAX_LEN 12
 #define FS_INVALID_IDX 0xFF
 #define FS_NULL_OFFSET 0xFFFF
+#define FS_MAX_NODES 255
 
 // File permissions structure (type is within fs_perms for that one extra byte of less space)
 typedef union fs_perms {
@@ -27,7 +28,7 @@ typedef union fs_perms {
         byte execute:1;
         byte is_directory:1;
         byte reserved:4;
-    };
+    } field;
 } fs_perms_t;
 
 // Filesystem node structure
@@ -51,7 +52,6 @@ typedef struct fs_extent {
 #define FS_FREE_LIST (*(word*)FS_START_ADDR)
 #define FS_NODES ((fs_node_t*)((byte*)FS_START_ADDR + sizeof(word)))
 #define FS_NODE_TABLE_SIZE (sizeof(fs_node_t) * FS_MAX_NODES)
-#define FS_MAX_NODES 255
 #define FS_DATA_POOL ((byte*)FS_START_ADDR + sizeof(word) + FS_NODE_TABLE_SIZE)
 #define FS_DATA_POOL_SIZE (FS_MAX_SIZE - sizeof(word) - FS_NODE_TABLE_SIZE)
 

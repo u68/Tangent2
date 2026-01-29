@@ -74,6 +74,12 @@ MainWindow::MainWindow() {
     // Apply saved colors
     applyColors();
 
+    // Prepare asynchronous build process for OS builds
+    m_buildProcess = new QProcess(this);
+    connect(m_buildProcess, &QProcess::readyReadStandardOutput, this, &MainWindow::onBuildOsProcessReadyStdout);
+    connect(m_buildProcess, &QProcess::readyReadStandardError, this, &MainWindow::onBuildOsProcessReadyStderr);
+    connect(m_buildProcess, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), this, &MainWindow::onBuildOsProcessFinished);
+
     // Bring window to front and maximize
     showMaximized();
     raise();
@@ -294,19 +300,34 @@ void MainWindow::setupMenus() {
     buildRomAction->setShortcut(QKeySequence("F7"));
     connect(buildRomAction, &QAction::triggered, this, &MainWindow::onBuildRom);
 
-    // OS menu with actions
-    QMenu* osMenu = menuBar()->addMenu("OS");
-
-    m_openOsSourceAction = osMenu->addAction("Open OS Source");
+    // Create top-level OS actions (ungrouped from an "OS" menu)
+    // Insert Open OS Source immediately after the Project menu
+    m_openOsSourceAction = new QAction("Open OS Source", this);
     m_openOsSourceAction->setCheckable(true);
     connect(m_openOsSourceAction, &QAction::toggled, this, &MainWindow::onOpenOsSourceToggled);
+    menuBar()->insertAction(m_projectMenu->menuAction(), m_openOsSourceAction);
 
-    m_buildOsSourceAction = osMenu->addAction("Build OS Source");
+    // Insert Build OS Source to the left of the Run/Debug menu (added below)
+    m_buildOsSourceAction = new QAction("Build OS Source", this);
     m_buildOsSourceAction->setEnabled(false);
-    connect(m_buildOsSourceAction, &QAction::triggered, this, &MainWindow::onBuildOsSource); 
+    connect(m_buildOsSourceAction, &QAction::triggered, this, &MainWindow::onBuildOsSource);
+    // We'll insert it before runDebug menu when runDebug is created below
 
     // Run/Debug menu
     QMenu* runDebug = menuBar()->addMenu("Run/Debug");
+
+    // Place Build action immediately to the right of Open OS Source
+    {
+        QList<QAction*> acts = menuBar()->actions();
+        int idx = acts.indexOf(m_openOsSourceAction);
+        if (idx >= 0 && idx + 1 < acts.size()) {
+            QAction* before = acts[idx + 1];
+            menuBar()->insertAction(before, m_buildOsSourceAction);
+        } else {
+            // If Open is last, append build after it
+            menuBar()->addAction(m_buildOsSourceAction);
+        }
+    }
     
     QAction* runOnEmulatorAction = runDebug->addAction("Run on Emulator");
     runOnEmulatorAction->setShortcut(QKeySequence("F6"));
@@ -333,6 +354,30 @@ void MainWindow::setupMenus() {
     QAction* toggleConsole = consoleDock->toggleViewAction();
     toggleConsole->setText("Console");
     view->addAction(toggleConsole);
+
+    // Ensure menubar order is: File, Project, Open OS Source, Build OS Source, Run/Debug, View
+    // Collect the actions we want in sequence and reinsert them.
+    QList<QAction*> desiredOrder;
+    // File menu is the first action (assume existing)
+    QAction* fileAction = menuBar()->actions().isEmpty() ? nullptr : menuBar()->actions().first();
+    if (fileAction) desiredOrder << fileAction;
+    if (m_projectMenu) desiredOrder << m_projectMenu->menuAction();
+    if (m_openOsSourceAction) desiredOrder << m_openOsSourceAction;
+    if (m_buildOsSourceAction) desiredOrder << m_buildOsSourceAction;
+    // Find Run/Debug action
+    QAction* runDebugAction = nullptr;
+    for (QAction* a : menuBar()->actions()) {
+        if (a->text() == "Run/Debug") { runDebugAction = a; break; }
+    }
+    if (runDebugAction) desiredOrder << runDebugAction;
+    if (view) desiredOrder << view->menuAction();
+
+    // Reinsert in order: remove then add
+    for (QAction* a : desiredOrder) {
+        if (!a) continue;
+        menuBar()->removeAction(a);
+        menuBar()->addAction(a);
+    }
 }
 
 void MainWindow::onOpenOsSourceToggled(bool checked) {
@@ -404,40 +449,60 @@ void MainWindow::onBuildOsSource() {
     console->clear();
     console->appendOutput("=== Building OS Source ===\n");
 
-    QProcess proc;
-    proc.setWorkingDirectory(releaseDir);
+    // If a build is already running, inform the user
+    if (m_buildProcess && m_buildProcess->state() != QProcess::NotRunning) {
+        console->appendError("A build is already running. Please wait for it to finish.\n");
+        return;
+    }
+
+    // Start process asynchronously and stream output to console
+    console->clear();
+    console->appendOutput("=== Building OS Source ===\n");
 
     // Start from the real system environment
     QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
-
-    // FORCE COMSPEC (Explorer always has this)
     env.insert("COMSPEC", "C:\\Windows\\System32\\cmd.exe");
 
-    proc.setProcessEnvironment(env);
+    m_buildProcess->setProcessEnvironment(env);
+    m_buildProcess->setWorkingDirectory(releaseDir);
 
-    // Launch exactly like Explorer
     QString cmd = env.value("COMSPEC");
     QStringList args;
     args << "/C" << "build_os.bat";
 
-    proc.start(cmd, args);
-
-    if (!proc.waitForFinished(-1)) {
-        console->appendError("Build process timed out or failed to start.\n");
+    m_buildProcess->start(cmd, args);
+    if (!m_buildProcess->waitForStarted(5000)) {
+        console->appendError("Failed to start build process.\n");
+        return;
     }
+}
 
-    QString out = proc.readAllStandardOutput();
-    QString err = proc.readAllStandardError();
-    if (!out.isEmpty()) console->appendOutput(out);
-    if (!err.isEmpty()) console->appendError(err);
+void MainWindow::onBuildOsProcessReadyStdout() {
+    if (!m_buildProcess) return;
+    QByteArray data = m_buildProcess->readAllStandardOutput();
+    if (!data.isEmpty()) {
+        console->appendOutput(QString::fromLocal8Bit(data));
+    }
+}
 
-    if (proc.exitCode() != 0) {
-        console->appendError("=== Build Failed (exit code " + QString::number(proc.exitCode()) + ") ===\n");
+void MainWindow::onBuildOsProcessReadyStderr() {
+    if (!m_buildProcess) return;
+    QByteArray data = m_buildProcess->readAllStandardError();
+    if (!data.isEmpty()) {
+        console->appendError(QString::fromLocal8Bit(data));
+    }
+}
+
+void MainWindow::onBuildOsProcessFinished(int exitCode, QProcess::ExitStatus exitStatus) {
+    Q_UNUSED(exitStatus);
+    if (exitCode != 0) {
+        console->appendError("=== Build Failed (exit code " + QString::number(exitCode) + ") ===\n");
     } else {
         console->appendSuccess("=== Build Script Completed Successfully ===\n");
     }
 
-    projectExplorer->refresh();
+    // Refresh project view after build completes
+    if (projectExplorer) projectExplorer->refresh();
 }
 
 QString MainWindow::findTangent2SrcPath() const {

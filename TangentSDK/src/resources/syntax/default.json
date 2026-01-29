@@ -136,6 +136,121 @@
                 ]
             }
         }
+        ,
+        "c": {
+            "name": "C",
+            "extensions": ["c"],
+            "rules": {
+                "comment": {
+                    "displayName": "Comments",
+                    "color": "#6A9955",
+                    "bold": false,
+                    "pattern": "\\/\\/.*$|\\/\\*[\\s\\S]*?\\*\\/"
+                },
+                "preprocessor": {
+                    "displayName": "Preprocessor",
+                    "color": "#C586C0",
+                    "bold": false,
+                    "pattern": "^\\s*#\\s*[a-zA-Z_][a-zA-Z0-9_]*"
+                },
+                "type": {
+                    "displayName": "Types",
+                    "color": "#4EC9B0",
+                    "bold": false,
+                    "keywords": [
+                        "int", "char", "short", "long", "float", "double", "void", "signed", "unsigned", "bool", "size_t"
+                    ]
+                },
+                "keyword": {
+                    "displayName": "Keywords",
+                    "color": "#569CD6",
+                    "bold": false,
+                    "keywords": [
+                        "if", "else", "for", "while", "do", "switch", "case", "break", "continue", "return",
+                        "goto", "struct", "union", "enum", "typedef", "static", "extern", "const", "volatile", "inline",
+                        "sizeof", "default", "register", "auto"
+                    ]
+                },
+                "number": {
+                    "displayName": "Numbers",
+                    "color": "#B5CEA8",
+                    "bold": false,
+                    "pattern": "\\b(0x[0-9a-fA-F]+|[0-9]+\\.?[0-9]*)\\b"
+                },
+                "string": {
+                    "displayName": "Strings",
+                    "color": "#CE9178",
+                    "bold": false,
+                    "pattern": "(\"[^\"]*\"|'[^']*')"
+                }
+            },
+            "completions": {
+                "keywords": [
+                    "if", "else", "for", "while", "do", "switch", "case", "break", "continue", "return",
+                    "goto", "struct", "union", "enum", "typedef", "static", "extern", "const", "volatile", "inline"
+                ],
+                "types": [
+                    "int", "char", "short", "long", "float", "double", "void", "bool", "size_t"
+                ]
+            }
+        },
+        "h": {
+            "name": "H",
+            "extensions": ["h"],
+            "rules": {
+                "comment": {
+                    "displayName": "Comments",
+                    "color": "#6A9955",
+                    "bold": false,
+                    "pattern": "\\/\\/.*$|\\/\\*[\\s\\S]*?\\*\\/"
+                },
+                "preprocessor": {
+                    "displayName": "Preprocessor",
+                    "color": "#C586C0",
+                    "bold": false,
+                    "pattern": "^\\s*#\\s*[a-zA-Z_][a-zA-Z0-9_]*"
+                },
+                "type": {
+                    "displayName": "Types",
+                    "color": "#4EC9B0",
+                    "bold": false,
+                    "keywords": [
+                        "int", "char", "short", "long", "float", "double", "void", "signed", "unsigned", "bool", "size_t"
+                    ]
+                },
+                "keyword": {
+                    "displayName": "Keywords",
+                    "color": "#569CD6",
+                    "bold": false,
+                    "keywords": [
+                        "if", "else", "for", "while", "do", "switch", "case", "break", "continue", "return",
+                        "goto", "struct", "union", "enum", "typedef", "static", "extern", "const", "volatile", "inline",
+                        "sizeof", "default", "register", "auto"
+                    ]
+                },
+                "number": {
+                    "displayName": "Numbers",
+                    "color": "#B5CEA8",
+                    "bold": false,
+                    "pattern": "\\b(0x[0-9a-fA-F]+|[0-9]+\\.?[0-9]*)\\b"
+                },
+                "string": {
+                    "displayName": "Strings",
+                    "color": "#CE9178",
+                    "bold": false,
+                    "pattern": "(\"[^\"]*\"|'[^']*')"
+                }
+            },
+            "completions": {
+                "keywords": [
+                    "if", "else", "for", "while", "do", "switch", "case", "break", "continue", "return",
+                    "goto", "struct", "union", "enum", "typedef", "static", "extern", "const", "volatile", "inline"
+                ],
+                "types": [
+                    "int", "char", "short", "long", "float", "double", "void", "bool", "size_t"
+                ]
+            }
+        }
     },
     "common": {
         "rules": {

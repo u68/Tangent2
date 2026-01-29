@@ -16,9 +16,12 @@ SyntaxHighlighter::SyntaxHighlighter(QTextDocument* doc)
 void SyntaxHighlighter::setupFormats() {
     m_formats.clear();
     SyntaxDefinition& def = SyntaxDefinition::instance();
+    // Ensure syntax definitions are loaded (dev fallback)
+    def.load();
     
     // Get language key from extension
-    QString langKey = m_fileExtension;
+    QString langKey = def.getLanguageKeyByExtension(m_fileExtension);
+    if (langKey.isEmpty()) langKey = m_fileExtension;
     
     // Load formats for language-specific rules
     for (const QString& ruleKey : def.getRuleKeys(langKey)) {
@@ -51,7 +54,8 @@ void SyntaxHighlighter::setupFormats() {
 void SyntaxHighlighter::buildHighlightRules() {
     m_rules.clear();
     SyntaxDefinition& def = SyntaxDefinition::instance();
-    QString langKey = m_fileExtension;
+    QString langKey = def.getLanguageKeyByExtension(m_fileExtension);
+    if (langKey.isEmpty()) langKey = m_fileExtension;
     
     // Build rules for each syntax rule in the language
     for (const QString& ruleKey : def.getRuleKeys(langKey)) {
@@ -239,6 +243,16 @@ void SyntaxHighlighter::highlightBlock(const QString& text) {
             highlightTML(text);
             break;
         default:
+            // Generic fallback: apply compiled rules from JSON for other languages
+            for (const HighlightRule& rule : m_rules) {
+                QRegularExpressionMatchIterator it = rule.pattern.globalMatch(text);
+                while (it.hasNext()) {
+                    QRegularExpressionMatch match = it.next();
+                    if (m_formats.contains(rule.formatKey)) {
+                        setFormat(match.capturedStart(), match.capturedLength(), m_formats[rule.formatKey]);
+                    }
+                }
+            }
             break;
     }
 }

@@ -156,11 +156,51 @@ void CompletionPopup::buildCompletionList() {
     m_allCompletions.clear();
     
     SyntaxDefinition& def = SyntaxDefinition::instance();
+    // Ensure definitions are loaded (robust for dev runs where files may be in repo)
+    def.load();
+    // If completions are missing, try to explicitly load default.json from repository paths
+    auto tryLoadDefaultFromRepo = [&def]() -> bool {
+        // Search upward from current working directory and application dir
+        QStringList roots;
+        roots << QDir::currentPath();
+        roots << QCoreApplication::applicationDirPath();
+        for (const QString& root : roots) {
+            QDir walker(root);
+            for (int i = 0; i < 8; ++i) {
+                QString candidate = walker.absoluteFilePath("TangentSDK/src/resources/syntax/default.json");
+                if (QFile::exists(candidate)) {
+                    def.loadFromJsonFile(candidate, false);
+                    return true;
+                }
+                candidate = walker.absoluteFilePath("src/resources/syntax/default.json");
+                if (QFile::exists(candidate)) {
+                    def.loadFromJsonFile(candidate, false);
+                    return true;
+                }
+                walker.cdUp();
+            }
+        }
+        return false;
+    };
     
     if (m_fileType == TASM) {
-        m_allCompletions << def.getAllCompletions("tasm");
+        QStringList comps = def.getAllCompletions("tasm");
+        if (comps.isEmpty()) {
+            if (tryLoadDefaultFromRepo()) comps = def.getAllCompletions("tasm");
+        }
+        m_allCompletions << comps;
     } else if (m_fileType == TML) {
-        m_allCompletions << def.getAllCompletions("tml");
+        QStringList comps = def.getAllCompletions("tml");
+        if (comps.isEmpty()) {
+            if (tryLoadDefaultFromRepo()) comps = def.getAllCompletions("tml");
+        }
+        m_allCompletions << comps;
+    } else if (m_fileType == C) {
+        QStringList comps = def.getAllCompletions("c");
+        if (comps.isEmpty()) {
+            if (tryLoadDefaultFromRepo()) comps = def.getAllCompletions("c");
+        }
+        m_allCompletions << comps;
     }
 
     // If label map is already available, include its keys

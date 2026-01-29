@@ -23,8 +23,30 @@ SyntaxDefinition::SyntaxDefinition() {
 }
 
 QString SyntaxDefinition::getDefaultFilePath() const {
-    // Default file is shipped with the application in resources
+    // Prefer an external default.json located in the source tree or install tree.
+    // Search common locations relative to application dir and current working dir.
     QString appDir = QCoreApplication::applicationDirPath();
+    QStringList candidates;
+    candidates << appDir + "/syntax/default.json";
+    candidates << appDir + "/resources/syntax/default.json";
+    candidates << appDir + "/../syntax/default.json";
+    candidates << appDir + "/../resources/syntax/default.json";
+    candidates << appDir + "/../TangentSDK/src/resources/syntax/default.json";
+
+    // Also try current working directory and its parents (useful in dev)
+    QDir cwd(QDir::currentPath());
+    for (int i = 0; i < 8; ++i) {
+        candidates << cwd.absoluteFilePath("TangentSDK/src/resources/syntax/default.json");
+        candidates << cwd.absoluteFilePath("src/resources/syntax/default.json");
+        candidates << cwd.absoluteFilePath("resources/syntax/default.json");
+        cwd.cdUp();
+    }
+
+    for (const QString& c : candidates) {
+        if (QFile::exists(c)) return QDir(c).canonicalPath();
+    }
+
+    // Fallback to application resource path (do not prefer embedding; used only if external not found)
     return appDir + "/syntax/default.json";
 }
 
@@ -167,21 +189,71 @@ void SyntaxDefinition::loadAllExtensions() {
     // Load extensions in priority order (lower priority first, so higher priority overrides)
     for (const auto& ext : m_extensions) {
         if (!ext.enabled) continue;
-        
         QFile file(ext.filePath);
+        bool opened = false;
         if (file.open(QIODevice::ReadOnly)) {
+            opened = true;
+        } else {
+            // If default extension failed to open from applicationDir, try common fallback locations
+            if (ext.isDefault) {
+                QString appDir = QCoreApplication::applicationDirPath();
+                QStringList candidates = {
+                    appDir + "/syntax/default.json",
+                    appDir + "/../syntax/default.json",
+                    appDir + "/resources/syntax/default.json",
+                    appDir + "/../src/resources/syntax/default.json",
+                    appDir + "/../TangentSDK/src/resources/syntax/default.json"
+                };
+                for (const QString& cpath : candidates) {
+                    QFile cf(cpath);
+                    if (cf.open(QIODevice::ReadOnly)) {
+                        file.setFileName(cpath);
+                        opened = true;
+                        break;
+                    }
+                }
+
+                // As last resort, try Qt resource path (if bundled into a .qrc)
+                if (!opened) {
+                    QFile rf(":/syntax/default.json");
+                    if (rf.open(QIODevice::ReadOnly)) {
+                        QJsonDocument doc = QJsonDocument::fromJson(rf.readAll());
+                        rf.close();
+                        if (!doc.isNull() && doc.isObject()) {
+                            bool isOverride = (ext.priority > 0);
+                            loadFromJson(doc.object(), isOverride);
+                            if (ext.isEdited) m_customizations = doc.object();
+                        }
+                        continue; // skip normal file processing
+                    }
+                }
+            }
+        }
+
+        if (opened) {
             QJsonDocument doc = QJsonDocument::fromJson(file.readAll());
             file.close();
             if (!doc.isNull() && doc.isObject()) {
                 bool isOverride = (ext.priority > 0);  // Anything after default is an override
                 loadFromJson(doc.object(), isOverride);
-                
+
                 // Keep track of edited customizations separately
                 if (ext.isEdited) {
                     m_customizations = doc.object();
                 }
             }
         }
+    }
+    
+}
+
+void SyntaxDefinition::loadFromJsonFile(const QString& filePath, bool isOverride) {
+    QFile file(filePath);
+    if (!file.open(QIODevice::ReadOnly)) return;
+    QJsonDocument doc = QJsonDocument::fromJson(file.readAll());
+    file.close();
+    if (!doc.isNull() && doc.isObject()) {
+        loadFromJson(doc.object(), isOverride);
     }
 }
 
@@ -546,6 +618,10 @@ QString SyntaxDefinition::getLanguageNameByExtension(const QString& extension) c
     QString langKey = m_extensionMap.value(extension.toLower());
     if (langKey.isEmpty()) return QString();
     return m_languages.value(langKey).name;
+}
+
+QString SyntaxDefinition::getLanguageKeyByExtension(const QString& extension) const {
+    return m_extensionMap.value(extension.toLower());
 }
 
 QStringList SyntaxDefinition::getLanguageNames() const {

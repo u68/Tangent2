@@ -1,3 +1,20 @@
+#include <QTabBar>
+#include <QPainter>
+#include <QToolButton>
+#include <QPushButton>
+#include <QMouseEvent>
+
+class SharpTabBar : public QTabBar {
+    Q_OBJECT
+public:
+    SharpTabBar(QWidget* parent = nullptr) : QTabBar(parent) {}
+protected:
+    QSize tabSizeHint(int index) const override {
+        QSize s = QTabBar::tabSizeHint(index);
+        s.setHeight(22);
+        return s;
+    }
+};
 #pragma once
 #include <QTabWidget>
 #include <QMap>
@@ -19,6 +36,7 @@ public:
     void setProjectPath(const QString& projectPath);
     void refreshAllHighlighting();
     void reloadAllSyntaxColors(); // Reload colors on all editors
+    bool renameOpenFile(const QString& oldPath, const QString& newPath);
     
     // Check for unsaved changes
     bool hasUnsavedChanges() const;

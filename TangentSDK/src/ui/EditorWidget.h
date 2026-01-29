@@ -22,6 +22,7 @@ public:
     void setProjectPath(const QString& projectPath);
     void refreshHighlighting();
     void reloadSyntaxColors(); // Reload colors from settings
+    void updateFilePath(const QString& newPath);
     
     // Line number area
     void lineNumberAreaPaintEvent(QPaintEvent* event);
@@ -51,7 +52,7 @@ private:
     bool m_isLoading = false;
     QString m_originalContent;
     
-    enum FileType { Unknown, TASM, TML };
+    enum FileType { Unknown, TASM, TML, C };
     FileType m_fileType = Unknown;
     
     void handleAutoIndent();

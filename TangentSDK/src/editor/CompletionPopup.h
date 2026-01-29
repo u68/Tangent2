@@ -22,7 +22,7 @@ public:
 class CompletionPopup : public QListWidget {
     Q_OBJECT
 public:
-    enum FileType { Unknown, TASM, TML };
+    enum FileType { Unknown, TASM, TML, C };
     
     // Custom roles for item data
     enum ItemRole {
