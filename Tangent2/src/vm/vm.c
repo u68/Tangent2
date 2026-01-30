@@ -10,6 +10,7 @@
 #include "../heap/heap.h"
 #include "../debug/debug.h"
 #include "../time/time.h"
+#include "../fs/fs.h"
 
 // Internals
 
@@ -81,6 +82,12 @@ typedef enum {
     DRAW_RECT,
     DRAW_TEXT,
     SLEEP,
+    GET_TIME_MS,
+    GET_TIME_S,
+    FS_READ,
+    FS_WRITE,
+    FS_MKDIR,
+    FS_DELETE,
     STOP,
     END,
 } syscall_t;
@@ -451,11 +458,11 @@ static void vm_syscall(TangentMachine* vm, syscall_t syscall_number) {
                     else { trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD); }
                     break;
                 case FIELD_CHECKED:
-                    if (elem->type == TML_TYPE_CHECKBOX) vm->registers.rn[4] = elem->data.checkbox.checked;
+                    if (elem->type == TML_TYPE_CHECKBOX) vm->registers.rn[4] = elem->select.field.selected;
                     else { trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD); }
                     break;
                 case FIELD_SELECTED:
-                    if (elem->type == TML_TYPE_RADIO) vm->registers.rn[4] = elem->data.radio.selected;
+                    if (elem->type == TML_TYPE_RADIO) vm->registers.rn[4] = elem->select.field.selected;
                     else { trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD); }
                     break;
                 case FIELD_SIZE:
@@ -545,11 +552,11 @@ static void vm_syscall(TangentMachine* vm, syscall_t syscall_number) {
                     else { trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD); }
                     break;
                 case FIELD_CHECKED:
-                    if (elem->type == TML_TYPE_CHECKBOX) elem->data.checkbox.checked = (byte)vm->registers.rn[4];
+                    if (elem->type == TML_TYPE_CHECKBOX) elem->select.field.selected = (byte)vm->registers.rn[4];
                     else { trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD); }
                     break;
                 case FIELD_SELECTED:
-                    if (elem->type == TML_TYPE_RADIO) elem->data.radio.selected = (byte)vm->registers.rn[4];
+                    if (elem->type == TML_TYPE_RADIO) elem->select.field.selected = (byte)vm->registers.rn[4];
                     else { trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD); }
                     break;
                 case FIELD_SIZE:
@@ -620,6 +627,40 @@ static void vm_syscall(TangentMachine* vm, syscall_t syscall_number) {
             // I will implement this later to only pause the VM instead of the whole system
             //delay_ms(vm->registers.ern[2]);
             break;
+        }
+        case GET_TIME_MS:
+            vm->registers.ern[0] = (Timer0Counter >> 3);
+            break;
+        // Unreliable ish
+        case GET_TIME_S:
+            vm->registers.ern[0] = (Timer0Counter >> 3) / 1000;
+            break;
+        case FS_READ: {
+            // Check if file exists
+            fs_node_t *fs_chk = fs_touch(FS_ROOT, (const char*)vm->registers.ern[0], PERMS_RW);
+            if (fs_chk) {
+                fs_read_file(fs_chk, (byte*)vm->registers.ern[1], vm->registers.rn[2]);
+            }
+            break;
+        }
+        case FS_WRITE: {
+            // Check if file exists
+            fs_node_t *fs_chk = fs_touch(FS_ROOT, (const char*)vm->registers.ern[0], PERMS_RW);
+            if (fs_chk) {
+                fs_write_file(fs_chk, (const byte*)vm->registers.ern[1], vm->registers.rn[2]);
+            }
+            break;
+        }
+        case FS_MKDIR:
+            fs_mkdir(FS_ROOT, (const char*)vm->registers.ern[0], PERMS_RW);
+            break;
+        case FS_DELETE: {
+            fs_node_t *fs_chk = fs_touch(FS_ROOT, (const char*)vm->registers.ern[0], PERMS_RW);
+            if (fs_chk) {
+                fs_delete_node(fs_chk);
+            }
+            break;
+
         }
         case STOP:
             vm->vm_properties.running = 0;
