@@ -47,6 +47,43 @@ void tml_render(TmlElement* root) {
 	// Start with root
 	TmlElement* current = root;
 	TmlTransform current_transform = {0, 0, 0};
+
+	TmlElement* focused_elem = root;
+	byte current_key = CheckButtons();
+	if (current_key != 0xff) {
+		switch(current_key) {
+			case SP_BACK:
+			case SP_UP:
+				if (focused_elem->parent && focused_elem->parent->select.field.selectable) {
+					focused_elem->select.field.focused = 0;
+					focused_elem->parent->select.field.focused = 1;
+				}
+				break;
+			case SP_DOWN:
+				if (focused_elem->first_child && focused_elem->first_child->select.field.selectable) {
+					focused_elem->select.field.focused = 0;
+					focused_elem = focused_elem->first_child;
+					focused_elem->select.field.focused = 1;
+				}
+				break;
+			case SP_RIGHT:
+				if (focused_elem->next_sibling && focused_elem->next_sibling->select.field.selectable) {
+					focused_elem->select.field.focused = 0;
+					focused_elem = focused_elem->next_sibling;
+					focused_elem->select.field.focused = 1;
+				}
+				break;
+			case SP_EXE:
+				if (focused_elem->select.field.selectable) {
+					focused_elem->select.field.selected = 1;
+				}
+				break;
+			case SP_AC:
+				focused_elem->select.field.selected = 0;
+				focused_elem->select.field.focused = 0;
+				focused_elem = root;
+		}
+	}
 	
 	while (current || stack_ptr > 0) {
 		// Go as deep as possible through first children
@@ -135,7 +172,21 @@ void tml_render(TmlElement* root) {
 // Element renderers
 static void render_text(TmlElement* elem, byte world_x, byte world_y, word world_rot) {
 	if (!elem->data.text.text) return;
-	
+	if (elem->select.field.focused) {
+		byte text_w, text_h;
+		tui_get_text_size(elem->data.text.font_size, elem->data.text.text, &text_w, &text_h);
+		tui_draw_rectangle(world_x - 1, world_y -1, 
+						   text_w + 2, text_h + 2, 
+						   elem->anchor_x, elem->anchor_y, 
+						   world_rot, TUI_COLOUR_DARK_GREY, 1, 0x55);
+	} else if (elem->select.field.selected) {
+		byte text_w, text_h;
+		tui_get_text_size(elem->data.text.font_size, elem->data.text.text, &text_w, &text_h);
+		tui_draw_rectangle(world_x - 1, world_y -1, 
+						   text_w + 2, text_h + 2, 
+						   elem->anchor_x, elem->anchor_y, 
+						   world_rot, TUI_COLOUR_BLACK, 1, TUI_LINE_STYLE_SOLID);
+	}
 	tui_draw_text(world_x, world_y, 
 	          elem->data.text.text, 
 	          elem->data.text.font_size,
@@ -146,6 +197,20 @@ static void render_text(TmlElement* elem, byte world_x, byte world_y, word world
 static void render_button(TmlElement* elem, byte world_x, byte world_y, word world_rot) {
 	TmlButtonData* btn = &elem->data.button;
 	
+	if (elem->select.field.focused) {
+		byte but_w = btn->width, but_h = btn->height;
+		tui_draw_rectangle(world_x - 1, world_y -1, 
+						   but_w + 2, but_h + 2, 
+						   elem->anchor_x, elem->anchor_y, 
+						   world_rot, TUI_COLOUR_DARK_GREY, 1, 0x55);
+	} else if (elem->select.field.selected) {
+		byte but_w = btn->width, but_h = btn->height;
+		tui_draw_rectangle(world_x - 1, world_y -1, 
+						   but_w + 2, but_h + 2, 
+						   elem->anchor_x, elem->anchor_y, 
+						   world_rot, TUI_COLOUR_BLACK, 1, TUI_LINE_STYLE_SOLID);
+	}
+
 	// Draw border rectangle
 	tui_draw_rectangle(world_x, world_y,
 	               btn->width, btn->height,
@@ -205,6 +270,20 @@ static void render_button(TmlElement* elem, byte world_x, byte world_y, word wor
 static void render_div(TmlElement* elem, byte world_x, byte world_y, word world_rot) {
 	TmlDivData* div = &elem->data.div;
 	
+	if (elem->select.field.focused) {
+		byte div_w = div->width, div_h = div->height;
+		tui_draw_rectangle(world_x - 1, world_y -1, 
+						   div_w + 2, div_h + 2, 
+						   elem->anchor_x, elem->anchor_y, 
+						   world_rot, TUI_COLOUR_DARK_GREY, 1, 0x55);
+	} else if (elem->select.field.selected) {
+		byte div_w = div->width, div_h = div->height;
+		tui_draw_rectangle(world_x - 1, world_y -1, 
+						   div_w + 2, div_h + 2, 
+						   elem->anchor_x, elem->anchor_y, 
+						   world_rot, TUI_COLOUR_BLACK, 1, TUI_LINE_STYLE_SOLID);
+	}
+
 	tui_draw_rectangle(world_x, world_y,
 	               div->width, div->height,
 	               elem->anchor_x, elem->anchor_y,
@@ -230,6 +309,18 @@ static void render_line(TmlElement* elem, byte world_x, byte world_y, word world
 		x0 = rx0; y0 = ry0;
 		x1 = rx1; y1 = ry1;
 	}
+
+	if (elem->select.field.focused) {
+		tui_draw_rectangle(x0 - 1, y0 -1, 
+						   x1 + 1, y1 + 1, 
+						   elem->anchor_x, elem->anchor_y, 
+						   world_rot, TUI_COLOUR_DARK_GREY, 1, 0x55);
+	} else if (elem->select.field.selected) {
+		tui_draw_rectangle(x0 - 1, y0 -1, 
+						   x1 + 1, y1 + 1, 
+						   elem->anchor_x, elem->anchor_y, 
+						   world_rot, TUI_COLOUR_BLACK, 1, TUI_LINE_STYLE_SOLID);
+	}
 	
 	tui_draw_line(x0, y0, x1, y1, elem->colour, line->thickness, line->style);
 }
@@ -244,8 +335,16 @@ static void render_checkbox(TmlElement* elem, byte world_x, byte world_y, word w
 	               world_rot, elem->colour,
 	               cb->border_thickness, cb->border_style);
 	
+	if (elem->select.field.focused) {
+		byte cb_size = cb->size;
+		tui_draw_rectangle(world_x - 1, world_y -1, 
+						   cb_size + 2, cb_size + 2, 
+						   elem->anchor_x, elem->anchor_y, 
+						   world_rot, TUI_COLOUR_DARK_GREY, 1, 0x55);
+	}
+	
 	// Draw checkmark if checked
-	if (cb->checked) {
+	if (elem->select.field.selected) {
 		byte inner = cb->size - (cb->border_thickness << 1) - 2;
 		byte ix = world_x + cb->border_thickness + 1;
 		byte iy = world_y + cb->border_thickness + 1;
@@ -263,14 +362,20 @@ static void render_radio(TmlElement* elem, byte world_x, byte world_y, word worl
 	tui_draw_circle(world_x, world_y, radius,
 	            elem->anchor_x, elem->anchor_y,
 	            radio->border_thickness, elem->colour);
-	
+	if (world_rot) {
+		byte nx, ny;
+		tui_rotate_point(world_x, world_y, world_x - elem->anchor_x + radio->size, world_y - elem->anchor_y + radio->size, world_rot, &nx, &ny);
+		world_x = nx;
+		world_y = ny;
+	} else {
+		world_x = world_x - elem->anchor_x + radio->size;
+		world_y = world_y - elem->anchor_y + radio->size;
+	}
 	// Draw filled inner circle if selected
-	if (radio->selected) {
+	if (elem->select.field.selected) {
 		byte inner_r = radius - radio->border_thickness - 1;
 		if (inner_r > 0) {
-			tui_draw_circle(world_x, world_y, inner_r,
-			            elem->anchor_x, elem->anchor_y,
-			            inner_r, elem->colour);
+			tui_circle(world_x, world_y, inner_r, elem->colour);
 		}
 	}
 }
@@ -288,6 +393,7 @@ void tml_init_root(TmlElement* e) {
 	e->parent = 0;
 	e->first_child = 0;
 	e->next_sibling = 0;
+	e->select = (TmlSelect){0};
 }
 
 void tml_init_text(TmlElement* e, word id, byte x, byte y, const char* text, byte font_size, byte colour) {
@@ -304,6 +410,7 @@ void tml_init_text(TmlElement* e, word id, byte x, byte y, const char* text, byt
 	e->next_sibling = 0;
 	e->data.text.text = text;
 	e->data.text.font_size = font_size;
+	e->select = (TmlSelect){0};
 }
 
 void tml_init_button(TmlElement* e, word id, byte x, byte y, byte w, byte h, const char* text, byte font_size, byte colour) {
@@ -325,6 +432,7 @@ void tml_init_button(TmlElement* e, word id, byte x, byte y, byte w, byte h, con
 	e->data.button.border_thickness = 1;
 	e->data.button.border_style = TUI_LINE_STYLE_SOLID;
 	e->data.button.text_align = TML_ALIGN_MIDDLE_CENTER;
+	e->select = (TmlSelect){.field.selectable = 1, .field.selected = 0, .field.focused = 0};
 }
 
 void tml_init_div(TmlElement* e, word id, byte x, byte y, byte w, byte h, byte colour, byte thickness, byte style) {
@@ -344,6 +452,7 @@ void tml_init_div(TmlElement* e, word id, byte x, byte y, byte w, byte h, byte c
 	e->data.div.border_thickness = thickness;
 	e->data.div.border_style = style;
 	e->data.div.child_align = TML_ALIGN_TOP_LEFT;
+	e->select = (TmlSelect){0};
 }
 
 void tml_init_line(TmlElement* e, word id, byte x, byte y, byte x1, byte y1, byte colour, byte thickness, byte style) {
@@ -362,6 +471,7 @@ void tml_init_line(TmlElement* e, word id, byte x, byte y, byte x1, byte y1, byt
 	e->data.line.y1 = y1;
 	e->data.line.thickness = thickness;
 	e->data.line.style = style;
+	e->select = (TmlSelect){0};
 }
 
 void tml_init_checkbox(TmlElement* e, word id, byte x, byte y, byte size, byte colour, byte checked) {
@@ -379,7 +489,7 @@ void tml_init_checkbox(TmlElement* e, word id, byte x, byte y, byte size, byte c
 	e->data.checkbox.size = size;
 	e->data.checkbox.border_thickness = 1;
 	e->data.checkbox.border_style = TUI_LINE_STYLE_SOLID;
-	e->data.checkbox.checked = checked;
+	e->select = (TmlSelect){.field.selectable = 1, .field.selected = checked, .field.focused = 0};
 }
 
 void tml_init_radio(TmlElement* e, word id, byte x, byte y, byte size, byte colour, byte selected) {
@@ -396,7 +506,7 @@ void tml_init_radio(TmlElement* e, word id, byte x, byte y, byte size, byte colo
 	e->next_sibling = 0;
 	e->data.radio.size = size;
 	e->data.radio.border_thickness = 1;
-	e->data.radio.selected = selected;
+	e->select = (TmlSelect){.field.selectable = 1, .field.selected = selected, .field.focused = 0};
 }
 
 // Tree manipulation
@@ -585,12 +695,12 @@ TmlElement* tml_parse(const byte* data, TmlElement* elements, byte max_elems) {
 				elem->data.checkbox.size = 8;
 				elem->data.checkbox.border_thickness = 1;
 				elem->data.checkbox.border_style = TUI_LINE_STYLE_SOLID;
-				elem->data.checkbox.checked = 0;
+				elem->select = (TmlSelect){.field.selectable = 1, .field.selected = 0, .field.focused = 0};
 				break;
 			case TML_TYPE_RADIO:
 				elem->data.radio.size = 8;
 				elem->data.radio.border_thickness = 1;
-				elem->data.radio.selected = 0;
+				elem->select = (TmlSelect){.field.selectable = 1, .field.selected = 0, .field.focused = 0};
 				break;
 			default:
 				trigger_bsod(ERROR_TUI_INVALID_ELEMENT);
@@ -657,11 +767,11 @@ TmlElement* tml_parse(const byte* data, TmlElement* elements, byte max_elems) {
 					else p++;
 					break;
 				case FIELD_CHECKED:
-					if (type == TML_TYPE_CHECKBOX) elem->data.checkbox.checked = *p++;
+					if (type == TML_TYPE_CHECKBOX) elem->select.field.selected = *p++;
 					else p++;
 					break;
 				case FIELD_SELECTED:
-					if (type == TML_TYPE_RADIO) elem->data.radio.selected = *p++;
+					if (type == TML_TYPE_RADIO) elem->select.field.selected = *p++;
 					else p++;
 					break;
 				case FIELD_SIZE:
@@ -728,4 +838,30 @@ TmlElement* tml_parse(const byte* data, TmlElement* elements, byte max_elems) {
 	}
 	
 	return root;
+}
+
+byte lastbutton = 0xff;
+byte CheckButtons() {
+	byte x;
+	byte y;
+	byte i = 0;
+	for(x = 0x80; x != 0; x = x >> 1)
+	{
+		deref(0xf046) = x;
+		for(y = 0x80; y != 0; y = y >> 1)
+		{
+			if((deref(0xf040) & y) == 0)
+			{
+				if(i != lastbutton)
+				{
+					lastbutton = i;
+					return i;
+				}
+				return 0xff;
+			}
+			++i;
+		}
+	}
+	lastbutton = 0x50;
+	return 0xff;
 }
