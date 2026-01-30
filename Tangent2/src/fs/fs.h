@@ -73,4 +73,23 @@ byte fs_chmod_node(fs_node_t *node, fs_perms_t new_perms);
 byte fs_write_file(fs_node_t *file, const void *data, word size);
 word fs_read_file(fs_node_t *file, void *buffer, word buffer_size);
 
+// Extra
+fs_node_t *fs_mkdir(fs_node_t *parent, const char *path, fs_perms_t perms);
+fs_node_t *fs_touch(fs_node_t *parent, const char *path, fs_perms_t perms);
+word fs_read(fs_node_t *parent, const char *path, void *buffer, word buffer_size);
+byte fs_write(fs_node_t *parent, const char *path, const void *data, word size);
+
+// Perm presets
+#define PERMS_RWX  ((fs_perms_t){ .field.read=1, .field.write=1, .field.execute=1 })
+#define PERMS_RW   ((fs_perms_t){ .field.read=1, .field.write=1, .field.execute=0 })
+#define PERMS_R    ((fs_perms_t){ .field.read=1, .field.write=0, .field.execute=0 })
+#define PERMS_WX   ((fs_perms_t){ .field.read=0, .field.write=1, .field.execute=1 })
+#define PERMS_W    ((fs_perms_t){ .field.read=0, .field.write=1, .field.execute=0 })
+#define PERMS_X    ((fs_perms_t){ .field.read=0, .field.write=0, .field.execute=1 })
+#define PERMS_RX   ((fs_perms_t){ .field.read=1, .field.write=0, .field.execute=1 })
+#define PERMS_NONE ((fs_perms_t){ .field.read=0, .field.write=0, .field.execute=0 })
+
+// Rewt
+#define FS_ROOT (&FS_NODES[0])
+
 #endif /* FS_H_ */

@@ -170,7 +170,7 @@ void fs_init(void) {
         FS_NODES[i].perms.raw = 0;
     }
     // Initialize root node
-    fs_node_t *root = &FS_NODES[0];
+    fs_node_t *root = FS_ROOT;
     root->perms.field.read = 1;
     root->perms.field.write = 1;
     root->perms.field.execute = 1;
@@ -195,7 +195,7 @@ void fs_init(void) {
 // Insert a node as first child of parent and return pointer to it
 fs_node_t *fs_create_file(fs_node_t *parent, const char *name, fs_perms_t perms) {
     // Validation of parent, name, uniqueness, and type of the parent
-    if (!parent || !name[0] || !parent->perms.field.is_directory || fs_find_child_by_name(parent, name)) return 0;
+    if (!parent || !name[0] || !parent->perms.field.is_directory || !parent->perms.field.write || fs_find_child_by_name(parent, name)) return 0;
     
     // Find free node and index
     fs_node_t *node = fs_find_free_node();
@@ -235,9 +235,9 @@ fs_node_t *fs_create_directory(fs_node_t *parent, const char *name, fs_perms_t p
 // Get node from path
 fs_node_t *fs_get_node_from_path(const char *path, fs_node_t *start) {
     // Validate inputs
-    if (!path || !start || !start->perms.field.is_directory) return 0;
+    if (!path || !start || !start->perms.field.is_directory || !start->perms.field.read) return 0;
 
-    fs_node_t *current = (*path == '/') ? &FS_NODES[0] : start;
+    fs_node_t *current = (*path == '/') ? FS_ROOT : start;
     if (*path == '/') path++;
 
     char name[FS_NAME_MAX_LEN];
@@ -267,7 +267,7 @@ fs_node_t *fs_get_node_from_path(const char *path, fs_node_t *start) {
 
 byte fs_delete_node(fs_node_t *node) {
     // Validate node
-    if (!node || node == &FS_NODES[0] || !node->perms.field.write) return 0;
+    if (!node || node == FS_ROOT || !node->perms.field.write) return 0;
 
     if (node->parent != FS_INVALID_IDX) {
         fs_node_t *parent = &FS_NODES[node->parent];
@@ -287,7 +287,7 @@ byte fs_delete_node(fs_node_t *node) {
 }
 
 static byte fs_is_ancestor(fs_node_t *node, fs_node_t *possible_child) {
-    while (possible_child != &FS_NODES[0]) {
+    while (possible_child != FS_ROOT) {
         if (possible_child == node) return 1;
         possible_child = &FS_NODES[possible_child->parent];
     }
@@ -296,7 +296,7 @@ static byte fs_is_ancestor(fs_node_t *node, fs_node_t *possible_child) {
 
 byte fs_move_node(fs_node_t *node, fs_node_t *new_parent) {
     // Validate nodes
-    if (!node || !new_parent || !node->perms.field.write || !new_parent->perms.field.is_directory) return 0;
+    if (!node || !new_parent || !node->perms.field.write || !new_parent->perms.field.is_directory || !new_parent->perms.field.write) return 0;
     if (node == new_parent || fs_is_ancestor(node, new_parent)) return 0;
 
     fs_node_t *old_parent = &FS_NODES[node->parent];
@@ -375,4 +375,103 @@ word fs_read_file(fs_node_t *file, void *buffer, word buffer_size) {
 
     for (word i = 0; i < to_read; i++) dest[i] = src[i];
     return to_read;
+}
+
+// Extra
+
+// Create full directory path from parent, creating any missing directories
+fs_node_t *fs_mkdir(fs_node_t *parent, const char *path, fs_perms_t perms) {
+    if (!path || !*path || !parent || !parent->perms.field.is_directory || !parent->perms.field.write) return 0;
+
+    // If path is 0
+    if (path[0] == 0) return 0;
+
+    // Start from root if path is absolute
+    fs_node_t *current = (*path == '/') ? FS_ROOT : parent;
+    if (*path == '/') path++;
+
+    char name[FS_NAME_MAX_LEN];
+
+    while (*path) {
+        byte i = 0;
+        while (*path && *path != '/' && i < FS_NAME_MAX_LEN - 1) {
+            name[i++] = *path++;
+        }
+        name[i] = 0;
+
+        if (name[0] != '\0' && !(name[0] == '.' && name[1] == 0)) {
+            fs_node_t *next = fs_find_child_by_name(current, name);
+            if (!next) {
+                next = fs_create_directory(current, name, perms);
+                if (!next) return 0;
+            }
+            current = next;
+        }
+
+        if (*path == '/') path++;
+    }
+    return current;
+}
+
+// Create full file path from parent, creating any missing directories
+fs_node_t *fs_touch(fs_node_t *parent, const char *path, fs_perms_t perms) {
+    if (!path || !*path || !parent || !parent->perms.field.is_directory || !parent->perms.field.write) return 0;
+
+    // If path is 0
+    if (path[0] == 0) return 0;
+    // Check if path ends with '/', which is invalid for touch
+    const char *p = path;
+    while (*p) p++;
+    p--;
+    if (*p == '/') return 0;
+
+    fs_node_t *current = (*path == '/') ? FS_ROOT : parent;
+    if (*path == '/') path++;
+
+    char name[FS_NAME_MAX_LEN];
+
+    while (*path) {
+        byte i = 0;
+        while (*path && *path != '/' && i < FS_NAME_MAX_LEN - 1) {
+            name[i++] = *path++;
+        }
+        name[i] = 0;
+
+        if (name[0] != '\0' &&
+            !(name[0] == '.' && name[1] == 0)) {
+
+            fs_node_t *next = fs_find_child_by_name(current, name);
+
+            byte is_last = (*path == 0);
+
+            if (!next) {
+                if (is_last) {
+                    next = fs_create_file(current, name, perms);
+                } else {
+                    next = fs_create_directory(current, name, perms);
+                }
+                if (!next) return 0;
+            }
+
+            current = next;
+        }
+
+        if (*path == '/') path++;
+    }
+
+    return current;
+}
+
+// Read a file from path relative to parent
+word fs_read(fs_node_t *parent, const char *path, void *buffer, word buffer_size) {
+    fs_node_t *file = fs_get_node_from_path(path, parent);
+    if (!file) return 0;
+    return fs_read_file(file, buffer, buffer_size);
+}
+
+// Write to a file from path relative to parent
+byte fs_write(fs_node_t *parent, const char *path, const void *data, word size) {
+    fs_node_t *file = fs_get_node_from_path(path, parent);
+    if (!file) return 0;
+    return fs_write_file(file, data, size);
 }
