@@ -462,6 +462,26 @@ fs_node_t *fs_touch(fs_node_t *parent, const char *path, fs_perms_t perms) {
     return current;
 }
 
+// Check file existence from path relative to parent
+fs_node_t *fs_lookup(fs_node_t *parent, const char *path) {
+    if (!path || !*path || !parent || !parent->perms.field.is_directory || !parent->perms.field.read) return 0;
+    fs_node_t *look = fs_get_node_from_path(path, parent);
+    if (look && !look->perms.field.is_directory) {
+        return look;
+    }
+    return 0;
+}
+
+// Check directory existence from path relative to parent
+fs_node_t *fs_dir_lookup(fs_node_t *parent, const char *path) {
+    if (!path || !*path || !parent || !parent->perms.field.is_directory || !parent->perms.field.read) return 0;
+    fs_node_t *look = fs_get_node_from_path(path, parent);
+    if (look && look->perms.field.is_directory) {
+        return look;
+    }
+    return 0;
+}
+
 // Read a file from path relative to parent
 word fs_read(fs_node_t *parent, const char *path, void *buffer, word buffer_size) {
     fs_node_t *file = fs_get_node_from_path(path, parent);

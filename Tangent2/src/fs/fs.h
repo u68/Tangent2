@@ -76,6 +76,8 @@ word fs_read_file(fs_node_t *file, void *buffer, word buffer_size);
 // Extra
 fs_node_t *fs_mkdir(fs_node_t *parent, const char *path, fs_perms_t perms);
 fs_node_t *fs_touch(fs_node_t *parent, const char *path, fs_perms_t perms);
+fs_node_t *fs_lookup(fs_node_t *parent, const char *path);
+fs_node_t *fs_dir_lookup(fs_node_t *parent, const char *path);
 word fs_read(fs_node_t *parent, const char *path, void *buffer, word buffer_size);
 byte fs_write(fs_node_t *parent, const char *path, const void *data, word size);
 

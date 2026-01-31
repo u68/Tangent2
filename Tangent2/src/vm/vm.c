@@ -542,9 +542,9 @@ static void vm_syscall(TangentMachine* vm, syscall_t syscall_number) {
                     else { trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD); }
                     break;
                 case FIELD_TEXT:
-                    if (elem->type == TML_TYPE_TEXT) elem->data.text.text = (const char*)vm->registers.ern[2];
-                    else if (elem->type == TML_TYPE_BUTTON) elem->data.button.text = (const char*)vm->registers.ern[2];
-                    else if (elem->type == TML_TYPE_INPUT) elem->data.input.text = (char*)vm->registers.ern[2];
+                    if (elem->type == TML_TYPE_TEXT) elem->data.text.text = (const char*)(&vm->ram[vm->registers.ern[2]]);
+                    else if (elem->type == TML_TYPE_BUTTON) elem->data.button.text = (const char*)(&vm->ram[vm->registers.ern[2]]);
+                    else if (elem->type == TML_TYPE_INPUT) elem->data.input.text = (char*)(&vm->ram[vm->registers.ern[2]]);
                     else { trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD); }
                     break;
                 case FIELD_ALIGN:
@@ -637,25 +637,42 @@ static void vm_syscall(TangentMachine* vm, syscall_t syscall_number) {
             break;
         case FS_READ: {
             // Check if file exists
-            fs_node_t *fs_chk = fs_touch(FS_ROOT, (const char*)vm->registers.ern[0], PERMS_RW);
+            fs_node_t *fs_chk = fs_lookup(FS_ROOT, (const char*)(&vm->ram[vm->registers.ern[0]]));
             if (fs_chk) {
-                fs_read_file(fs_chk, (byte*)vm->registers.ern[1], vm->registers.rn[2]);
+                if (&vm->ram[vm->registers.ern[0]] + vm->registers.ern[2] > &vm->ram[vm->vm_properties.ram_size]) {
+                    trigger_bsod(ERROR_VM_OUT_OF_BOUNDS_MEMORY_ACCESS);
+                    return;
+                }
+                fs_read_file(fs_chk, (byte*)(&vm->ram[vm->registers.ern[1]]), vm->registers.ern[2]);
             }
             break;
         }
         case FS_WRITE: {
-            // Check if file exists
-            fs_node_t *fs_chk = fs_touch(FS_ROOT, (const char*)vm->registers.ern[0], PERMS_RW);
+            // Check if file exists / create one if not
+            fs_node_t *fs_chk = fs_touch(FS_ROOT, (const char*)(&vm->ram[vm->registers.ern[0]]), PERMS_RW);
             if (fs_chk) {
-                fs_write_file(fs_chk, (const byte*)vm->registers.ern[1], vm->registers.rn[2]);
+                if (&vm->ram[vm->registers.ern[0]] + vm->registers.ern[2] > &vm->ram[vm->vm_properties.ram_size]) {
+                    trigger_bsod(ERROR_VM_OUT_OF_BOUNDS_MEMORY_ACCESS);
+                    return;
+                }
+                fs_write_file(fs_chk, (const byte*)(&vm->ram[vm->registers.ern[1]]), vm->registers.ern[2]);
             }
             break;
         }
         case FS_MKDIR:
-            fs_mkdir(FS_ROOT, (const char*)vm->registers.ern[0], PERMS_RW);
+            fs_mkdir(FS_ROOT, (const char*)(&vm->ram[vm->registers.ern[0]]), PERMS_RW);
             break;
         case FS_DELETE: {
-            fs_node_t *fs_chk = fs_touch(FS_ROOT, (const char*)vm->registers.ern[0], PERMS_RW);
+            fs_node_t *fs_chk = 0;
+            // If register 2 is 0xFF, then "-r"
+            if (vm->registers.rn[2] == 0xFF) {
+                fs_chk = fs_fir_lookup(FS_ROOT, (const char*)(&vm->ram[vm->registers.ern[0]]));
+                if (!fs_chk) {
+                    fs_chk = fs_lookup(FS_ROOT, (const char*)(&vm->ram[vm->registers.ern[0]]));
+                }
+            } else {
+                fs_chk = fs_lookup(FS_ROOT, (const char*)(&vm->ram[vm->registers.ern[0]]));
+            }
             if (fs_chk) {
                 fs_delete_node(fs_chk);
             }
@@ -698,7 +715,7 @@ void vm_init(TangentMachine* vm, byte* code) {
 } 
 
 // Create new VM from bytecode, add to pool, expand pool if needed
-TangentMachine* vm_spawn(const byte* code) {
+TangentMachine *vm_spawn(const byte* code) {
     if (!code) return 0;
     
     // Find first NULL slot in pool
@@ -741,6 +758,21 @@ TangentMachine* vm_spawn(const byte* code) {
     vm_init(vm, code);
     vm_pool[slot] = vm;
     return vm; 
+}
+
+TangentMachine *vm_run_file(fs_node_t* parent, const char *filename) {
+    if (!parent || !filename || !parent->perms.field.read) return 0;
+
+    // TODO: Replace fs_touch calls for checking file existence with proper fs_lookup when available
+    fs_node_t *file_node = fs_touch(parent, filename, PERMS_RW); // Fs touch creates the file, but does nothing if file exists, but it sorta works for our needs here
+
+    if (!file_node || !file_node->perms.field.execute) return 0;
+    if (file_node->data_offset == FS_NULL_OFFSET || file_node->size == 0) return 0;
+    byte *data = FS_DATA_POOL + file_node->data_offset;
+
+    if (!vm_spawn(data)) {
+        return 0;
+    }
 }
 
 // Free VM from heap and set its pool slot to NULL

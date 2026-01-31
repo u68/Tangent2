@@ -152,6 +152,7 @@ typedef enum opcode_t {
 void vm_init_system(void);
 void vm_init(TangentMachine* vm, byte* code);
 TangentMachine* vm_spawn(const byte* code);
+TangentMachine *vm_run_file(fs_node_t* parent, const char *filename);
 void vm_destroy(TangentMachine* vm);
 void vm_step(TangentMachine* vm);
 void vm_step_all(void);
