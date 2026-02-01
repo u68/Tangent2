@@ -69,29 +69,6 @@ static word pop_stack_word(TangentMachine* vm);
 static psw_flags_t cmp_bytes(byte a, byte b);
 static psw_flags_t cmp_words(word a, word b);
 
-// Syscall
-typedef enum {
-    // Syscall numbers
-    GET_ELEMENT_FIELD,
-    SET_ELEMENT_FIELD,
-    RENDER_ELEMENT,
-    DRAW_LINE,
-    SET_PIXEL,
-    GET_PIXEL,
-    DRAW_IMAGE,
-    DRAW_RECT,
-    DRAW_TEXT,
-    SLEEP,
-    GET_TIME_MS,
-    GET_TIME_S,
-    FS_READ,
-    FS_WRITE,
-    FS_MKDIR,
-    FS_DELETE,
-    STOP,
-    END,
-} syscall_t;
-
 static void vm_syscall(TangentMachine* vm, syscall_t syscall_number);
 
 // ALU operation implementations
@@ -401,9 +378,7 @@ static psw_flags_t cmp_words(word a, word b) {
 static void vm_syscall(TangentMachine* vm, syscall_t syscall_number) {
     switch (syscall_number) {
         case GET_ELEMENT_FIELD: {
-            word elem_addr = vm->registers.ern[0];
-            if (elem_addr < 4 || elem_addr >= (word)(vm->vm_properties.code_size + 4)) { trigger_bsod(ERROR_TUI_INVALID_ELEMENT); return; }
-            TmlElement* elem = (TmlElement*)(vm->code + elem_addr);
+            TmlElement* elem = (TmlElement*)(&vm->ram[vm->registers.ern[0]]);
             byte field = vm->registers.rn[2];
             switch (field) {
                 case FIELD_ID:
@@ -588,14 +563,11 @@ static void vm_syscall(TangentMachine* vm, syscall_t syscall_number) {
             break;
         }
         case RENDER_ELEMENT: {
-            word elem_addr = vm->registers.ern[0];
-            if (elem_addr < 4 || elem_addr >= (word)(vm->vm_properties.code_size + 4)) { trigger_bsod(ERROR_TUI_INVALID_ELEMENT); return; }
-            TmlElement* elem = (TmlElement*)(vm->code + elem_addr);
-            TmlTransform* transform = 0;
+            TmlElement* elem = (TmlElement*)(&vm->ram[vm->registers.ern[0]]);
+            TmlTransform* transform = {0};
             word tr_addr = vm->registers.ern[1];
             if (tr_addr) {
-                if (tr_addr < 4 || tr_addr >= (word)(vm->vm_properties.code_size + 4)) { trigger_bsod(ERROR_TUI_INVALID_ELEMENT); return; }
-                transform = (TmlTransform*)(vm->code + tr_addr);
+                transform = (TmlTransform*)(&vm->ram[vm->registers.ern[1]]);
             }
             //tml_render_element(elem, transform);
             break;
@@ -615,7 +587,7 @@ static void vm_syscall(TangentMachine* vm, syscall_t syscall_number) {
             break;
         }
         case DRAW_IMAGE:
-            tui_draw_image(vm->registers.rn[0],vm->registers.rn[1],vm->registers.rn[2],vm->registers.rn[3],(const byte*)vm->registers.ern[2],vm->registers.rn[6],vm->registers.rn[7],vm->registers.ern[4],vm->registers.rn[10]);
+            tui_draw_image(vm->registers.rn[0],vm->registers.rn[1],vm->registers.rn[2],vm->registers.rn[3],(const byte*)(&vm->ram[vm->registers.ern[2]]),vm->registers.rn[6],vm->registers.rn[7],vm->registers.ern[4],vm->registers.rn[10]);
             break;
         case DRAW_RECT:
             tui_draw_rectangle(vm->registers.rn[0], vm->registers.rn[1], vm->registers.rn[2], vm->registers.rn[3], (sbyte)vm->registers.rn[6], (sbyte)vm->registers.rn[7], vm->registers.ern[4], vm->registers.rn[10], vm->registers.rn[11], vm->registers.rn[12]);
@@ -678,6 +650,20 @@ static void vm_syscall(TangentMachine* vm, syscall_t syscall_number) {
             }
             break;
 
+        }
+        case FS_RENAME: {
+            fs_node_t *fs_chk = fs_lookup(FS_ROOT, (const char*)(&vm->ram[vm->registers.ern[0]]));
+            if (fs_chk) {
+                fs_rename_node(fs_chk, (const char*)(&vm->ram[vm->registers.ern[1]]));
+            }
+            break;
+        }
+        case FS_MOVE: {
+            fs_node_t *fs_chk = fs_lookup(FS_ROOT, (const char*)(&vm->ram[vm->registers.ern[0]]));
+            if (fs_chk) {
+                fs_move_node(fs_chk, FS_ROOT);
+            }
+            break;
         }
         case STOP:
             vm->vm_properties.running = 0;
@@ -1665,6 +1651,11 @@ void vm_step(TangentMachine* vm) {
                 if (address < 4 || address + 1 >= (word)(vm->vm_properties.code_size + 4)) { trigger_bsod(ERROR_VM_INVALID_INSTRUCTION); return; }
                 vm->lr = vm->pc + 2;
                 vm->pc = address;
+                break;
+            }
+        case OP_RT:
+            {
+                vm->pc = vm->lr;
                 break;
             }
 
