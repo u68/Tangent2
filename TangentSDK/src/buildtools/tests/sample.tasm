@@ -1,0 +1,14 @@
+#define VALUE 12
+#include "include_me.tasm"
+
+start:
+    mov r0, #VALUE
+    mov er1, #'AB'
+    l r2, [0x1234]
+    st [er2], #0x7e
+    beq loop
+    syscall GET_TIME_MS
+    end
+
+loop:
+    b loop

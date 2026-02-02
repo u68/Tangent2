@@ -377,6 +377,27 @@ static psw_flags_t cmp_words(word a, word b) {
 // Syscall handler
 static void vm_syscall(TangentMachine* vm, syscall_t syscall_number) {
     switch (syscall_number) {
+        case COPY_TO_RAM: {
+            word dest_addr = vm->registers.ern[0];
+            word src_addr = vm->registers.ern[1];
+            word length = vm->registers.ern[2];
+            if (!vm->vm_properties.uses_ram) {
+                trigger_bsod(ERROR_VM_OUT_OF_BOUNDS_MEMORY_ACCESS);
+                return;
+            }
+            if (dest_addr + length > vm->vm_properties.ram_size) {
+                trigger_bsod(ERROR_VM_OUT_OF_BOUNDS_MEMORY_ACCESS);
+                return;
+            }
+            if (src_addr + length > vm->vm_properties.code_size) {
+                trigger_bsod(ERROR_VM_OUT_OF_BOUNDS_MEMORY_ACCESS);
+                return;
+            }
+            for (word i = 0; i < length; i++) {
+                vm->ram[dest_addr + i] = vm->code[src_addr + i];
+            }
+            break;
+        }
         case GET_ELEMENT_FIELD: {
             TmlElement* elem = (TmlElement*)(&vm->ram[vm->registers.ern[0]]);
             byte field = vm->registers.rn[2];

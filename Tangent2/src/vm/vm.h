@@ -154,6 +154,7 @@ typedef enum opcode_t {
 // Syscall
 typedef enum {
     // Syscall numbers
+    COPY_TO_RAM,
     GET_ELEMENT_FIELD,
     SET_ELEMENT_FIELD,
     RENDER_ELEMENT,
