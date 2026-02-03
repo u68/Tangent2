@@ -40,16 +40,16 @@ An element-based UI framework with a human-readable markup language.
 
 | Component | Status |
 |-----------|--------|
-| Buttons | Visual |
+| Buttons | To be tested |
 | Text | Complete |
 | Boxes | Complete |
 | Lines | Complete |
-| Checkboxes | Visual |
-| Radio buttons | Visual |
+| Checkboxes | To be tested |
+| Radio buttons | To be tested |
 | Multiple font sizes | Complete |
-| Input boxes | Not Implemented |
-| Interaction | Not Implemented |
-| Navigation  | Not Implemented |
+| Input boxes | To be tested |
+| Interaction | To be tested |
+| Navigation  | To be tested |
 
 Tui operates as a standalone rendering system with hooks for external interaction, designed for integration with Tangent2 and other projects alike.
 
@@ -656,6 +656,7 @@ This project is licensed under the MIT License — see the [LICENSE](LICENSE) fi
 **[Report Bug](../../issues) · [Request Feature](../../issues)**
 
 </div>
+
 
 
 
