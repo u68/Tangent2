@@ -1,6 +1,8 @@
 /*
  * libcw.c
- *
+ * Implementation of libcw
+ * Why are you reading this
+ * Come on don't you have anything better to do
  *  Created on: Feb 9, 2026
  *      Author: harma
  */

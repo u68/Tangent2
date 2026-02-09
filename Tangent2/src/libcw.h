@@ -1,5 +1,5 @@
 /*
- * libcw.h version 1.1
+ * libcw.h version 1.3
  * A compilation of things you might want for CW dev.
  * Contians: 
  *  - Type definitions 
@@ -9,6 +9,7 @@
  *  - Graphics library functions
  *  - File system implementation
  *  - RTC functions
+ *  - Key detection/conversion (only cwii for conversion right now)
  * 
  * Created on: Feb 4 2026
  * Copyright (C) 2026 u68
@@ -17,7 +18,7 @@
 #ifndef LIBCW_H_
 #define LIBCW_H_
 
-#define LIBCW_VERSION "1.1"
+#define LIBCW_VERSION "1.3"
 
  // Telecomadm1145 did most of this sfr stuff
  typedef unsigned char byte;
