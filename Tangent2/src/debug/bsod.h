@@ -8,7 +8,7 @@
 #ifndef BSOD_H_
 #define BSOD_H_
 
-#include "../base.h"
+#include "../libcw.h"
 
 // Forward declaration
 typedef enum error_t error_t;

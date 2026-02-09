@@ -43,11 +43,8 @@ STACK_CALCULATOR_OUTPUT_OUTPUTS__QUOTED :=
 SUBDIRS := \
 debug \
 desktop \
-fs \
-heap \
 . \
 media \
-time \
 tui \
 vm \
 

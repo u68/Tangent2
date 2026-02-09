@@ -8,7 +8,7 @@
 #ifndef VM_H_
 #define VM_H_
 
-#include "../base.h"
+#include "../libcw.h"
 
 #define MAX_VMS 16 // Default max, dymanically expands when full
 

@@ -8,7 +8,7 @@
 #ifndef DESKTOP_H_
 #define DESKTOP_H_
 
-#include "../base.h"
+#include "../libcw.h"
 
 /* Forward declaration to avoid pulling in the entire TUI header */
 typedef struct TmlElement TmlElement;

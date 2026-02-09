@@ -1,7 +1,1839 @@
-#include "ysglfonts.h"
+/*
+ * libcw.c
+ *
+ *  Created on: Feb 9, 2026
+ *      Author: harma
+ */
+
+#include "libcw.h"
+
+// Internals
+
+static const byte YsFont6x7[1792];
+static const byte YsFont6x8[2048];
+static const byte YsFont6x10[2560];
+static const byte YsFont7x10[2560];
+static const byte YsFont8x8[2048];
+static const byte YsFont8x12[3072];
+static const byte YsFont12x16[8192];
+
+static const sbyte tui_sin_table[360];
+static const sbyte tui_cos_table[360];
+
+static void __tui_clear_screen_real_buf_2(void);
+static void __tui_clear_screen_real_buf_1(void);
+static void __tui_set_pixel_real(byte x, byte y, byte colour);
+static void __tui_set_pixel(byte x, byte y, byte colour);
+
+// Rotates point (ax, ay) around anchor (px, py) by angle (in degrees)
+void tui_rotate_point(byte ax, byte ay, byte px, byte py, word angle, byte *out_x, byte *out_y) {
+	if (!angle) {
+		*out_x = px;
+		*out_y = py;
+		return;
+	}
+	// Nerdy trig stuff
+	sword x = (sword)px - (sword)ax;
+	sword y = (sword)py - (sword)ay;
+	sbyte cs = tui_cos_table[angle];
+	sbyte sn = tui_sin_table[angle];
+	sword xr = ((sword)x * cs - (sword)y * sn ) >> 7;
+	sword yr = ((sword)x * sn + (sword)y * cs ) >> 7;
+	*out_x = (byte)(ax + xr);
+	*out_y = (byte)(ay + yr);
+}
+
+// Simple Bresenham line drawing
+void tui_simple_line(byte x0, byte y0, byte x1, byte y1, byte colour) {
+	int dx = abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
+	int dy = -abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
+	int err = dx + dy, e2;
+	while (1) {
+		__tui_set_pixel(x0, y0, colour);
+		if (x0 == x1 && y0 == y1) break;
+		e2 = err << 1;
+		if (e2 >= dy) {
+			err += dy;
+			x0 += sx;
+		}
+		if (e2 <= dx) {
+			err += dx;
+			y0 += sy;
+		}
+	}
+}
+
+// Draw a line with a pattern stretched across its length
+void tui_advanced_draw_line(byte* data, byte bit_length, byte x0, byte y0, byte x1, byte y1, byte colour, byte thickness)
+{
+	int dx = abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
+	int dy = -abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
+	int err = dx + dy, e2;
+	int line_len = dx > -dy ? dx : -dy;
+	int pix_index = 0;
+	while (1) {
+		int bit_index = ((long)pix_index * bit_length) / line_len;
+		if (data[bit_index >> 3] & (0x80 >> (bit_index & 7))) {
+			tui_set_pixel(x0, y0, colour, thickness);
+		}
+		if (x0 == x1 && y0 == y1) break;
+		pix_index++;
+		e2 = err << 1;
+		if (e2 >= dy) {
+			err += dy;
+			x0 += sx;
+		}
+		if (e2 <= dx) {
+			err += dx;
+			y0 += sy;
+		}
+	}
+}
+
+// Draw a line with a repeating pattern
+void tui_pattern_draw_line(byte pattern, byte x0, byte y0, byte x1, byte y1, byte colour, byte thickness) {
+	byte lcount = 0;
+	int dx = abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
+	int dy = -abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
+	int err = dx + dy, e2;
+	while (1) {
+		// Draw pixel based on pattern
+		if (pattern == 0xFF) {
+			tui_set_pixel(x0, y0, colour, thickness);
+		} else if (pattern & (0x80 >> (lcount & 7))) {
+			tui_set_pixel(x0, y0, colour, thickness);
+		} else {
+			tui_set_pixel(x0, y0, (byte)TUI_COLOUR_WHITE, thickness);
+		}
+		lcount++;
+		if (x0 == x1 && y0 == y1) break;
+		e2 = err << 1;
+		if (e2 >= dy) {
+			err += dy;
+			x0 += sx;
+		}
+		if (e2 <= dx) {
+			err += dx;
+			y0 += sy;
+		}
+	}
+}
+
+// Draw the contents of the VRAM buffer to the real VRAM
+void tui_render_buffer(void) {
+	word i = 0;
+	word j = 0;
+	// Lower bitplane
+    #ifndef IS_CWX
+	BufSelSFR= 0;
+    #endif
+	for(i = 0; i < 0x0600; i+=2)
+	{
+		derefw(0xf800 + j) = derefw(VRAM + i);
+		j+=2;
+		if((j & 0x001F) == 0x18)
+		{
+			j+=8;
+		}
+	}
+	// Upper bitplane
+    #ifndef IS_CWX
+	BufSelSFR = 4;
+	j = 0;
+	for(i = 0; i < 0x0600; i+=2)
+	{
+		derefw(0xf800 + j) = derefw(VRAM + i + 0x600);
+		j+=2;
+		if((j & 0x001F) == 0x18)
+		{
+			j+=8;
+		}
+	}
+    #endif
+}
+
+// An attempt to work around compiler optimization issues
+#ifndef IS_CWX
+static void __tui_clear_screen_real_buf_2(void) {
+	word i;
+	BufSelSFR = 4;
+	for (i = 0; i < 0x800; i+=2) {
+		if ((i & 0x1F) == 0x18) i += 8;
+		hw_derefw(0xF800 + i) = 0x0000;
+	}
+}
+#endif
+
+static void __tui_clear_screen_real_buf_1(void) {
+	word i;
+    #ifndef IS_CWX
+	BufSelSFR = 0;
+    #endif
+	for (i = 0; i < 0x800; i+=2) {
+		if ((i & 0x1F) == 0x18) i += 8;
+		hw_derefw(0xF800 + i) = 0x00;
+	}
+}
+
+// I wonder what this does
+void tui_clear_screen(void) {
+	// Determine whether to clear real screen or buffer
+	if (Write2RealScreen) {
+		__tui_clear_screen_real_buf_1();
+        #ifndef IS_CWX
+		__tui_clear_screen_real_buf_2();
+        #endif
+		return;
+	} else {
+		word i;
+        #ifndef IS_CWX
+		for (i = 0; i < 0xC00; i+=2) {
+        #else
+        for (i = 0; i < 0x600; i+=2) {
+        #endif
+			derefw(VRAM + i) = 0x0000;
+		}
+	}
+}
+
+// Some testing stuff that may be useful later
+byte tui_get_pixel_b(byte x, byte y, byte buf) {
+	if (x > 191 || y > 63) {
+		return 0;
+	}
+	if (buf == 2) {
+		return tui_get_pixel(x, y);
+	}
+	byte a, b;
+	byte ty = 0x80>>(x & 7);
+	if (Write2RealScreen) {
+        #ifndef IS_CWX
+		if (buf) {
+			BufSelSFR = 0;
+		} else {
+			BufSelSFR = 4;
+		}
+        #endif
+		return deref((y<<5) + (x >> 3) + 0xF800) & ty ? 1 : 0;
+	} else {
+		word addr = (y << 4) + (y << 3) + (x >> 3) + VRAM;
+        #ifndef IS_CWX
+		if (buf) {
+			return deref(addr) & ty ? 1 : 0;
+		} else {
+			return deref(addr+0x600) & ty ? 2 : 0;
+		}
+        #else
+        return deref(addr) & ty ? 1 : 0;
+        #endif
+	}
+}
+
+// Get pixel colour at x,y
+byte tui_get_pixel(byte x, byte y) {
+	if (x > 191 || y > 63) {
+		return 0;
+	}
+	byte a = 0, b = 0;
+	byte ty = 0x80>>(x & 7);
+	// Determine whether to read from real screen or buffer
+	if (Write2RealScreen) {
+        #ifndef IS_CWX
+		BufSelSFR = 0;
+		a = (deref((y<<5) + (x >> 3) + 0xF800) & ty) ? 1 : 0;
+		BufSelSFR = 4;
+        #endif
+		b = (deref((y<<5) + (x >> 3) + 0xF800) & ty) ? 2 : 0;
+		return a + b;
+	} else {
+		word addr = (y << 4) + (y << 3) + (x >> 3) + VRAM;
+		a = (deref(addr) & ty) ? 1 : 0;
+        #ifndef IS_CWX
+		b = (deref(addr+0x600) & ty) ? 2 : 0;
+        #endif
+		return a + b;
+	}
+}
+
+// Internal function to set a pixel in real VRAM
+static void __tui_set_pixel_real(byte x, byte y, byte colour) {
+	if (x > 191 || y > 63) {
+		return;
+	}
+	word addr = (y<<5) + (x >> 3) + 0xF800;
+	byte ty = 0x80>>(x & 7);
+    #ifndef IS_CWX
+	BufSelSFR = 0;
+    #endif
+	// Use switch for efficiency
+	switch(colour) {
+	case TUI_COLOUR_WHITE:
+		deref(addr) &= ~ty; // Set both bitplanes bits to 0
+        #ifndef IS_CWX
+		BufSelSFR = 4;
+		deref(addr) &= ~ty;
+        #endif
+		break;
+    #ifndef IS_CWX
+	case TUI_COLOUR_LIGHT_GREY:
+		deref(addr) |= ty; // Set lower bitplane bit to 1, upper to 0
+		BufSelSFR = 4;
+		deref(addr) &= ~ty;
+		break;
+	case TUI_COLOUR_DARK_GREY:
+		deref(addr) &= ~ty; // Set lower bitplane bit to 0, upper to 1
+		BufSelSFR = 4;
+		deref(addr) |= ty;
+		break;
+    #endif
+	case TUI_COLOUR_BLACK:
+		deref(addr) |= ty; // Set both bitplanes bits to 1
+        #ifndef IS_CWX
+		BufSelSFR = 4;
+		deref(addr) |= ty;
+        #endif
+		break;
+	default:
+		break;
+	}
+}
+
+// Internal function to set a pixel in VRAM buffer
+static void __tui_set_pixel(byte x, byte y, byte colour) {
+	if (x > 191 || y > 63) {
+		return;
+	} //else
+	// STUPID COMPILER OPTIMIZATIONS
+	void (*volatile fp)(byte, byte, byte) = __tui_set_pixel_real;
+
+	if (Write2RealScreen) {
+		fp(x, y, colour);
+	    return;
+	}
+	// Set pixel in VRAM buffer
+	word addr = (y << 4) + (y << 3) + (x >> 3) + VRAM;
+	byte ty = 0x80>>(x & 7);
+	switch(colour)	{
+	case TUI_COLOUR_WHITE:
+		deref(addr) &= ~ty;     // Set both bitplanes bits to 0
+        #ifndef IS_CWX
+		deref(addr+0x600) &= ~ty;
+        #endif
+		break;
+    #ifndef IS_CWX
+	case TUI_COLOUR_LIGHT_GREY:
+		deref(addr) |= ty;		// Set lower bitplane bit to 1, upper to 0
+		deref(addr+0x600) &= ~ty;
+		break;
+	case TUI_COLOUR_DARK_GREY:
+		deref(addr) &= ~ty;		// Set lower bitplane bit to 0, upper to 1
+		deref(addr+0x600) |= ty;
+		break;
+    #endif
+	case TUI_COLOUR_BLACK:
+		deref(addr) |= ty;		// Set both bitplanes bits to 1
+        #ifndef IS_CWX
+		deref(addr+0x600) |= ty;
+        #endif
+		break;
+	default:
+		break;
+	}
+}
+
+// Basically drawing a circle, but has some optimizations for small sizes
+void tui_set_pixel(byte x, byte y, byte colour, byte size) {
+	switch(size) {
+	case 0:
+		return;
+	case 1:
+		__tui_set_pixel(x, y, colour);
+		return;
+	case 2:
+		__tui_set_pixel(x, y, colour);
+		__tui_set_pixel(x+1, y, colour);
+		__tui_set_pixel(x, y+1, colour);
+		__tui_set_pixel(x-1, y, colour);
+		__tui_set_pixel(x, y-1, colour);
+		return;
+	default:
+		tui_circle(x, y, size>>1, colour);
+		return;
+	}
+}
+
+// Square but filled in
+void tui_circle(byte cx, byte cy, byte r, byte col)
+{
+	int x = r;
+	int y = 0;
+	int err = 1 - r;
+	while (x >= y)
+	{
+		for (int yy = cy - x; yy <= cy + x; yy++)
+		{
+			__tui_set_pixel(cx + y, yy, col);
+			__tui_set_pixel(cx - y, yy, col);
+		}
+		for (int yy = cy - y; yy <= cy + y; yy++)
+		{
+			__tui_set_pixel(cx + x, yy, col);
+			__tui_set_pixel(cx - x, yy, col);
+		}
+		y++;
+		if (err < 0)
+			err += (y << 1) + 1;
+		else {
+			x--;
+			err += ((y - x) << 1) + 1;
+		}
+	}
+}
+
+// Draw a line with specified style and thickness
+void tui_draw_line(byte x0, byte y0, byte x1, byte y1, byte colour, byte thickness, byte style) {
+	byte pattern = style;
+	switch(style) {
+	case TUI_STYLE_NONE:
+	case TUI_STYLE_SOLID:
+		pattern = 0xFF;
+		break;
+	case TUI_STYLE_DOTTED:
+		pattern = 0xAA;
+		break;
+	case TUI_STYLE_DASHED:
+		pattern = 0xF8;
+		break;
+	case TUI_STYLE_DOUBLE:
+		break;
+	default:
+		pattern = style; // Assume custom pattern
+		break;
+	}
+	tui_pattern_draw_line(pattern, x0, y0, x1, y1, colour, thickness);
+}
+
+// Draw a rectangle with rotation around anchor point
+void tui_draw_rectangle(byte x, byte y, byte width, byte height, sbyte ax, sbyte ay, word rotation, byte colour, byte thickness, byte style) {
+	// Assume rotation is 0
+	byte nx0 = x - ax;
+	byte ny0 = y - ay;
+	byte nx1 = x + width - ax;
+	byte ny1 = y - ay;
+	byte nx2 = x - ax;
+	byte ny2 = y - ay + height;
+	byte nx3 = x + width - ax;
+	byte ny3 = y - ay + height;
+	if (rotation >= 360) rotation -= 360;
+	if (rotation < 0) rotation += 360;
+	if (rotation) {
+		// Rotate all points around x, y
+		if (ax || ay) {
+			tui_rotate_point(x, y, x - ax, y - ay, rotation, &nx0, &ny0); // Optimizationg because usually ax and ay are 0, so the top left corner doesn't need rotation
+		}
+		// Top right
+		tui_rotate_point(x, y, x + width - ax, y - ay, rotation, &nx1, &ny1);
+		// Bottom left
+		tui_rotate_point(x, y, x - ax, y - ay + height, rotation, &nx2, &ny2);
+		// Bottom right
+		tui_rotate_point(x, y, x + width - ax, y - ay + height, rotation, &nx3, &ny3);
+	}
+	// Draw lines between points
+	tui_draw_line(nx0, ny0, nx1, ny1, colour, thickness, style);
+	tui_draw_line(nx0, ny0, nx2, ny2, colour, thickness, style);
+	tui_draw_line(nx2, ny2, nx3, ny3, colour, thickness, style);
+	tui_draw_line(nx1, ny1, nx3, ny3, colour, thickness, style);
+}
+
+// Helper function to draw circles
+void tui_draw_points(byte cx, byte cy, byte x, byte y, byte thickness, byte colour) {
+	// Blah blah blah
+	tui_set_pixel(cx + x, cy + y, colour, thickness);
+	tui_set_pixel(cx - x, cy + y, colour, thickness);
+	tui_set_pixel(cx + x, cy - y, colour, thickness);
+	tui_set_pixel(cx - x, cy - y, colour, thickness);
+	tui_set_pixel(cx + y, cy + x, colour, thickness);
+	tui_set_pixel(cx - y, cy + x, colour, thickness);
+	tui_set_pixel(cx + y, cy - x, colour, thickness);
+	tui_set_pixel(cx - y, cy - x, colour, thickness);
+}
+
+// Draw a circle with rotation around cx, cy with anchor point
+void tui_draw_circle(byte cx, byte cy, byte radius, sbyte ax, sbyte ay, byte thickness, byte colour) {
+	byte x = 0;
+	byte y = radius;
+	sword d = 3 - (radius << 1);
+
+	tui_draw_points(cx - ax, cy - ay, x, y, thickness, colour);
+
+	while (y >= x) {
+		if (d > 0) {
+			y--;
+			d = d + ((x - y) << 2) + 10;
+		} else {
+			d = d + (x << 2) + 6;
+		}
+		x++;
+		tui_draw_points(cx - ax, cy - ay, x, y, thickness, colour);
+	}
+}
+
+// Returns the width and height of a given font
+void tui_get_font_size(byte font_size, byte* width, byte* height) {
+	switch(font_size) {
+	case TUI_FONT_SIZE_6x7:
+		*width = 6;
+		*height = 7;
+		return;
+	case TUI_FONT_SIZE_6x8:
+		*width = 6;
+		*height = 8;
+		return;
+	case TUI_FONT_SIZE_6x10:
+		*width = 6;
+		*height = 10;
+		return;
+	case TUI_FONT_SIZE_7x10:
+		*width = 7;
+		*height = 10;
+		return;
+	case TUI_FONT_SIZE_8x8:
+		*width = 8;
+		*height = 8;
+		return;
+	case TUI_FONT_SIZE_8x12:
+		*width = 8;
+		*height = 12;
+		return;
+	case TUI_FONT_SIZE_12x16:
+		*width = 12;
+		*height = 16;
+		return;
+	default:
+		*width = 6;
+		*height = 8;
+		return;
+	}
+}
+
+// Returns the width and height of the given text
+void tui_get_text_size(byte font_size, const char* text, byte* width, byte* height) {
+	byte cwidth = 0, cheight = 0, i = 0;
+	tui_get_font_size(font_size, &cwidth, &cheight);
+	// Count characters and multiply by width
+	while (text[i]) i++;
+	*width = cwidth * i;
+	*height = cheight;
+}
+
+// Draw text with specified font size, rotation, and style
+void tui_draw_text(byte x, byte y, const char* text, byte font_size, sbyte ax, sbyte ay, word rotation, byte colour) {
+	byte cheight;
+	byte cwidth;
+	byte i = 0;
+	byte tx, ty;
+	byte ox = x;
+	// Get character dimensions
+	tui_get_font_size(font_size, &cwidth, &cheight);
+	while (text[i]) {
+		if (rotation) tui_rotate_point(x, y, ox - ax, y - ay, rotation, &tx, &ty); // Rotate around anchor
+		else {
+			tx = ox - ax; // No rotation, just offset by anchor
+			ty = y - ay;
+		}
+		// Draw character, anchor x, y isn't really used since it was done before but whatever
+		tui_draw_char(tx, ty, text[i], font_size, 0, 0, rotation, colour);
+		ox += cwidth;
+		i++;
+	}
+}
+
+// Draw a byte at x,y with mask
+void tui_draw_byte(byte x, byte y, byte data, byte data2, byte mask) {
+	if (x > 191 || y > 63) {
+		return;
+	}
+	// Prepare bit-shifted data
+	byte bitpos = x & 7;
+	byte lbyte = data >> bitpos;
+	byte hbyte = data << (8 - bitpos);
+	byte lbyte2 = data2 >> bitpos;
+	byte hbyte2 = data2 << (8 - bitpos);
+	byte lmask = mask >> bitpos;
+	byte hmask = mask << (8 - bitpos);
+	byte temp;
+	word addr;
+	// Determine starting address based on real screen or buffer flag
+	if (Write2RealScreen) {
+		addr = (y << 5) + (x >> 3) + 0xF800;
+	} else {
+		addr = (y << 4) + (y << 3) + (x >> 3) + VRAM;
+	}
+	// Write high bytes first if there's spillover
+	if (bitpos) {
+        #ifndef IS_CWX
+		if (Write2RealScreen) {
+			BufSelSFR = 0;
+		}
+        #endif
+		// Draw first bitplane high byte
+		temp = deref(addr + 1);
+		temp &= ~hmask;
+		temp |= (hbyte & hmask);
+		deref(addr + 1) = temp;
+        #ifndef IS_CWX
+		if (Write2RealScreen) {
+			BufSelSFR = 4;
+		} else {
+			addr += 0x600;
+		}
+		// Draw second bitplane high byte
+		temp = deref(addr + 1);
+		temp &= ~hmask;
+		temp |= (hbyte2 & hmask);
+		deref(addr + 1) = temp;
+		if (!Write2RealScreen) {
+			addr -= 0x600;
+		}
+        #endif
+	}
+    #ifndef IS_CWX
+	if (Write2RealScreen) {
+		BufSelSFR = 0;
+	}
+    #endif
+	// Draw low byte (first bitplane)
+	temp = deref(addr);
+	temp &= ~lmask;
+	temp |= (lbyte & lmask);
+	deref(addr) = temp;
+    #ifndef IS_CWX
+	if (Write2RealScreen) {
+		BufSelSFR = 4;
+	} else {
+		addr += 0x600;
+	}
+	// Draw low byte (second bitplane)
+	temp = deref(addr);
+	temp &= ~lmask;
+	temp |= (lbyte2 & lmask);
+	deref(addr) = temp;
+    #endif
+}
+
+// Helper functions to get min and max of 4 bytes
+static byte tui_min4(byte a, byte b, byte c, byte d) {
+	byte m = a;
+	if (b < m) m = b;
+	if (c < m) m = c;
+	if (d < m) m = d;
+	return m;
+}
+
+static byte tui_max4(byte a, byte b, byte c, byte d) {
+	byte m = a;
+	if (b > m) m = b;
+	if (c > m) m = c;
+	if (d > m) m = d;
+	return m;
+}
+
+// Draw an image bitmap with rotation around anchor point
+void tui_draw_image(byte x, byte y, byte width, byte height, const byte* bitmap, sbyte ax, sbyte ay, word rotation, byte colour) {
+	word bwidth = (width + 7) >> 3;
+	word psize = bwidth * height;
+	byte iy, ix;
+	word mapindex;
+
+	if (!rotation) {
+		byte osf = (width & 7) ? 1 : 0; // If size is not a multiple of 8
+		byte rem = width & 7; // Remaining bits in last byte
+		byte last_mask = rem ? (0xFF << (8 - rem)) : 0xFF; // Mask for last byte
+		// No rotation, simple blit, but it's massive becuase doing the switch when it comes to draw the byte decreases the amount of cycles
+		switch (colour) {
+		case TUI_COLOUR_WHITE:
+			return;
+        #ifndef IS_CWX
+		case TUI_COLOUR_LIGHT_GREY:
+			for (iy = 0; iy < height; iy++) {
+				for (ix = 0; ix < bwidth; ix++) {
+					mapindex = iy * bwidth + ix; // Calculate index in bitmap
+					byte mask = (ix == bwidth - osf && osf) ? last_mask : 0xFF; // If it is the last byte and there is an offset, use last mask
+					tui_draw_byte(x + (ix << 3) - ax, y - ay + iy, bitmap[mapindex], 0, mask); // The draw byte function is surprisingly complicated
+				}
+			}
+			return;
+		case TUI_COLOUR_DARK_GREY:
+			for (iy = 0; iy < height; iy++) {
+				for (ix = 0; ix < bwidth; ix++) {
+					mapindex = iy * bwidth + ix;
+					byte mask = (ix == bwidth - osf && osf) ? last_mask : 0xFF;
+					tui_draw_byte(x + (ix << 3) - ax, y - ay + iy, 0, bitmap[mapindex], mask);
+				}
+			}
+			return;
+        #endif
+		case TUI_COLOUR_BLACK:
+			for (iy = 0; iy < height; iy++) {
+				for (ix = 0; ix < bwidth; ix++) {
+					mapindex = iy * bwidth + ix;
+					byte mask = (ix == bwidth - osf && osf) ? last_mask : 0xFF;
+					tui_draw_byte(x + (ix << 3) - ax, y - ay + iy, bitmap[mapindex], bitmap[mapindex], mask);
+				}
+			}
+			return;
+		default:
+			for (iy = 0; iy < height; iy++) {
+				for (ix = 0; ix < bwidth; ix++) {
+					mapindex = iy * bwidth + ix;
+					byte mask = (ix == bwidth - osf && osf) ? last_mask : 0xFF;
+                    #ifndef IS_CWX
+					tui_draw_byte(x + (ix << 3) - ax, y - ay + iy, bitmap[mapindex], bitmap[mapindex + psize], mask);
+                    #else
+                    tui_draw_byte(x + (ix << 3) - ax, y - ay + iy, bitmap[mapindex], bitmap[mapindex], mask);
+                    #endif
+				}
+			}
+			return;
+		}
+	} else {
+		// If there is rotation, we have to do it pixel by pixel :(
+		byte nx, ny, cx1, cy1, cx2, cy2, cx3, cy3, bx, by, rx, ry, hx, hy;
+		byte cx0 = x, cy0 = y;
+		// Rotate corners
+		if (ax || ay) {
+			tui_rotate_point(x, y, x - ax, y - ay, rotation, &cx0, &cy0);
+		}
+		tui_rotate_point(x, y, x + width - ax, y - ay, rotation, &cx1, &cy1);
+		tui_rotate_point(x, y, x - ax, y - ay + height, rotation, &cx2, &cy2);
+		tui_rotate_point(x, y, x + width - ax, y - ay + height, rotation, &cx3, &cy3);
+		// Get bounding box from the rotated corners
+		bx = tui_min4(cx0, cx1, cx2, cx3);
+		by = tui_min4(cy0, cy1, cy2, cy3);
+		rx = tui_max4(cx0, cx1, cx2, cx3) + 1;
+		ry = tui_max4(cy0, cy1, cy2, cy3) + 1;
+		if (rx > 192) rx = 192;
+		if (ry > 64) ry = 64;
+		// For each pixel in bounding box, rotate backwards and sample from bitmap, that way there are no gaps
+		for (byte i = bx; i < rx; i++) {
+			for (byte j = by; j < ry; j++) {
+				tui_rotate_point(x, y, i, j, 360 - rotation, &hx, &hy); // Rotate backwards to get sample point
+				hx -= (x - ax);
+				hy -= (y - ay);
+				// When out of bounds, skip to not write junk data
+				if (hx < 0 || hy < 0 || hx >= width || hy >= height) {
+					continue;
+				}
+				byte col = 0;
+				word addr = hy * bwidth + (hx >> 3); // Calculate address in bitmap
+				byte bdata = bitmap[addr]; // Get byte from bitmap
+                #ifndef IS_CWX
+				byte bdata2 = (colour == TUI_COLOUR_IMAGE) ? bitmap[addr + psize] : 0; // Get second bitplane if needed
+                #endif
+				byte bmask = 0x80 >> (hx & 7); // Calculate bitmask for pixel
+				// Determine colour based on bitplanes and requested colour
+                #ifndef IS_CWX
+				if (colour == TUI_COLOUR_IMAGE) {
+					if (bdata2 & bmask) {
+						col |= 2;
+					}
+				}
+				if (bdata & bmask) {
+					if (colour != TUI_COLOUR_IMAGE) {
+						col = colour;
+					} else {
+						col |= 1;
+					}
+				}
+                #else
+                if (bdata & bmask) {
+                    col = colour;
+                }
+                #endif
+				tui_set_pixel(i, j, col, 1); // Finally set the pixel
+			}
+		}
+	}
+}
+
+// Draw_image wrapper to draw a character from a font
+void tui_draw_char(byte x, byte y, char c, byte font_size, sbyte ax, sbyte ay, word rotation, byte colour) {
+	const byte* font_data;
+	byte font_width;
+	byte font_height;
+	// This can probably use tui_get_font_size but tui_get_font_size doesnt get dont_data so like idc
+	switch(font_size) {
+	case TUI_FONT_SIZE_6x7:
+		font_data = YsFont6x7;
+		font_width = 6;
+		font_height = 7;
+		break;
+	case TUI_FONT_SIZE_6x8:
+		font_data = YsFont6x8;
+		font_width = 6;
+		font_height = 8;
+		break;
+	case TUI_FONT_SIZE_6x10:
+		font_data = YsFont6x10;
+		font_width = 6;
+		font_height = 10;
+		break;
+	case TUI_FONT_SIZE_7x10:
+		font_data = YsFont7x10;
+		font_width = 7;
+		font_height = 10;
+		break;
+	case TUI_FONT_SIZE_8x8:
+		font_data = YsFont8x8;
+		font_width = 8;
+		font_height = 8;
+		break;
+	case TUI_FONT_SIZE_8x12:
+		font_data = YsFont8x12;
+		font_width = 8;
+		font_height = 12;
+		break;
+	case TUI_FONT_SIZE_12x16:
+		font_data = YsFont12x16;
+		font_width = 12;
+		font_height = 16;
+		break;
+	default:
+		return;
+	}
+	// Font data is selected based on the given font_size
+	// Draw the character using draw_image
+	// Font data is extracted by subtracting the character byte 32 (first printable ascii (" "))
+	// And then it is multiplied by the height of the character, times the width in bytes (width + 7) >> 3
+	// And then that is used as the index into the font data
+	tui_draw_image(x, y, font_width, font_height, &font_data[(byte)(c - 32) * (font_height * ((font_width + 7) >> 3))], ax, ay, rotation, colour);
+}
+
+// Idk what this is, ill fix latersss
+void tui_draw_full_image(const word* bitmap, byte colour) {
+	word i = 0;
+	word j = 0;
+	word* dest = (word*)0xF800;
+	if (colour == TUI_COLOUR_IMAGE) {
+		// Lower bitplane
+        #ifndef IS_CWX
+		BufSelSFR = 0;
+        #endif
+		for(i = 0; i < 0x600; i++)
+		{
+			dest[j] = bitmap[i];
+			j++;
+			if((j & 0x001F) == 0x0C)
+			{
+				j+=4;
+			}
+		}
+		// Upper bitplane
+        #ifndef IS_CWX
+		BufSelSFR = 4;
+		j = 0;
+		for(i = 0x600; i < 0xC00; i++)
+		{
+			dest[j] = bitmap[i];
+			j++;
+			if((j & 0x001F) == 0x0C)
+			{
+				j+=4;
+			}
+		}
+        #endif
+    #ifndef IS_CWX
+	} else if (colour == TUI_COLOUR_LIGHT_GREY) {
+		BufSelSFR = 0;
+		for(i = 0; i < 0x600; i++)
+		{
+			dest[j] = bitmap[i];
+			j++;
+			if((j & 0x001F) == 0x0C)
+			{
+				j+=4;
+			}
+		}
+	} else if (colour == TUI_COLOUR_DARK_GREY) {
+		BufSelSFR = 4;
+		for(i = 0x600; i < 0xC00; i++)
+		{
+			dest[j] = bitmap[i];
+			j++;
+			if((j & 0x001F) == 0x0C)
+			{
+				j+=4;
+			}
+		}
+    #endif
+	}
+}
+
+// Get user data pointer from block header
+static void *hdata(block_t *b) {
+    return (void *)((byte *)b + sizeof(block_t));
+}
+
+// Get block header from user data pointer
+static block_t *hblock(void *ptr) {
+    return (block_t *)((byte *)ptr - sizeof(block_t));
+}
+
+// Align size to heap block alignment
+static word halign(word size) {
+    if (size % HEAP_BLOCK_ALIGN == 0) {
+        return size;
+    }
+    return size + (HEAP_BLOCK_ALIGN - (size % HEAP_BLOCK_ALIGN));
+}
+
+// Initialize heap with single free block
+void hinit(void) {
+    block_t *initial_block = (block_t *)HEAP_START_ADDR;
+    initial_block->size = HEAP_MAX_SIZE - sizeof(block_t);
+    initial_block->next = 0;
+    initial_block->free = 1;
+}
+
+// Split block into two if larger than needed
+static void hsplit(block_t *b, word size) {
+    block_t *new_block = (block_t *)((byte *)hdata(b) + size);
+    new_block->size = b->size - size - sizeof(block_t);
+    new_block->next = b->next;
+    new_block->free = 1;
+    b->size = size;
+    b->next = new_block;
+}
+
+// Merge free blocks
+void hmerge(void) {
+    block_t *current = (block_t *)HEAP_START_ADDR;
+    while (current && current->next) {
+        if (current->free && current->next->free) {
+            current->size += sizeof(block_t) + current->next->size;
+            current->next = current->next->next;
+        } else {
+            current = current->next;
+        }
+    }
+}
+
+// Find memory block (helper for halloc)
+static block_t *hfind(word size) {
+    block_t *current = (block_t *)HEAP_START_ADDR;
+    while (current) {
+        if (current->free && current->size >= size) {
+            return current;
+        }
+        current = current->next;
+    }
+    return 0;
+}
+
+// Allocate memory block
+void *halloc(word size) {
+    size = halign(size);
+    block_t *b = hfind(size);
+
+    if (!b) {
+        hmerge();
+        b = hfind(size);
+        if (!b) return 0;
+    }
+
+    if (b->size >= size + sizeof(block_t) + HEAP_BLOCK_ALIGN)
+        hsplit(b, size);
+
+    b->free = 0;
+    return hdata(b);
+}
+
+// Allocate and zero-initialize memory block
+void *hcalloc(word num, word size) {
+    word total_size = num * size;
+    total_size = halign(total_size);
+    void *ptr = halloc(total_size);
+    if (ptr) {
+        byte *bptr = (byte *)ptr;
+        for (word i = 0; i < total_size; i++) {
+            bptr[i] = 0;
+        }
+    }
+    return ptr;
+}
+
+// Reallocate memory block for new size
+void *hrealloc(void *ptr, word size) {
+    size = halign(size);
+    if (!ptr) return halloc(size);
+    block_t *old = hblock(ptr);
+    word old_size = old->size;
+
+    if (size <= old_size) return ptr;
+
+    void *new_ptr = halloc(size);
+    if (!new_ptr) return 0;
+
+    byte *src = (byte *)ptr;
+    byte *dst = (byte *)new_ptr;
+    for (word i = 0; i < old_size; i++) dst[i] = src[i];
+
+    old->free = 1;
+
+    return new_ptr;
+}
+
+// Free memory block
+void hfree(void *ptr) {
+    if (!ptr) return;
+    block_t *b = hblock(ptr);
+    b->free = 1;
+}
+
+//Internals
+static byte fs_node_index(fs_node_t *node) {
+    return (byte)(node - FS_NODES);
+}
+
+static fs_node_t *fs_find_free_node(void) {
+    for (byte i = 0; i < FS_MAX_NODES; i++) {
+        if (FS_NODES[i].name[0] == 0 && FS_NODES[i].parent == FS_INVALID_IDX) {
+            return &FS_NODES[i];
+        }
+    }
+    return 0;
+}
+
+static word fs_allocate_data(word size) {
+	size = halign(size);
+    if (size == 0 || size > FS_DATA_POOL_SIZE - sizeof(fs_extent_t)) return FS_NULL_OFFSET;
+
+    word prev = FS_NULL_OFFSET;
+    word current = FS_FREE_LIST;
+
+    while (current != FS_NULL_OFFSET) {
+        fs_extent_t *extent = (fs_extent_t *)(FS_DATA_POOL + current);
+
+        if (extent->size >= size) {
+            word data_offset = current + sizeof(fs_extent_t);
+
+            // Ensure offset is within pool
+            if (data_offset >= FS_DATA_POOL_SIZE || data_offset + size > FS_DATA_POOL_SIZE)
+                return FS_NULL_OFFSET;
+
+            // Split extent if leftover is usable
+            if (extent->size >= size + sizeof(fs_extent_t) + 1) {
+                word new_extent_offset = data_offset + size;
+                fs_extent_t *new_extent = (fs_extent_t *)(FS_DATA_POOL + new_extent_offset);
+                new_extent->size = extent->size - size - sizeof(fs_extent_t);
+                new_extent->next = extent->next;
+
+                if (prev == FS_NULL_OFFSET)
+                    FS_FREE_LIST = new_extent_offset;
+                else
+                    ((fs_extent_t *)(FS_DATA_POOL + prev))->next = new_extent_offset;
+
+                extent->size = size;
+            } else {
+                if (prev == FS_NULL_OFFSET)
+                    FS_FREE_LIST = extent->next;
+                else
+                    ((fs_extent_t *)(FS_DATA_POOL + prev))->next = extent->next;
+            }
+            return data_offset;
+        }
+        prev = current;
+        current = extent->next;
+    }
+    return FS_NULL_OFFSET;
+}
+
+static void fs_free_data(word data_offset) {
+    if (data_offset == FS_NULL_OFFSET) return;
+
+    word freed_offset = data_offset - sizeof(fs_extent_t);
+    if (freed_offset >= FS_DATA_POOL_SIZE) return;
+
+    fs_extent_t *freed = (fs_extent_t *)(FS_DATA_POOL + freed_offset);
+    freed->next = FS_NULL_OFFSET;
+
+    // Insert into sorted free list
+    if (FS_FREE_LIST == FS_NULL_OFFSET || freed_offset < FS_FREE_LIST) {
+        freed->next = FS_FREE_LIST;
+        FS_FREE_LIST = freed_offset;
+    } else {
+        word prev = FS_FREE_LIST;
+        fs_extent_t *prev_extent = (fs_extent_t *)(FS_DATA_POOL + prev);
+        while (prev_extent->next != FS_NULL_OFFSET && prev_extent->next < freed_offset) {
+            prev = prev_extent->next;
+            prev_extent = (fs_extent_t *)(FS_DATA_POOL + prev);
+        }
+        freed->next = prev_extent->next;
+        prev_extent->next = freed_offset;
+    }
+
+    // Merge adjacent blocks
+    word current = FS_FREE_LIST;
+    while (current != FS_NULL_OFFSET) {
+        fs_extent_t *cur_extent = (fs_extent_t *)(FS_DATA_POOL + current);
+        word next_offset = cur_extent->next;
+        if (next_offset != FS_NULL_OFFSET) {
+            if (next_offset > FS_DATA_POOL_SIZE) break;
+            fs_extent_t *next_extent = (fs_extent_t *)(FS_DATA_POOL + next_offset);
+            if ((current + sizeof(fs_extent_t) + cur_extent->size) == next_offset) {
+                cur_extent->size += sizeof(fs_extent_t) + next_extent->size;
+                cur_extent->next = next_extent->next;
+                continue; // Check again with next
+            }
+        }
+        current = cur_extent->next;
+    }
+}
+
+static fs_node_t *fs_find_child_by_name(fs_node_t *parent, const char *name) {
+    if (!parent || !parent->perms.field.is_directory || !parent->perms.field.read) return 0;
+    byte idx = parent->first_child;
+
+    while (idx != FS_INVALID_IDX) {
+        fs_node_t *child = &FS_NODES[idx];
+
+        byte match = 1;
+        for (byte i = 0; i < FS_NAME_MAX_LEN; i++) {
+            if (child->name[i] != name[i]) {
+                match = 0;
+                break;
+            }
+            if (child->name[i] == 0 && name[i] == 0) break;
+        }
+
+        if (match) return child;
+        idx = child->next_sibling;
+    }
+    return 0;
+}
+
+
+// I hate recursion but whatever
+static void fs_delete_subtree(fs_node_t *node) {
+    if (!node) return;
+
+    // Recursively delete all children
+    byte child_idx = node->first_child;
+    while (child_idx != FS_INVALID_IDX) {
+        fs_node_t *child = &FS_NODES[child_idx];
+        byte next_sibling = child->next_sibling;
+        fs_delete_subtree(child);
+        child_idx = next_sibling;
+    }
+
+    // Free file data
+    fs_free_data(node->data_offset);
+
+    // Clear node
+    node->name[0] = 0;
+    node->parent = FS_INVALID_IDX;
+    node->first_child = FS_INVALID_IDX;
+    node->next_sibling = FS_INVALID_IDX;
+    node->size = 0;
+    node->data_offset = FS_NULL_OFFSET;
+    node->perms.raw = 0;
+}
+
+
+// Public interface
+
+void fs_init(void) {
+    // Clear all nodes
+    for (byte i = 0; i < FS_MAX_NODES; i++) {
+        FS_NODES[i].name[0] = 0;
+        FS_NODES[i].parent = FS_INVALID_IDX;
+        FS_NODES[i].first_child = FS_INVALID_IDX;
+        FS_NODES[i].next_sibling = FS_INVALID_IDX;
+        FS_NODES[i].size = 0;
+        FS_NODES[i].data_offset = FS_NULL_OFFSET;
+        FS_NODES[i].perms.raw = 0;
+    }
+    // Initialize root node
+    fs_node_t *root = FS_ROOT;
+    root->perms.field.read = 1;
+    root->perms.field.write = 1;
+    root->perms.field.execute = 1;
+    root->perms.field.is_directory = 1;
+    root->name[0] = '/';
+    root->name[1] = 0;
+    root->parent = FS_INVALID_IDX;
+    root->first_child = FS_INVALID_IDX;
+    root->next_sibling = FS_INVALID_IDX;
+    // Initialize the first free extent for the data pool
+    if (FS_DATA_POOL_SIZE > sizeof(fs_extent_t)) {
+        fs_extent_t *e = (fs_extent_t *)FS_DATA_POOL;
+        e->size = FS_DATA_POOL_SIZE - sizeof(fs_extent_t);
+        e->next = FS_NULL_OFFSET;
+        FS_FREE_LIST = 0;  // offset 0 relative to FS_DATA_POOL
+    } else {
+        FS_FREE_LIST = FS_NULL_OFFSET; // no space available
+    }
+}
+
+
+// Insert a node as first child of parent and return pointer to it
+fs_node_t *fs_create_file(fs_node_t *parent, const char *name, fs_perms_t perms) {
+    // Validation of parent, name, uniqueness, and type of the parent
+    if (!parent || !name[0] || !parent->perms.field.is_directory || !parent->perms.field.write || fs_find_child_by_name(parent, name)) return 0;
+
+    // Find free node and index
+    fs_node_t *node = fs_find_free_node();
+    if (!node) return 0;
+    byte idx = fs_node_index(node);
+
+    // Initialize node
+    node->perms = perms;
+    node->perms.field.is_directory = 0;
+    node->parent = fs_node_index(parent);
+    node->first_child = FS_INVALID_IDX;
+    node->next_sibling = parent->first_child;
+    node->size = 0;
+    node->data_offset = FS_NULL_OFFSET;
+
+    // Copy name
+    for (byte i = 0; i < FS_NAME_MAX_LEN - 1; i++) {
+        node->name[i] = name[i];
+        if (name[i] == 0) break;
+    }
+    node->name[FS_NAME_MAX_LEN - 1] = 0;
+
+    // Insert into parent's child list
+    parent->first_child = idx;
+    return node;
+}
+
+// Insert a directory node as first child of parent and return pointer to it
+fs_node_t *fs_create_directory(fs_node_t *parent, const char *name, fs_perms_t perms) {
+    // Create a file node first and then set is_directory flag
+    fs_node_t *dir = fs_create_file(parent, name, perms);
+    if (!dir) return 0;
+    dir->perms.field.is_directory = 1;
+    return dir;
+}
+
+// Get node from path
+fs_node_t *fs_get_node_from_path(const char *path, fs_node_t *start) {
+    // Validate inputs
+    if (!path || !start || !start->perms.field.is_directory || !start->perms.field.read) return 0;
+
+    fs_node_t *current = (*path == '/') ? FS_ROOT : start;
+    if (*path == '/') path++;
+
+    char name[FS_NAME_MAX_LEN];
+
+    while (*path) {
+        byte i = 0;
+        // Extract the next component of the path
+        while (*path && *path != '/' && i < FS_NAME_MAX_LEN - 1) {
+            name[i++] = *path++;
+        }
+        name[i] = 0;
+        // Handle parent directory
+        if (name[0] == '.' && name[1] == '.' && name[2] == 0) {
+            if (current->parent != FS_INVALID_IDX) {
+                current = &FS_NODES[current->parent];
+            } // else stay at root
+        } else if (name[0] != '\0' && !(name[0] == '.' && name[1] == 0)) {
+            // Normal child lookup (skip "." components)
+            current = fs_find_child_by_name(current, name);
+            if (!current) return 0;
+        }
+
+        if (*path == '/') path++;
+    }
+    return current;
+}
+
+byte fs_delete_node(fs_node_t *node) {
+    // Validate node
+    if (!node || node == FS_ROOT || !node->perms.field.write) return 0;
+
+    if (node->parent != FS_INVALID_IDX) {
+        fs_node_t *parent = &FS_NODES[node->parent];
+        byte *link = &parent->first_child;
+
+        while (*link != FS_INVALID_IDX) {
+            if (*link == fs_node_index(node)) {
+                *link = node->next_sibling;
+                break;
+            }
+            link = &FS_NODES[*link].next_sibling;
+        }
+    }
+
+    fs_delete_subtree(node);
+    return 1;
+}
+
+static byte fs_is_ancestor(fs_node_t *node, fs_node_t *possible_child) {
+    while (possible_child != FS_ROOT) {
+        if (possible_child == node) return 1;
+        possible_child = &FS_NODES[possible_child->parent];
+    }
+    return 0;
+}
+
+byte fs_move_node(fs_node_t *node, fs_node_t *new_parent) {
+    // Validate nodes
+    if (!node || !new_parent || !node->perms.field.write || !new_parent->perms.field.is_directory || !new_parent->perms.field.write) return 0;
+    if (node == new_parent || fs_is_ancestor(node, new_parent)) return 0;
+
+    fs_node_t *old_parent = &FS_NODES[node->parent];
+    byte *link = &old_parent->first_child;
+    // Unlink node from old parent's child list
+    while (*link != FS_INVALID_IDX) {
+        if (*link == fs_node_index(node)) {
+            *link = node->next_sibling;
+            break;
+        }
+        link = &FS_NODES[*link].next_sibling;
+    }
+    // Insert node into new parent's child list
+    node->parent = fs_node_index(new_parent);
+    node->next_sibling = new_parent->first_child;
+    new_parent->first_child = fs_node_index(node);
+
+    return 1;
+}
+
+byte fs_rename_node(fs_node_t *node, const char *new_name) {
+    // Validate node and new name
+    if (!node || !new_name[0] || !node->perms.field.write) return 0;
+
+    fs_node_t *parent = &FS_NODES[node->parent];
+    // Ensure new name is unique among siblings
+    if (fs_find_child_by_name(parent, new_name)) return 0;
+
+    // Copy new name
+    for (byte i = 0; i < FS_NAME_MAX_LEN - 1; i++) {
+        node->name[i] = new_name[i];
+        if (new_name[i] == 0) break;
+    }
+    node->name[FS_NAME_MAX_LEN - 1] = 0;
+
+    return 1;
+}
+
+byte fs_chmod_node(fs_node_t *node, fs_perms_t new_perms) {
+    // Validate node
+    if (!node) return 0;
+
+    node->perms = new_perms;
+    return 1;
+}
+
+byte fs_write_file(fs_node_t *file, const void *data, word size) {
+    if (!file || file->perms.field.is_directory || !file->perms.field.write) return 0;
+	size = halign(size);
+    if (size > FS_DATA_POOL_SIZE - sizeof(fs_extent_t)) return 0;
+
+    // Free existing data
+    fs_free_data(file->data_offset);
+
+    // Allocate new data
+    word offset = fs_allocate_data(size);
+    if (offset == FS_NULL_OFFSET) return 0;
+
+    // Copy data
+    byte *dest = FS_DATA_POOL + offset;
+    const byte *src = (const byte *)data;
+    for (word i = 0; i < size; i++) dest[i] = src[i];
+
+    file->data_offset = offset;
+    file->size = size;
+    return 1;
+}
+
+word fs_read_file(fs_node_t *file, void *buffer, word buffer_size) {
+    // Validate inputs
+    if (!file || file->perms.field.is_directory || !file->perms.field.read) return 0;
+    if (file->data_offset == FS_NULL_OFFSET || file->size == 0) return 0;
+
+    word to_read = (file->size < buffer_size) ? file->size : buffer_size;
+    byte *src = FS_DATA_POOL + file->data_offset;
+    byte *dest = (byte *)buffer;
+
+    for (word i = 0; i < to_read; i++) dest[i] = src[i];
+    return to_read;
+}
+
+// Extra
+
+// Create full directory path from parent, creating any missing directories
+fs_node_t *fs_mkdir(fs_node_t *parent, const char *path, fs_perms_t perms) {
+    if (!path || !*path || !parent || !parent->perms.field.is_directory || !parent->perms.field.write) return 0;
+
+    // If path is 0
+    if (path[0] == 0) return 0;
+
+    // Start from root if path is absolute
+    fs_node_t *current = (*path == '/') ? FS_ROOT : parent;
+    if (*path == '/') path++;
+
+    char name[FS_NAME_MAX_LEN];
+
+    while (*path) {
+        byte i = 0;
+        while (*path && *path != '/' && i < FS_NAME_MAX_LEN - 1) {
+            name[i++] = *path++;
+        }
+        name[i] = 0;
+
+        if (name[0] != '\0' && !(name[0] == '.' && name[1] == 0)) {
+            fs_node_t *next = fs_find_child_by_name(current, name);
+            if (!next) {
+                next = fs_create_directory(current, name, perms);
+                if (!next) return 0;
+            }
+            current = next;
+        }
+
+        if (*path == '/') path++;
+    }
+    return current;
+}
+
+// Create full file path from parent, creating any missing directories
+fs_node_t *fs_touch(fs_node_t *parent, const char *path, fs_perms_t perms) {
+    if (!path || !*path || !parent || !parent->perms.field.is_directory || !parent->perms.field.write) return 0;
+
+    // If path is 0
+    if (path[0] == 0) return 0;
+    // Check if path ends with '/', which is invalid for touch
+    const char *p = path;
+    while (*p) p++;
+    p--;
+    if (*p == '/') return 0;
+
+    fs_node_t *current = (*path == '/') ? FS_ROOT : parent;
+    if (*path == '/') path++;
+
+    char name[FS_NAME_MAX_LEN];
+
+    while (*path) {
+        byte i = 0;
+        while (*path && *path != '/' && i < FS_NAME_MAX_LEN - 1) {
+            name[i++] = *path++;
+        }
+        name[i] = 0;
+
+        if (name[0] != '\0' &&
+            !(name[0] == '.' && name[1] == 0)) {
+
+            fs_node_t *next = fs_find_child_by_name(current, name);
+
+            byte is_last = (*path == 0);
+
+            if (!next) {
+                if (is_last) {
+                    next = fs_create_file(current, name, perms);
+                } else {
+                    next = fs_create_directory(current, name, perms);
+                }
+                if (!next) return 0;
+            }
+
+            current = next;
+        }
+
+        if (*path == '/') path++;
+    }
+
+    return current;
+}
+
+// Check file existence from path relative to parent
+fs_node_t *fs_lookup(fs_node_t *parent, const char *path) {
+    if (!path || !*path || !parent || !parent->perms.field.is_directory || !parent->perms.field.read) return 0;
+    fs_node_t *look = fs_get_node_from_path(path, parent);
+    if (look && !look->perms.field.is_directory) {
+        return look;
+    }
+    return 0;
+}
+
+// Check directory existence from path relative to parent
+fs_node_t *fs_dir_lookup(fs_node_t *parent, const char *path) {
+    if (!path || !*path || !parent || !parent->perms.field.is_directory || !parent->perms.field.read) return 0;
+    fs_node_t *look = fs_get_node_from_path(path, parent);
+    if (look && look->perms.field.is_directory) {
+        return look;
+    }
+    return 0;
+}
+
+// Read a file from path relative to parent
+word fs_read(fs_node_t *parent, const char *path, void *buffer, word buffer_size) {
+    fs_node_t *file = fs_get_node_from_path(path, parent);
+    if (!file) return 0;
+    return fs_read_file(file, buffer, buffer_size);
+}
+
+// Write to a file from path relative to parent
+byte fs_write(fs_node_t *parent, const char *path, const void *data, word size) {
+    fs_node_t *file = fs_get_node_from_path(path, parent);
+    if (!file) return 0;
+    return fs_write_file(file, data, size);
+}
+
+typedef enum time_format {
+    TIME_FORMAT_24H,
+    TIME_FORMAT_12H,
+    TIME_FORMAT_24H_WITH_SECONDS,
+    TIME_FORMAT_12H_WITH_SECONDS,
+} format_t;
+
+// Convert BCD byte to decimal value
+static byte bcd_to_dec(byte bcd) {
+    return ((bcd >> 4) & 0x0F) * 10 + (bcd & 0x0F);
+}
+
+// Convert decimal byte to ASCII string
+static void dec_to_ascii(byte dec, char* out) {
+    out[0] = '0' + ((dec / 10) % 10);
+    out[1] = '0' + (dec % 10);
+    out[2] = 0;
+}
+
+// Check if hours is in PM (afternoon)
+static byte is_pm(byte hours) {
+    return hours >= 12;
+}
+
+// Convert 24h format to 12h format
+static byte hours_12h(byte hours_24h) {
+    if (hours_24h == 0) return 12;
+    if (hours_24h > 12) return hours_24h - 12;
+    return hours_24h;
+}
+
+// Format time in 24h format with optional seconds
+static void format_24h_time(byte hours, byte minutes, byte seconds, byte show_seconds, char* out) {
+    byte pos = 0;
+
+    dec_to_ascii(bcd_to_dec(hours), out + pos);
+    pos += 2;
+    out[pos++] = ':';
+    dec_to_ascii(bcd_to_dec(minutes), out + pos);
+
+    if (show_seconds) {
+        pos += 2;
+        out[pos++] = ':';
+        dec_to_ascii(bcd_to_dec(seconds), out + pos);
+        pos += 2;
+    }
+
+    out[pos] = 0;
+}
+
+// Format time in 12h format with AM/PM and optional seconds
+static void format_12h_time(byte hours, byte minutes, byte seconds, byte show_seconds, char* out) {
+    byte pos = 0;
+
+    dec_to_ascii(hours_12h(bcd_to_dec(hours)), out + pos);
+    pos += 2;
+    out[pos++] = ':';
+    dec_to_ascii(bcd_to_dec(minutes), out + pos);
+    pos += 2;
+
+    if (show_seconds) {
+        out[pos++] = ':';
+        dec_to_ascii(bcd_to_dec(seconds), out + pos);
+        pos += 2;
+    }
+
+    out[pos++] = ' ';
+
+    if (is_pm(bcd_to_dec(hours))) {
+        out[pos++] = 'P';
+        out[pos++] = 'M';
+    } else {
+        out[pos++] = 'A';
+        out[pos++] = 'M';
+    }
+
+    out[pos] = 0;
+}
+
+// Get time string in specified format from RTC
+void get_time_string(format_t format, char* out) {
+    byte hours_bcd = RTC_HOURS;
+    byte minutes_bcd = RTC_MINUTES;
+    byte seconds_bcd = RTC_SECONDS;
+
+    switch (format) {
+    case TIME_FORMAT_24H:
+        format_24h_time(hours_bcd, minutes_bcd, seconds_bcd, 0, out);
+        break;
+    case TIME_FORMAT_12H:
+        format_12h_time(hours_bcd, minutes_bcd, seconds_bcd, 0, out);
+        break;
+    case TIME_FORMAT_24H_WITH_SECONDS:
+        format_24h_time(hours_bcd, minutes_bcd, seconds_bcd, 1, out);
+        break;
+    case TIME_FORMAT_12H_WITH_SECONDS:
+        format_12h_time(hours_bcd, minutes_bcd, seconds_bcd, 1, out);
+        break;
+    }
+}
+
+// Reset RTC to default state
+void rtc_reset(void) {
+    RTC_ENABLE = 0;
+    RTC_SECONDS = 0;
+    RTC_MINUTES = 0;
+    RTC_HOURS = 0;
+    RTC_DAY = 1;
+    RTC_WEEK = 1;
+    RTC_MONTH = 1;
+    RTC_YEAR = 0;
+}
+
+// Enable RTC
+void rtc_enable(void) {
+    RTC_ENABLE = 1;
+}
+
+// Disable RTC
+void rtc_disable(void) {
+    RTC_ENABLE = 0;
+}
+
+// Set full time (hours, minutes, seconds)
+void rtc_set_time(byte hours, byte minutes, byte seconds) {
+    RTC_SECONDS = seconds;
+    RTC_MINUTES = minutes;
+    RTC_HOURS = hours;
+}
+
+// Set seconds register
+void rtc_set_seconds(byte seconds) {
+    RTC_SECONDS = seconds;
+}
+
+// Set minutes register
+void rtc_set_minutes(byte minutes) {
+    RTC_MINUTES = minutes;
+}
+
+// Set hours register
+void rtc_set_hours(byte hours) {
+    RTC_HOURS = hours;
+}
+
+// Get full time (hours, minutes, seconds)
+void rtc_get_time(byte* hours, byte* minutes, byte* seconds) {
+    *seconds = RTC_SECONDS;
+    *minutes = RTC_MINUTES;
+    *hours = RTC_HOURS;
+}
+
+// Get seconds register
+byte rtc_get_seconds() {
+    return RTC_SECONDS;
+}
+
+// Get minutes register
+byte rtc_get_minutes() {
+    return RTC_MINUTES;
+}
+
+// Get hours register
+byte rtc_get_hours() {
+    return RTC_HOURS;
+}
+
+// Set full date (year, month, day, week)
+void rtc_set_date(word year, byte month, byte day, byte week) {
+    RTC_YEAR = (byte)(year - 2026);
+    RTC_MONTH = month;
+    RTC_DAY = day;
+    RTC_WEEK = week;
+}
+
+// Set day register
+void rtc_set_day(byte day) {
+    RTC_DAY = day;
+}
+
+// Set month register
+void rtc_set_month(byte month) {
+    RTC_MONTH = month;
+}
+
+// Set year register
+void rtc_set_year(word year) {
+    RTC_YEAR = (byte)(year - 2026);
+}
+
+// Get full date (year, month, day, week)
+void rtc_get_date(word* year, byte* month, byte* day, byte* week) {
+    *year = (word)(RTC_YEAR + 2026);
+    *month = RTC_MONTH;
+    *day = RTC_DAY;
+    *week = RTC_WEEK;
+}
+
+// Get day register
+byte rtc_get_day() {
+    return RTC_DAY;
+}
+
+// Get month register
+byte rtc_get_month() {
+    return RTC_MONTH;
+}
+
+// Get year register (with 2026 offset)
+word rtc_get_year() {
+    return (word)(RTC_YEAR + 2026);
+}
+
+// Internal delay function using Timer0
+void __delay(word after_ticks) {
+    if ((FCON & 2) != 0)
+        FCON &= 0xfd;
+    __DI();
+    Timer0Interval = after_ticks;
+    Timer0Counter = 0;
+    Timer0Control = 0x0101;
+    InterruptPending_W0 = 0;
+    StopAcceptor = 0x50;
+    StopAcceptor = 0xa0;
+    StopControl = 2;
+    __asm("nop");
+    __asm("nop");
+    __EI();
+}
+
+// Delay for specified milliseconds
+void delay_ms(word ms) {
+    while (ms >= 1000) {
+        __delay(1000 * TICKS_PER_MS);
+        ms -= 1000;
+    }
+    if (ms > 0) {
+        __delay(ms * TICKS_PER_MS);
+    }
+}
+
+// Delay for specified seconds
+void delay_s(word s) {
+    for (word i = 0; i < s; i++) {
+        delay_ms(1000);
+    }
+}
+
+// Convert milliseconds to timer ticks
+word ms_to_ticks(word ms) {
+    return ms * TICKS_PER_MS;
+}
+
+// Convert seconds to timer ticks
+word s_to_ticks(word s) {
+    return s * TICKS_PER_SECOND;
+}
+
+// Convert timer ticks to milliseconds
+word ticks_to_ms(word ticks) {
+    return ticks / TICKS_PER_MS;
+}
+
+// Convert timer ticks to seconds
+word ticks_to_s(word ticks) {
+    return ticks / TICKS_PER_SECOND;
+}
+
+// Keys
+
+byte lastbutton = 0xff;
+byte CheckButtons() {
+	byte x;
+	byte y;
+	byte i = 0;
+	for(x = 0x80; x != 0; x = x >> 1)
+	{
+		deref(0xf046) = x;
+		for(y = 0x80; y != 0; y = y >> 1)
+		{
+			if((deref(0xf040) & y) == 0)
+			{
+				if(i != lastbutton)
+				{
+					lastbutton = i;
+					return i;
+				}
+				return 0xff;
+			}
+			++i;
+		}
+	}
+	lastbutton = 0x50;
+	return 0xff;
+}
+
+// Auto generated sin table
+static const sbyte tui_sin_table[360] = {
+       0,    2,    4,    7,    9,   11,   13,   15,   18,   20,   22,   24,   26,   29,   31,   33,
+      35,   37,   39,   41,   43,   46,   48,   50,   52,   54,   56,   58,   60,   62,   63,   65,
+      67,   69,   71,   73,   75,   76,   78,   80,   82,   83,   85,   87,   88,   90,   91,   93,
+      94,   96,   97,   99,  100,  101,  103,  104,  105,  107,  108,  109,  110,  111,  112,  113,
+     114,  115,  116,  117,  118,  119,  119,  120,  121,  121,  122,  123,  123,  124,  124,  125,
+     125,  125,  126,  126,  126,  127,  127,  127,  127,  127,  127,  127,  127,  127,  127,  127,
+     126,  126,  126,  125,  125,  125,  124,  124,  123,  123,  122,  121,  121,  120,  119,  119,
+     118,  117,  116,  115,  114,  113,  112,  111,  110,  109,  108,  107,  105,  104,  103,  101,
+     100,   99,   97,   96,   94,   93,   91,   90,   88,   87,   85,   83,   82,   80,   78,   76,
+      75,   73,   71,   69,   67,   65,   63,   62,   60,   58,   56,   54,   52,   50,   48,   46,
+      43,   41,   39,   37,   35,   33,   31,   29,   26,   24,   22,   20,   18,   15,   13,   11,
+       9,    7,    4,    2,    0,   -2,   -4,   -7,   -9,  -11,  -13,  -15,  -18,  -20,  -22,  -24,
+     -26,  -29,  -31,  -33,  -35,  -37,  -39,  -41,  -43,  -46,  -48,  -50,  -52,  -54,  -56,  -58,
+     -60,  -62,  -64,  -65,  -67,  -69,  -71,  -73,  -75,  -76,  -78,  -80,  -82,  -83,  -85,  -87,
+     -88,  -90,  -91,  -93,  -94,  -96,  -97,  -99, -100, -101, -103, -104, -105, -107, -108, -109,
+    -110, -111, -112, -113, -114, -115, -116, -117, -118, -119, -119, -120, -121, -121, -122, -123,
+    -123, -124, -124, -125, -125, -125, -126, -126, -126, -127, -127, -127, -127, -127, -127, -127,
+    -127, -127, -127, -127, -126, -126, -126, -125, -125, -125, -124, -124, -123, -123, -122, -121,
+    -121, -120, -119, -119, -118, -117, -116, -115, -114, -113, -112, -111, -110, -109, -108, -107,
+    -105, -104, -103, -101, -100,  -99,  -97,  -96,  -94,  -93,  -91,  -90,  -88,  -87,  -85,  -83,
+     -82,  -80,  -78,  -76,  -75,  -73,  -71,  -69,  -67,  -65,  -64,  -62,  -60,  -58,  -56,  -54,
+     -52,  -50,  -48,  -46,  -43,  -41,  -39,  -37,  -35,  -33,  -31,  -29,  -26,  -24,  -22,  -20,
+     -18,  -15,  -13,  -11,   -9,   -7,   -4,   -2,
+};
+
+// Auto generated cos table
+static const sbyte tui_cos_table[360] = {
+     127,  127,  127,  127,  127,  127,  126,  126,  126,  125,  125,  125,  124,  124,  123,  123,
+     122,  121,  121,  120,  119,  119,  118,  117,  116,  115,  114,  113,  112,  111,  110,  109,
+     108,  107,  105,  104,  103,  101,  100,   99,   97,   96,   94,   93,   91,   90,   88,   87,
+      85,   83,   82,   80,   78,   76,   75,   73,   71,   69,   67,   65,   64,   62,   60,   58,
+      56,   54,   52,   50,   48,   46,   43,   41,   39,   37,   35,   33,   31,   29,   26,   24,
+      22,   20,   18,   15,   13,   11,    9,    7,    4,    2,    0,   -2,   -4,   -7,   -9,  -11,
+     -13,  -15,  -18,  -20,  -22,  -24,  -26,  -29,  -31,  -33,  -35,  -37,  -39,  -41,  -43,  -46,
+     -48,  -50,  -52,  -54,  -56,  -58,  -60,  -62,  -63,  -65,  -67,  -69,  -71,  -73,  -75,  -76,
+     -78,  -80,  -82,  -83,  -85,  -87,  -88,  -90,  -91,  -93,  -94,  -96,  -97,  -99, -100, -101,
+    -103, -104, -105, -107, -108, -109, -110, -111, -112, -113, -114, -115, -116, -117, -118, -119,
+    -119, -120, -121, -121, -122, -123, -123, -124, -124, -125, -125, -125, -126, -126, -126, -127,
+    -127, -127, -127, -127, -127, -127, -127, -127, -127, -127, -126, -126, -126, -125, -125, -125,
+    -124, -124, -123, -123, -122, -121, -121, -120, -119, -119, -118, -117, -116, -115, -114, -113,
+    -112, -111, -110, -109, -108, -107, -105, -104, -103, -101, -100,  -99,  -97,  -96,  -94,  -93,
+     -91,  -90,  -88,  -87,  -85,  -83,  -82,  -80,  -78,  -76,  -75,  -73,  -71,  -69,  -67,  -65,
+     -64,  -62,  -60,  -58,  -56,  -54,  -52,  -50,  -48,  -46,  -43,  -41,  -39,  -37,  -35,  -33,
+     -31,  -29,  -26,  -24,  -22,  -20,  -18,  -15,  -13,  -11,   -9,   -7,   -4,   -2,    0,    2,
+       4,    7,    9,   11,   13,   15,   18,   20,   22,   24,   26,   29,   31,   33,   35,   37,
+      39,   41,   43,   46,   48,   50,   52,   54,   56,   58,   60,   62,   64,   65,   67,   69,
+      71,   73,   75,   76,   78,   80,   82,   83,   85,   87,   88,   90,   91,   93,   94,   96,
+      97,   99,  100,  101,  103,  104,  105,  107,  108,  109,  110,  111,  112,  113,  114,  115,
+     116,  117,  118,  119,  119,  120,  121,  121,  122,  123,  123,  124,  124,  125,  125,  125,
+     126,  126,  126,  127,  127,  127,  127,  127,
+};
+
 // Flattened + row-reversed font: YsFont6x7
 // Width=6, Height=7, PaddedBytes=1
-const byte YsFont6x7[1792] = {
+static const byte YsFont6x7[1792] = {
     // Deleted 32 leading and 129 trailing
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x20, 0x20, 0x20, 0x20, 0x00, 0x20, 0x00,
@@ -102,7 +1934,7 @@ const byte YsFont6x7[1792] = {
 
 // Flattened + row-reversed font: YsFont6x8
 // Width=6, Height=8, PaddedBytes=1
-const byte YsFont6x8[2048] = {
+static const byte YsFont6x8[2048] = {
     // Deleted 32 leading and 129 trailing
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x20, 0x20, 0x20, 0x20, 0x20, 0x00, 0x20, 0x00,
@@ -203,7 +2035,7 @@ const byte YsFont6x8[2048] = {
 
 // Flattened + row-reversed font: YsFont6x10
 // Width=6, Height=10, PaddedBytes=1
-const byte YsFont6x10[2560] = {
+static const byte YsFont6x10[2560] = {
     // Deleted 32 leading and 129 trailing
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x30, 0x30, 0x30, 0x30, 0x30, 0x20, 0x20, 0x00, 0x20, 0x00,
@@ -304,7 +2136,7 @@ const byte YsFont6x10[2560] = {
 
 // Flattened + row-reversed font: YsFont7x10
 // Width=7, Height=10, PaddedBytes=1
-const byte YsFont7x10[2560] = {
+static const byte YsFont7x10[2560] = {
     // Deleted 32 leading and 129 trailing
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x30, 0x30, 0x30, 0x30, 0x30, 0x20, 0x20, 0x00, 0x20, 0x00,
@@ -405,7 +2237,7 @@ const byte YsFont7x10[2560] = {
 
 // Flattened + row-reversed font: YsFont8x8
 // Width=8, Height=8, PaddedBytes=1
-const byte YsFont8x8[2048] = {
+static const byte YsFont8x8[2048] = {
     // Deleted 32 leading and 129 trailing
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x18, 0x18, 0x18, 0x18, 0x10, 0x00, 0x10, 0x00,
@@ -506,7 +2338,7 @@ const byte YsFont8x8[2048] = {
 
 // Flattened + row-reversed font: YsFont8x12
 // Width=8, Height=12, PaddedBytes=1
-const byte YsFont8x12[3072] = {
+static const byte YsFont8x12[3072] = {
     // Deleted 32 leading and 129 trailing
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x30, 0x30, 0x30, 0x30, 0x30, 0x20, 0x20, 0x20, 0x00, 0x30, 0x30, 0x00,
@@ -607,7 +2439,7 @@ const byte YsFont8x12[3072] = {
 
 // Flattened + row-reversed font: YsFont12x16
 // Width=12, Height=16, PaddedBytes=2
-const byte YsFont12x16[8192] = {
+static const byte YsFont12x16[8192] = {
     // Deleted 32 leading and 129 trailing
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x0e, 0x00, 0x0e, 0x00, 0x0e, 0x00, 0x0e, 0x00, 0x0c, 0x00, 0x0c, 0x00, 0x0c, 0x00, 0x08, 0x00, 0x08, 0x00, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0c, 0x00, 0x0c, 0x00, 0x00, 0x00, 0x00, 0x00,

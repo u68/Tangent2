@@ -7,8 +7,7 @@
 
 #include "debug.h"
 #include "bsod.h"
-#include "../tui/glib.h"
-#include "../heap/heap.h"
+#include "../libcw.h"
 
 // Error strings
 const char ERROR_UNKNOWN_STR[] = "Unknown error";

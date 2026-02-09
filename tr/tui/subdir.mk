@@ -4,70 +4,37 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
-../tui/glib.c \
-../tui/graphics.c \
-../tui/lut.c \
-../tui/ysglfonts.c 
+../tui/glib.c 
 
 PRNS += \
-./tui/glib.prn \
-./tui/graphics.prn \
-./tui/lut.prn \
-./tui/ysglfonts.prn 
+./tui/glib.prn 
 
 PRNS__QUOTED += \
-"./tui/glib.prn" \
-"./tui/graphics.prn" \
-"./tui/lut.prn" \
-"./tui/ysglfonts.prn" 
+"./tui/glib.prn" 
 
 ASMS += \
-./tui/glib.asm \
-./tui/graphics.asm \
-./tui/lut.asm \
-./tui/ysglfonts.asm 
+./tui/glib.asm 
 
 ASMS__QUOTED += \
-"./tui/glib.asm" \
-"./tui/graphics.asm" \
-"./tui/lut.asm" \
-"./tui/ysglfonts.asm" 
+"./tui/glib.asm" 
 
 IS += \
-./tui/glib.i \
-./tui/graphics.i \
-./tui/lut.i \
-./tui/ysglfonts.i 
+./tui/glib.i 
 
 IS__QUOTED += \
-"./tui/glib.i" \
-"./tui/graphics.i" \
-"./tui/lut.i" \
-"./tui/ysglfonts.i" 
+"./tui/glib.i" 
 
 RESS += \
-./tui/glib.res \
-./tui/graphics.res \
-./tui/lut.res \
-./tui/ysglfonts.res 
+./tui/glib.res 
 
 RESS__QUOTED += \
-"./tui/glib.res" \
-"./tui/graphics.res" \
-"./tui/lut.res" \
-"./tui/ysglfonts.res" 
+"./tui/glib.res" 
 
 OBJS += \
-./tui/glib.obj \
-./tui/graphics.obj \
-./tui/lut.obj \
-./tui/ysglfonts.obj 
+./tui/glib.obj 
 
 OBJS__QUOTED += \
-"./tui/glib.obj" \
-"./tui/graphics.obj" \
-"./tui/lut.obj" \
-"./tui/ysglfonts.obj" 
+"./tui/glib.obj" 
 
 
 # Each subdirectory must supply rules for building sources it contributes
@@ -89,62 +56,5 @@ tui/glib.obj: ./tui/glib.asm
 	@echo ' '
 
 tui/glib.prn: tui/glib.obj
-
-tui/graphics.asm: ../tui/graphics.c
-	@echo 'Building file: $<'
-	@echo 'Invoking: Compiler'
-	lccu16 @"./tui/graphics.res"
-	@echo 'Finished building: $<'
-	@echo ' '
-
-tui/graphics.res: tui/graphics.asm
-tui/graphics.i: tui/graphics.asm
-
-tui/graphics.obj: ./tui/graphics.asm
-	@echo 'Building file: $<'
-	@echo 'Invoking: Assembler'
-	rasu8 -CD -ABW -SD -DF -ML -O"tui/" -WRPEAT -PR"tui/graphics.prn" -L -NS -NR -NPL -NPW "$<"
-	@echo 'Finished building: $<'
-	@echo ' '
-
-tui/graphics.prn: tui/graphics.obj
-
-tui/lut.asm: ../tui/lut.c
-	@echo 'Building file: $<'
-	@echo 'Invoking: Compiler'
-	lccu16 @"./tui/lut.res"
-	@echo 'Finished building: $<'
-	@echo ' '
-
-tui/lut.res: tui/lut.asm
-tui/lut.i: tui/lut.asm
-
-tui/lut.obj: ./tui/lut.asm
-	@echo 'Building file: $<'
-	@echo 'Invoking: Assembler'
-	rasu8 -CD -ABW -SD -DF -ML -O"tui/" -WRPEAT -PR"tui/lut.prn" -L -NS -NR -NPL -NPW "$<"
-	@echo 'Finished building: $<'
-	@echo ' '
-
-tui/lut.prn: tui/lut.obj
-
-tui/ysglfonts.asm: ../tui/ysglfonts.c
-	@echo 'Building file: $<'
-	@echo 'Invoking: Compiler'
-	lccu16 @"./tui/ysglfonts.res"
-	@echo 'Finished building: $<'
-	@echo ' '
-
-tui/ysglfonts.res: tui/ysglfonts.asm
-tui/ysglfonts.i: tui/ysglfonts.asm
-
-tui/ysglfonts.obj: ./tui/ysglfonts.asm
-	@echo 'Building file: $<'
-	@echo 'Invoking: Assembler'
-	rasu8 -CD -ABW -SD -DF -ML -O"tui/" -WRPEAT -PR"tui/ysglfonts.prn" -L -NS -NR -NPL -NPW "$<"
-	@echo 'Finished building: $<'
-	@echo ' '
-
-tui/ysglfonts.prn: tui/ysglfonts.obj
 
 

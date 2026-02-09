@@ -10,10 +10,7 @@ RM := rm -f
 -include sources.mk
 -include vm/subdir.mk
 -include tui/subdir.mk
--include time/subdir.mk
 -include media/subdir.mk
--include heap/subdir.mk
--include fs/subdir.mk
 -include desktop/subdir.mk
 -include debug/subdir.mk
 -include subdir.mk
@@ -29,36 +26,37 @@ export PATH=C:/LAPIS/LEXIDE/Bin;C:/LAPIS/LEXIDE/BuildTools/Ver.20251017/Bin;C:/L
 
 # Add inputs and outputs from these tool invocations to the build variables 
 OBJHEX += \
-tangent.HEX \
+tui.HEX \
 
 ABS += \
-tangent.abs \
+tui.abs \
 
 MAP += \
-tangent.map \
+tui.map \
+
 
 # All Target
 all: $(OBJHEX)
 
 # Tool invocations
-tangent.HEX: $(ABS)
+tui.HEX: $(ABS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: Object converter'
-	CnvOHU8 -H $(ABS) "tangent.HEX";
+	CnvOHU8 -H $(ABS) "tui.HEX";
 	@echo 'Finished building target: $@'
 	@echo ' '
 
-tangent.abs: $(OBJS)
+tui.abs: $(OBJS)
 	@echo 'Invoking: Linker'
-	rlu8 -D -SD -NS -CC -ABW $(OBJS__QUOTED),"tangent.abs",,"PLU16100LWF.LIB";
+	rlu8 -D -SD -NS -CC -ABW $(OBJS__QUOTED),"tui.abs",,"PLU16100LWF.LIB";
 	@echo 'Finished building: $@'
 	@echo ' '
 
-tangent.map: tangent.abs $(OBJS)
+tui.map: tui.abs $(OBJS)
+
 # Other Targets
 clean:
-	-$(RM) "./debug/bsod.prn" "./debug/debug.prn" "./desktop/desktop.prn" "./fs/fs.prn" "./heap/heap.prn" "./main.prn" "./startup.prn" "./media/media.prn" "./time/time.prn" "./tui/glib.prn" "./tui/graphics.prn" "./tui/lut.prn" "./tui/ysglfonts.prn" "./vm/vm.prn" "./tuiRA.log" "./debug/bsod.asm" "./debug/debug.asm" "./desktop/desktop.asm" "./fs/fs.asm" "./heap/heap.asm" "./main.asm" "./media/media.asm" "./time/time.asm" "./tui/glib.asm" "./tui/graphics.asm" "./tui/lut.asm" "./tui/ysglfonts.asm" "./vm/vm.asm" "./debug/bsod.i" "./debug/debug.i" "./desktop/desktop.i" "./fs/fs.i" "./heap/heap.i" "./main.i" "./media/media.i" "./time/time.i" "./tui/glib.i" "./tui/graphics.i" "./tui/lut.i" "./tui/ysglfonts.i" "./vm/vm.i" "./tui.abs" "./tuiRB.s" "./tuiRA.s" "./debug/bsod.res" "./debug/debug.res" "./desktop/desktop.res" "./fs/fs.res" "./heap/heap.res" "./main.res" "./media/media.res" "./time/time.res" "./tui/glib.res" "./tui/graphics.res" "./tui/lut.res" "./tui/ysglfonts.res" "./vm/vm.res" "./tui.HEX" "./debug/bsod.obj" 
-	-$(RM) "./debug/debug.obj" "./desktop/desktop.obj" "./fs/fs.obj" "./heap/heap.obj" "./main.obj" "./startup.obj" "./media/media.obj" "./time/time.obj" "./tui/glib.obj" "./tui/graphics.obj" "./tui/lut.obj" "./tui/ysglfonts.obj" "./vm/vm.obj" "./tui.map" "./tui.sc" 
+	-$(RM) "./debug/bsod.prn" "./debug/debug.prn" "./desktop/desktop.prn" "./libcw.prn" "./main.prn" "./startup.prn" "./media/media.prn" "./tui/glib.prn" "./vm/vm.prn" "./tuiRA.log" "./debug/bsod.asm" "./debug/debug.asm" "./desktop/desktop.asm" "./libcw.asm" "./main.asm" "./media/media.asm" "./tui/glib.asm" "./vm/vm.asm" "./debug/bsod.i" "./debug/debug.i" "./desktop/desktop.i" "./libcw.i" "./main.i" "./media/media.i" "./tui/glib.i" "./vm/vm.i" "./tui.abs" "./tuiRB.s" "./tuiRA.s" "./debug/bsod.res" "./debug/debug.res" "./desktop/desktop.res" "./libcw.res" "./main.res" "./media/media.res" "./tui/glib.res" "./vm/vm.res" "./tui.HEX" "./debug/bsod.obj" "./debug/debug.obj" "./desktop/desktop.obj" "./libcw.obj" "./main.obj" "./startup.obj" "./media/media.obj" "./tui/glib.obj" "./vm/vm.obj" "./tui.map" "./tui.sc" 
 	-@echo ' '
 
 .PHONY: all clean dependents

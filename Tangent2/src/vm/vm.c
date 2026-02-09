@@ -7,10 +7,7 @@
 
 #include "vm.h"
 #include "../tui/glib.h"
-#include "../heap/heap.h"
 #include "../debug/debug.h"
-#include "../time/time.h"
-#include "../fs/fs.h"
 
 // Internals
 
@@ -659,7 +656,7 @@ static void vm_syscall(TangentMachine* vm, syscall_t syscall_number) {
             fs_node_t *fs_chk = 0;
             // If register 2 is 0xFF, then "-r"
             if (vm->registers.rn[2] == 0xFF) {
-                fs_chk = fs_fir_lookup(FS_ROOT, (const char*)(&vm->ram[vm->registers.ern[0]]));
+                fs_chk = fs_dir_lookup(FS_ROOT, (const char*)(&vm->ram[vm->registers.ern[0]]));
                 if (!fs_chk) {
                     fs_chk = fs_lookup(FS_ROOT, (const char*)(&vm->ram[vm->registers.ern[0]]));
                 }

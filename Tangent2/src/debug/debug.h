@@ -8,7 +8,7 @@
 #ifndef DEBUG_H_
 #define DEBUG_H_
 
-#include "../base.h"
+#include "../libcw.h"
 
 typedef enum error_t {
     ERROR_UNKNOWN,

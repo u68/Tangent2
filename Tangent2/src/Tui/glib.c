@@ -67,11 +67,18 @@ void tml_render(TmlElement* root) {
 				}
 				break;
 			case SP_RIGHT:
-				if (focused_elem->next_sibling && focused_elem->next_sibling->select.field.selectable) {
+			{
+				TmlElement* candidate = focused_elem->next_sibling;
+				while (candidate && !candidate->select.field.selectable) {
+					candidate = candidate->next_sibling;
+				}
+				if (candidate) {
 					focused_elem->select.field.focused = 0;
-					focused_elem = focused_elem->next_sibling;
+					focused_elem = candidate;
 					focused_elem->select.field.focused = 1;
 				}
+				break;
+			}
 				break;
 			case SP_EXE:
 				if (focused_elem->select.field.selectable) {
@@ -838,30 +845,4 @@ TmlElement* tml_parse(const byte* data, TmlElement* elements, byte max_elems) {
 	}
 	
 	return root;
-}
-
-byte lastbutton = 0xff;
-byte CheckButtons() {
-	byte x;
-	byte y;
-	byte i = 0;
-	for(x = 0x80; x != 0; x = x >> 1)
-	{
-		deref(0xf046) = x;
-		for(y = 0x80; y != 0; y = y >> 1)
-		{
-			if((deref(0xf040) & y) == 0)
-			{
-				if(i != lastbutton)
-				{
-					lastbutton = i;
-					return i;
-				}
-				return 0xff;
-			}
-			++i;
-		}
-	}
-	lastbutton = 0x50;
-	return 0xff;
 }
