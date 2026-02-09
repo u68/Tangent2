@@ -34,22 +34,27 @@ Tangent2 is a complete ground-up rewrite of the original Tangent OS experiment. 
 
 ## Features
 
+
+![](https://geps.dev/progress/75) 
+
+Complete
+
 ### Tangent UI System (Tui)
 
 An element-based UI framework with a human-readable markup language.
 
 | Component | Status |
 |-----------|--------|
-| Buttons | Visual |
+| Buttons | To be tested |
 | Text | Complete |
 | Boxes | Complete |
 | Lines | Complete |
-| Checkboxes | Visual |
-| Radio buttons | Visual |
+| Checkboxes | To be tested |
+| Radio buttons | To be tested |
 | Multiple font sizes | Complete |
-| Input boxes | Not Implemented |
-| Interaction | Not Implemented |
-| Navigation  | Not Implemented |
+| Input boxes | To be tested |
+| Interaction | To be tested |
+| Navigation  | To be tested |
 
 Tui operates as a standalone rendering system with hooks for external interaction, designed for integration with Tangent2 and other projects alike.
 
@@ -59,7 +64,7 @@ Tui operates as a standalone rendering system with hooks for external interactio
 |---------|-------------|
 | **Desktop Environment** | Icons, taskbar, clock, backgrounds — fully customizable |
 | **Custom Filesystem** | Optimized for maximum storage capacity |
-| **Process Virtualization** | Unlimited\* concurrent processes v |
+| **Process Virtualization** | Unlimited\* concurrent processes |
 | **Native Applications** | Performance-critical apps written in C (video playback, file management) |
 
 \*Unlimited meaning that the only limitation is ram size (24kb in this case).
@@ -108,7 +113,7 @@ These two files work together to make a piece of text (Hello, World!) move horiz
 ### Editor
 
 - **Tabbed Interface** — Work on multiple files simultaneously with a tabbed editor
-- **Syntax Highlighting** — Full support for `.tasm` (assembly) and `.tml` (markup) files with customizable colors
+- **Syntax Highlighting** — Full support for `.tasm` (assembly) and `.tml` (markup) files with customizable colours, limited support for `.c` and `.h`, to aid with tweaking the OS source code within the IDE
 - **Code Completion** — Context-aware suggestions for keywords, registers, labels, and project symbols
 - **Customizable Fonts** — Choose any monospace font and size from your system
 - **Auto-Save** — Automatically save files when the editor loses focus (optional)
@@ -122,7 +127,7 @@ These two files work together to make a piece of text (Hello, World!) move horiz
 ### Build System
 
 - **One-Click Build** — Compile your project with a single click or keyboard shortcut
-- **Integrated Console** — View build output, errors, and warnings with color-coded messages
+- **Integrated Console** — View build output, errors, and warnings with colour-coded messages
 - **Error Highlighting** — Console output highlights errors (red), warnings (yellow), and success messages (green)
 - **ROM Builder** — Combine multiple programs into a single ROM image with the Build ROM dialog
 
@@ -409,23 +414,26 @@ Access settings via **File → Settings** or the toolbar. Settings are organized
 - **Enable/Disable** — Toggle the auto-completion popup
 - **Minimum Characters** — Characters required before suggestions appear (1-10)
 
-#### Syntax Highlighting Colors
+#### Syntax Highlighting Colours
 
-Customize colors for each syntax element. Click the color swatch to open the color picker, check the Bold box for bold text.
+Customize colours for each syntax element. Click the colour swatch to open the colour picker, check the Bold box for bold text.
 
-**TASM Colors:**
+**TASM Colours:**
 - Keywords, Registers, Labels, Comments, Addresses, Directives
 
-**TML Colors:**
-- Keywords, Fields, Label References, Bracket Colors (3 levels)
+**TML Colours:**
+- Keywords, Fields, Label References, Bracket Colours (3 levels)
 
-**Common Colors:**
+**C/H Colours**
+- Keywords, and some other stuff
+
+**Common Colours:**
 - Numbers, Strings
 
-**Console Colors:**
+**Console Colours:**
 - Error, Warning, Success, Normal text
 
-Right-click any color to reset it to default, or use "Reset to Defaults" to reset all colors.
+Right-click any colour to reset it to default, or use "Reset to Defaults" to reset all colours.
 
 #### Syntax Extensions
 
@@ -465,7 +473,7 @@ Extensions are stored in:
 - **User Settings:** `<AppData>/tangentsdk/syntax/edited.json` (your customizations)
 - **Custom Extensions:** `<AppData>/tangentsdk/syntax/extensions/`
 
-The `edited.json` file is automatically created and always exists — you can edit it directly to customize syntax colors without using the UI.
+The `edited.json` file is automatically created and always exists — you can edit it directly to customize syntax colours without using the UI.
 
 ### Extension JSON Format
 
@@ -479,7 +487,7 @@ The `edited.json` file is automatically created and always exists — you can ed
             "rules": {
                 "myRule": {
                     "displayName": "My Custom Rule",
-                    "color": "#FF5500",
+                    "colour": "#FF5500",
                     "bold": false,
                     "pattern": "\\bmy_pattern\\b",
                     "keywords": ["word1", "word2"]
@@ -494,7 +502,7 @@ The `edited.json` file is automatically created and always exists — you can ed
         "rules": {
             "number": {
                 "displayName": "Numbers",
-                "color": "#B5CEA8",
+                "colour": "#B5CEA8",
                 "pattern": "\\b[0-9]+\\b"
             }
         }
@@ -502,7 +510,7 @@ The `edited.json` file is automatically created and always exists — you can ed
     "console": {
         "error": {
             "displayName": "Error Text",
-            "color": "#F44747",
+            "colour": "#F44747",
             "bold": true
         }
     }
@@ -514,7 +522,7 @@ The `edited.json` file is automatically created and always exists — you can ed
 | Property | Type | Description |
 |----------|------|-------------|
 | `displayName` | string | Name shown in settings UI |
-| `color` | string | Hex color code (e.g., `#FF5500`) |
+| `colour` | string | Hex colour code (e.g., `#FF5500`) |
 | `bold` | boolean | Whether text should be bold |
 | `pattern` | string | Single regex pattern |
 | `patterns` | array | Multiple regex patterns |
@@ -525,7 +533,7 @@ The `edited.json` file is automatically created and always exists — you can ed
 
 Extensions are processed in order from top to bottom:
 1. **Custom Extensions** — Your imported/created extensions (highest priority)
-2. **Editor Settings (Your Settings)** — Colors customized via the Settings dialog
+2. **Editor Settings (Your Settings)** — Colours customized via the Settings dialog
 3. **Default (Built-in)** — Base syntax definitions (lowest priority)
 
 Items at the top of the list have the highest priority and override items below them.
@@ -557,7 +565,7 @@ First, you need to use ldc instead of dmd for the build tools, and you also need
 
 Each script checks for required tools (DMD, CMake, Ninja) and will print a helpful error if a prerequisite is missing. The script will compile the build tools, build the IDE, and launch the app when completed.
 
-> **Note:** The OS itself has some compiler-specific dependencies that make standalone builds tricky. The SDK includes prebuilt OS binaries and will eventually support building the OS directly inside the SDK, allowing you to modify it to your needs.
+> **Note:** The OS itself has some compiler-specific dependencies that make standalone builds tricky. The SDK includes prebuilt OS binaries and supports building the OS directly inside the SDK, allowing you to modify it to your needs.
 
 ### Having Issues?
 
@@ -640,7 +648,7 @@ const byte test_element_const[] = {
 - Make some videos about it showcasing the whole thing
 - Make Tangent3
 
-Also FYI, I don't care too much about the IDE, mainly the os itself and build tools, so I just got claude to do it for me because I'm a lazy humanoid creature.
+Also FYI, I don't care too much about the IDE, mainly the os itself and build tools, so I just got claude to do a lot of it for me because I'm a lazy humanoid creature.
 Sorry to dissapoint you all. 
 
 ---
@@ -656,6 +664,7 @@ This project is licensed under the MIT License — see the [LICENSE](LICENSE) fi
 **[Report Bug](../../issues) · [Request Feature](../../issues)**
 
 </div>
+
 
 
 
