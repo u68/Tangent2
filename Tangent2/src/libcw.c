@@ -871,6 +871,120 @@ void tui_draw_full_image(const word* bitmap, byte colour) {
 	}
 }
 
+void tui_invert_area(byte x, byte y, byte width, byte height, sbyte ax, sbyte ay, word rotation) {
+    if (!width || !height) {
+        return;
+    }
+
+    if (!rotation) {
+        sword sx = (sword)x - (sword)ax;
+        sword sy = (sword)y - (sword)ay;
+        sword ex = sx + (sword)width;
+        sword ey = sy + (sword)height;
+
+        if (sx < 0) sx = 0;
+        if (sy < 0) sy = 0;
+        if (ex > 192) ex = 192;
+        if (ey > 64) ey = 64;
+        if (ex <= sx || ey <= sy) {
+            return;
+        }
+
+        byte bstart = (byte)((word)sx >> 3);
+        byte bend = (byte)((word)(ex - 1) >> 3);
+        byte mfirst = (byte)(0xFFu >> (sx & 7));
+        byte mlast = (byte)(0xFFu << (7 - ((ex - 1) & 7)));
+
+        if (Write2RealScreen) {
+            #ifndef IS_CWX
+            byte old_bufsel = BufSelSFR;
+            #endif
+            for (byte py = (byte)sy; py < (byte)ey; py++) {
+                word row_base = (word)(0xF800u + ((word)py << 5));
+                for (byte bi = bstart; bi <= bend; bi++) {
+                    byte mask;
+                    if (bstart == bend) {
+                        mask = (byte)(mfirst & mlast);
+                    } else if (bi == bstart) {
+                        mask = mfirst;
+                    } else if (bi == bend) {
+                        mask = mlast;
+                    } else {
+                        mask = 0xFF;
+                    }
+
+                    word addr = (word)(row_base + bi);
+                    #ifndef IS_CWX
+                    BufSelSFR = 0;
+                    deref(addr) ^= mask;
+                    BufSelSFR = 4;
+                    deref(addr) ^= mask;
+                    #else
+                    deref(addr) ^= mask;
+                    #endif
+                }
+            }
+            #ifndef IS_CWX
+            BufSelSFR = old_bufsel;
+            #endif
+        } else {
+            for (byte py = (byte)sy; py < (byte)ey; py++) {
+                word row_base = (word)(VRAM + ((word)py << 4) + ((word)py << 3));
+                for (byte bi = bstart; bi <= bend; bi++) {
+                    byte mask;
+                    if (bstart == bend) {
+                        mask = (byte)(mfirst & mlast);
+                    } else if (bi == bstart) {
+                        mask = mfirst;
+                    } else if (bi == bend) {
+                        mask = mlast;
+                    } else {
+                        mask = 0xFF;
+                    }
+
+                    word addr = (word)(row_base + bi);
+                    deref(addr) ^= mask;
+                    #ifndef IS_CWX
+                    deref((word)(addr + 0x600u)) ^= mask;
+                    #endif
+                }
+            }
+        }
+        return;
+    }
+
+    // Rotation case: compute bounding box, then invert pixels that land inside
+    byte cx1, cy1, cx2, cy2, cx3, cy3, bx, by, rx, ry, hx, hy;
+    byte cx0 = x, cy0 = y;
+    if (ax || ay) {
+        tui_rotate_point(x, y, x - ax, y - ay, rotation, &cx0, &cy0);
+    }
+    tui_rotate_point(x, y, x + width - ax, y - ay, rotation, &cx1, &cy1);
+    tui_rotate_point(x, y, x - ax, y - ay + height, rotation, &cx2, &cy2);
+    tui_rotate_point(x, y, x + width - ax, y - ay + height, rotation, &cx3, &cy3);
+
+    bx = tui_min4(cx0, cx1, cx2, cx3);
+    by = tui_min4(cy0, cy1, cy2, cy3);
+    rx = tui_max4(cx0, cx1, cx2, cx3) + 1;
+    ry = tui_max4(cy0, cy1, cy2, cy3) + 1;
+    if (rx > 192) rx = 192;
+    if (ry > 64) ry = 64;
+
+    for (byte i = bx; i < rx; i++) {
+        for (byte j = by; j < ry; j++) {
+            tui_rotate_point(x, y, i, j, 360 - rotation, &hx, &hy);
+            hx -= (x - ax);
+            hy -= (y - ay);
+            if (hx < 0 || hy < 0 || hx >= width || hy >= height) {
+                continue;
+            }
+            byte col = tui_get_pixel(i, j);
+            tui_set_pixel(i, j, (byte)((col ^ 3) & 3), 1);
+        }
+    }
+}
+
+
 // Get user data pointer from block header
 static void *hdata(block_t *b) {
     return (void *)((byte *)b + sizeof(block_t));
