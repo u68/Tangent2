@@ -43,6 +43,7 @@ STACK_CALCULATOR_OUTPUT_OUTPUTS__QUOTED :=
 SUBDIRS := \
 debug \
 desktop \
+input \
 . \
 media \
 tui \

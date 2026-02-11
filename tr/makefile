@@ -11,6 +11,7 @@ RM := rm -f
 -include vm/subdir.mk
 -include tui/subdir.mk
 -include media/subdir.mk
+-include input/subdir.mk
 -include desktop/subdir.mk
 -include debug/subdir.mk
 -include subdir.mk
@@ -56,7 +57,7 @@ tui.map: tui.abs $(OBJS)
 
 # Other Targets
 clean:
-	-$(RM) "./debug/bsod.prn" "./debug/debug.prn" "./desktop/desktop.prn" "./libcw.prn" "./main.prn" "./startup.prn" "./media/media.prn" "./tui/glib.prn" "./vm/vm.prn" "./tuiRA.log" "./debug/bsod.asm" "./debug/debug.asm" "./desktop/desktop.asm" "./libcw.asm" "./main.asm" "./media/media.asm" "./tui/glib.asm" "./vm/vm.asm" "./debug/bsod.i" "./debug/debug.i" "./desktop/desktop.i" "./libcw.i" "./main.i" "./media/media.i" "./tui/glib.i" "./vm/vm.i" "./tui.abs" "./tuiRB.s" "./tuiRA.s" "./debug/bsod.res" "./debug/debug.res" "./desktop/desktop.res" "./libcw.res" "./main.res" "./media/media.res" "./tui/glib.res" "./vm/vm.res" "./tui.HEX" "./debug/bsod.obj" "./debug/debug.obj" "./desktop/desktop.obj" "./libcw.obj" "./main.obj" "./startup.obj" "./media/media.obj" "./tui/glib.obj" "./vm/vm.obj" "./tui.map" "./tui.sc" 
+	-$(RM) "./debug/bsod.prn" "./debug/debug.prn" "./desktop/desktop.prn" "./input/input.prn" "./libcw.prn" "./main.prn" "./startup.prn" "./media/media.prn" "./tui/glib.prn" "./vm/vm.prn" "./tuiRA.log" "./debug/bsod.asm" "./debug/debug.asm" "./desktop/desktop.asm" "./input/input.asm" "./libcw.asm" "./main.asm" "./media/media.asm" "./tui/glib.asm" "./vm/vm.asm" "./debug/bsod.i" "./debug/debug.i" "./desktop/desktop.i" "./input/input.i" "./libcw.i" "./main.i" "./media/media.i" "./tui/glib.i" "./vm/vm.i" "./tui.abs" "./tuiRB.s" "./tuiRA.s" "./debug/bsod.res" "./debug/debug.res" "./desktop/desktop.res" "./input/input.res" "./libcw.res" "./main.res" "./media/media.res" "./tui/glib.res" "./vm/vm.res" "./tui.HEX" "./debug/bsod.obj" "./debug/debug.obj" "./desktop/desktop.obj" "./input/input.obj" "./libcw.obj" "./main.obj" "./startup.obj" "./media/media.obj" "./tui/glib.obj" "./vm/vm.obj" "./tui.map" "./tui.sc" 
 	-@echo ' '
 
 .PHONY: all clean dependents
