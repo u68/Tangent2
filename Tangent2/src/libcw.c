@@ -984,7 +984,6 @@ void tui_invert_area(byte x, byte y, byte width, byte height, sbyte ax, sbyte ay
     }
 }
 
-
 // Get user data pointer from block header
 static void *hdata(block_t *b) {
     return (void *)((byte *)b + sizeof(block_t));
