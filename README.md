@@ -62,7 +62,7 @@ Tui operates as a standalone rendering system with hooks for external interactio
 
 | Feature | Description |
 |---------|-------------|
-| **Desktop Environment** | Icons, taskbar, clock, backgrounds — fully customizable |
+| **Desktop Environment** | Icons, taskbar, clock, backgrounds - fully customizable |
 | **Custom Filesystem** | Optimized for maximum storage capacity |
 | **Process Virtualization** | Unlimited\* concurrent processes |
 | **Native Applications** | Performance-critical apps written in C (video playback, file management) |
@@ -112,45 +112,45 @@ These two files work together to make a piece of text (Hello, World!) move horiz
 
 ### Editor
 
-- **Tabbed Interface** — Work on multiple files simultaneously with a tabbed editor
-- **Syntax Highlighting** — Full support for `.tasm` (assembly) and `.tml` (markup) files with customizable colours, limited support for `.c` and `.h`, to aid with tweaking the OS source code within the IDE
-- **Code Completion** — Context-aware suggestions for keywords, registers, labels, and project symbols
-- **Customizable Fonts** — Choose any monospace font and size from your system
-- **Auto-Save** — Automatically save files when the editor loses focus (optional)
+- **Tabbed Interface** - Work on multiple files simultaneously with a tabbed editor
+- **Syntax Highlighting** - Full support for `.tasm` (assembly) and `.tml` (markup) files with customizable colours, limited support for `.c` and `.h`, to aid with tweaking the OS source code within the IDE
+- **Code Completion** - Context-aware suggestions for keywords, registers, labels, and project symbols
+- **Customizable Fonts** - Choose any monospace font and size from your system
+- **Auto-Save** - Automatically save files when the editor loses focus (optional)
 
 ### Project Management
 
-- **Workspace Explorer** — File tree with project navigation
-- **File/Folder Creation** — Create new files and folders directly from the explorer
-- **Project Templates** — Start new projects with predefined structure
+- **Workspace Explorer** - File tree with project navigation
+- **File/Folder Creation** - Create new files and folders directly from the explorer
+- **Project Templates** - Start new projects with predefined structure
 
 ### Build System
 
-- **One-Click Build** — Compile your project with a single click or keyboard shortcut
-- **Integrated Console** — View build output, errors, and warnings with colour-coded messages
-- **Error Highlighting** — Console output highlights errors (red), warnings (yellow), and success messages (green)
-- **ROM Builder** — Combine multiple programs into a single ROM image with the Build ROM dialog
+- **One-Click Build** - Compile your project with a single click or keyboard shortcut
+- **Integrated Console** - View build output, errors, and warnings with colour-coded messages
+- **Error Highlighting** - Console output highlights errors (red), warnings (yellow), and success messages (green)
+- **ROM Builder** - Combine multiple programs into a single ROM image with the Build ROM dialog
 
 ### Run & Debug
 
-- **Emulator Integration** — Run your compiled project directly in CasioEmuMSVC
-- **RP2Ease Support** — Load programs onto physical hardware via RP2Ease/PicoEase
-- **Download from Device** — Pull data back from the calculator
+- **Emulator Integration** - Run your compiled project directly in CasioEmuMSVC
+- **RP2Ease Support** - Load programs onto physical hardware via RP2Ease/PicoEase
+- **Download from Device** - Pull data back from the calculator
 
 #### Chip Configuration
 
 The SDK supports advanced chip configuration for the ML620909:
 
 **Chip Password (32 bytes)**
-- `FF` — All 0xFF bytes (default)
-- `00` — All 0x00 bytes
-- `Casio Default` — Factory default password
-- `Custom` — Enter your own 64-character hex string
+- `FF` - All 0xFF bytes (default)
+- `00` - All 0x00 bytes
+- `Casio Default` - Factory default password
+- `Custom` - Enter your own 64-character hex string
 
 **Clock Speed (16 bytes)**
-- `Default` — 2 MHz standard clock
-- `Overclocked` — 3.9 MHz with 21 MHz boost
-- `Custom` — Enter your own 32-character hex configuration
+- `Default` - 2 MHz standard clock
+- `Overclocked` - 3.9 MHz with 21 MHz boost
+- `Custom` - Enter your own 32-character hex configuration
 
 Note:
 If you were to select custom for these two options, make sure you know what you are doing, as it could *potentially* brick your device.
@@ -159,14 +159,14 @@ If you were to select custom for these two options, make sure you know what you 
 
 Show off your development work with Discord integration:
 
-- **Enable/Disable** — Toggle Discord presence on or off
-- **Custom Text Format** — Define your own display text using variables:
-  - `${file}` — Full file name (e.g., `main.tasm`)
-  - `${file.baseName}` — File name without extension (e.g., `main`)
-  - `${file.extension}` — File extension (e.g., `tasm`)
-  - `${language}` — Programming language name
-  - `${project}` — Project folder name
-- **Elapsed Time Reset** — Choose when the timer resets:
+- **Enable/Disable** - Toggle Discord presence on or off
+- **Custom Text Format** - Define your own display text using variables:
+  - `${file}` - Full file name (e.g., `main.tasm`)
+  - `${file.baseName}` - File name without extension (e.g., `main`)
+  - `${file.extension}` - File extension (e.g., `tasm`)
+  - `${language}` - Programming language name
+  - `${project}` - Project folder name
+- **Elapsed Time Reset** - Choose when the timer resets:
   - On IDE startup
   - When opening a new project
   - When opening a new file
@@ -388,7 +388,7 @@ combiner-t16 build/myproject.tp -bh -o build/rom -p FFFFFFFFFFFFFFFFFFFFFFFFFFFF
 
 This produces `build/rom.bin` and `build/rom.hex` ready for flashing.
 
-> **Note:** The TangentSDK IDE automates this entire process — just press F5 to build your project, or use Project → Build ROM to create a combined ROM from multiple projects.
+> **Note:** The TangentSDK IDE automates this entire process - just press F5 to build your project, or use Project → Build ROM to create a combined ROM from multiple projects.
 
 ---
 
@@ -406,13 +406,13 @@ Access settings via **File → Settings** or the toolbar. Settings are organized
 ### Editor Tab
 
 #### Font Settings
-- **Font Family** — Select from available monospace fonts
-- **Font Size** — Adjust text size (6-72pt)
+- **Font Family** - Select from available monospace fonts
+- **Font Size** - Adjust text size (6-72pt)
 - Right-click to reset font settings to defaults
 
 #### Code Completion
-- **Enable/Disable** — Toggle the auto-completion popup
-- **Minimum Characters** — Characters required before suggestions appear (1-10)
+- **Enable/Disable** - Toggle the auto-completion popup
+- **Minimum Characters** - Characters required before suggestions appear (1-10)
 
 #### Syntax Highlighting Colours
 
@@ -439,12 +439,12 @@ Right-click any colour to reset it to default, or use "Reset to Defaults" to res
 
 Manage syntax definition extensions with priority ordering:
 
-- **Import Extension** — Add a JSON extension file
-- **Create Extension** — Create a new blank extension
-- **Edit Default JSON** — Open the default definitions for reference
-- **Reorder** — Use ▲/▼ buttons to change priority (higher position = takes precedence)
-- **Enable/Disable** — Toggle extensions on or off via checkbox
-- **Delete** — Remove custom extensions (right-click menu)
+- **Import Extension** - Add a JSON extension file
+- **Create Extension** - Create a new blank extension
+- **Edit Default JSON** - Open the default definitions for reference
+- **Reorder** - Use ▲/▼ buttons to change priority (higher position = takes precedence)
+- **Enable/Disable** - Toggle extensions on or off via checkbox
+- **Delete** - Remove custom extensions (right-click menu)
 
 ### Discord Tab
 
@@ -453,9 +453,9 @@ Configure Discord Rich Presence (see Discord Rich Presence section above).
 ### Run/Debug Tab
 
 #### Paths
-- **Emulator Executable** — Path to CasioEmuMSVC.exe
-- **Model Folder** — Path to calculator model files
-- **RP2Ease Executable** — Path to rp2ease.exe
+- **Emulator Executable** - Path to CasioEmuMSVC.exe
+- **Model Folder** - Path to calculator model files
+- **RP2Ease Executable** - Path to rp2ease.exe
 
 #### Chip Password & Clock Speed
 Configure hardware settings (see Run & Debug section above).
@@ -473,7 +473,7 @@ Extensions are stored in:
 - **User Settings:** `<AppData>/tangentsdk/syntax/edited.json` (your customizations)
 - **Custom Extensions:** `<AppData>/tangentsdk/syntax/extensions/`
 
-The `edited.json` file is automatically created and always exists — you can edit it directly to customize syntax colours without using the UI.
+The `edited.json` file is automatically created and always exists - you can edit it directly to customize syntax colours without using the UI.
 
 ### Extension JSON Format
 
@@ -532,9 +532,9 @@ The `edited.json` file is automatically created and always exists — you can ed
 ### Extension Priority
 
 Extensions are processed in order from top to bottom:
-1. **Custom Extensions** — Your imported/created extensions (highest priority)
-2. **Editor Settings (Your Settings)** — Colours customized via the Settings dialog
-3. **Default (Built-in)** — Base syntax definitions (lowest priority)
+1. **Custom Extensions** - Your imported/created extensions (highest priority)
+2. **Editor Settings (Your Settings)** - Colours customized via the Settings dialog
+3. **Default (Built-in)** - Base syntax definitions (lowest priority)
 
 Items at the top of the list have the highest priority and override items below them.
 
@@ -655,7 +655,7 @@ Sorry to dissapoint you all.
 
 ## License
 
-This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 

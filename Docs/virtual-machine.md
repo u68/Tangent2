@@ -39,8 +39,8 @@ Source reference: `src/vm/vm.c`.
 
 ## Memory layout and headers
 Bytecode layout (external array pointed to by `vm->code`):
-- Offset 0..1: `code_size` (word, little-endian) — number of bytes in code region
-- Offset 2..3: `ram_size` (word, little-endian) — bytes of RAM to allocate for the VM
+- Offset 0..1: `code_size` (word, little-endian) - number of bytes in code region
+- Offset 2..3: `ram_size` (word, little-endian) - bytes of RAM to allocate for the VM
 - Offset 4..(4 + code_size - 1): code bytes executed by the VM
 
 The VM checks code bounds using:
@@ -53,16 +53,16 @@ Words in memory and headers are always stored little-endian when read/written by
 
 ## Registers and PSW
 Registers (nomenclature used in code):
-- `rn[16]` — sixteen 8-bit general registers (byte-sized)
-- `ern[8]` — eight 16-bit general registers (word-sized) used for addresses and wide arithmetic
-- `sp` — stack pointer (word), initialized to `ram_size` (top of RAM)
-- `pc` — program counter (word), initialized to 4 (first instruction)
-- `lr` — link register (word), used by branch-and-link operations
-- `psw` — processor status word (flags) represented as `psw_flags_t` with fields:
-  - `zero` — set when result == 0
-  - `neg` — sign bit set (MSB) of result
-  - `carry` — carry for unsigned ops / borrow for subtraction
-  - `overflow` — signed overflow indicator
+- `rn[16]` - sixteen 8-bit general registers (byte-sized)
+- `ern[8]` - eight 16-bit general registers (word-sized) used for addresses and wide arithmetic
+- `sp` - stack pointer (word), initialized to `ram_size` (top of RAM)
+- `pc` - program counter (word), initialized to 4 (first instruction)
+- `lr` - link register (word), used by branch-and-link operations
+- `psw` - processor status word (flags) represented as `psw_flags_t` with fields:
+  - `zero` - set when result == 0
+  - `neg` - sign bit set (MSB) of result
+  - `carry` - carry for unsigned ops / borrow for subtraction
+  - `overflow` - signed overflow indicator
 
 Helper macros in the source provide signed/unsigned comparisons using `psw` (for example `SIGNED_LT(psw)`).
 
@@ -100,13 +100,13 @@ Note: `vm_step()` always validates there are enough bytes remaining for the expe
 This project defines many opcodes. Below are the broad categories and examples (refer to `vm.c` for the full switch table):
 
 - Data movement
-  - `OP_MOV8_REG_REG` — move 8-bit register to register
-  - `OP_MOV16_REG_REG`, `OP_MOV16_REG_IMM` — 16-bit moves
+  - `OP_MOV8_REG_REG` - move 8-bit register to register
+  - `OP_MOV16_REG_REG`, `OP_MOV16_REG_IMM` - 16-bit moves
   - Memory loads/stores: `OP_LOAD8_REG_MREG`, `OP_STORE8_MIMM_REG`, `OP_LOAD16_REG_MIMM`, etc.
 
 - Stack instructions
   - `OP_PUSH8_REG`, `OP_PUSH16_IMM`, `OP_POP8_REG`, `OP_POP16_REG`
-  - `OP_PUSH_LR`, `OP_POP_PC` — support call/return semantics
+  - `OP_PUSH_LR`, `OP_POP_PC` - support call/return semantics
   - `OP_PUSH_SP`, `OP_POP_SP`
 
 - Arithmetic and logic (ALU)
@@ -115,7 +115,7 @@ This project defines many opcodes. Below are the broad categories and examples (
   - CMP instructions set `psw` without changing operands
 
 - Branch and control flow
-  - `OP_B_REG`, `OP_B_IMM` — unconditional
+  - `OP_B_REG`, `OP_B_IMM` - unconditional
   - Conditional branches using `psw`: `OP_BEQ_IMM`, `OP_BNE_IMM`, `OP_BLT_IMM`, `OP_BLE_IMM`, `OP_BGT_IMM`, `OP_BGE_IMM`
   - Branch-and-link (`OP_BL_REG`, `OP_BL_IMM`) saves `pc` to `lr` before jumping
 
@@ -1310,7 +1310,7 @@ vm->psw = flags;
   - Errors: `ERROR_VM_INVALID_INSTRUCTION` if immediate bytes missing
 
 #### OP_CMP8_REG_IMM
-- (0xD0..0xDF) — Compact immediate block
+- (0xD0..0xDF) - Compact immediate block
 - Encoding: [opcode = base | dest][operand]
 - Behavior: compare `rn[dest]` with imm (operand byte)
 - PSW: set by `cmp_bytes`
@@ -1699,7 +1699,7 @@ ALU operations are implemented in two helpers:
 ALU details:
 - Arithmetic sets `carry` for unsigned overflow (or borrow for subtraction), `overflow` for two's complement signed overflow, `zero` when result == 0, and `neg` when the high bit is set (MSB of result).
 - Multiply sets `carry` if the full product does not fit in the result width.
-- Divide/mod by zero returns zero (no exception) — the operation in `alu_operation_*` sets result to 0 when divisor is zero.
+- Divide/mod by zero returns zero (no exception) - the operation in `alu_operation_*` sets result to 0 when divisor is zero.
 - Shifts:
   - Logical left (SLL) and right (SRL) shift by `n & 7` (byte) or `n & 15` (word).
   - Arithmetic right (SRA) preserves sign bit; carry is set from the last bit shifted out.
@@ -1736,7 +1736,7 @@ Call/return: `OP_BL_*` stores return address to `lr`. `OP_PUSH_LR` / `OP_POP_PC`
 
 ## Syscalls
 Syscall numbers are defined in `syscall_t` and include:
-- `GET_ELEMENT_FIELD`, `SET_ELEMENT_FIELD`, `RENDER_ELEMENT` — interface to TML/TUI element rendering and manipulation
+- `GET_ELEMENT_FIELD`, `SET_ELEMENT_FIELD`, `RENDER_ELEMENT` - interface to TML/TUI element rendering and manipulation
 - Drawing primitives: `DRAW_LINE`, `SET_PIXEL`, `GET_PIXEL`, `DRAW_IMAGE`, `DRAW_RECT`, `DRAW_TEXT`
 - `SLEEP`, `STOP`, `END`
 
@@ -1747,13 +1747,14 @@ Note: `SLEEP` is a placeholder in the VM and currently does not pause only the V
 ---
 
 ## VM lifecycle API
-- `vm_init_system()` — allocate an initial pool for VM pointers using `hcalloc`. Sets `vm_capacity = MAX_VMS` and `vm_pool` zeros.
-- `vm_spawn(code)` — allocates `TangentMachine` + RAM (`ram_size` from header), initializes fields, sets `vm->code = code`, calls `vm_init(vm, code)`, stores the VM in the pool. Expands the pool by `MAX_VMS` when needed using `hrealloc` and initializes new slots to `0`.
-- `vm_init(vm, code)` — sets `vm->ram`, `vm->code`, `vm->vm_properties.running = 1`, `vm->sp = vm->vm_properties.ram_size`, `vm->pc = 4` and ensures `uses_ram` matches `ram_size`.
-- `vm_destroy(vm)` — finds VM in `vm_pool`, frees it with `hfree` and sets the pool slot to `0`.
-- `vm_step(vm)` — execute a single instruction for `vm` (if running), validating code bounds and instruction lengths, updating `pc` and `psw` appropriately.
-- `vm_step_all()` — iterates `vm_pool` and calls `vm_step` for each non-NULL entry.
-- `vm_shutdown()` — frees each VM in the pool and the pool itself.
+- `vm_init_system()` - allocate an initial pool for VM pointers using `hcalloc`. Sets `vm_capacity = MAX_VMS` and `vm_pool` zeros.
+- `vm_spawn(code)` - allocates `TangentMachine` + RAM (`ram_size` from header), initializes fields, sets `vm->code = code`, calls `vm_init(vm, code)`, stores the VM in the pool. Expands the pool by `MAX_VMS` when needed using `hrealloc` and initializes new slots to `0`.
+- `vm_run_file(fs_node_t* parent, const char *filename)` - loads a vm wil the code from a given file.
+- `vm_init(vm, code)` - sets `vm->ram`, `vm->code`, `vm->vm_properties.running = 1`, `vm->sp = vm->vm_properties.ram_size`, `vm->pc = 4` and ensures `uses_ram` matches `ram_size`.
+- `vm_destroy(vm)` - finds VM in `vm_pool`, frees it with `hfree` and sets the pool slot to `0`.
+- `vm_step(vm)` - execute a single instruction for `vm` (if running), validating code bounds and instruction lengths, updating `pc` and `psw` appropriately.
+- `vm_step_all()` - iterates `vm_pool` and calls `vm_step` for each non-NULL entry.
+- `vm_shutdown()` - frees each VM in the pool and the pool itself.
 
 Notes on allocation: the code uses project helpers `hcalloc`, `hrealloc`, `hfree` for heap management.
 

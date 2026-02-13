@@ -19,8 +19,8 @@ The renderer traverses a TML element tree and issues low-level draw calls; trans
 ## TML (tml_*) API Reference
 
 ### Data types
-- `TmlElement` — main element struct. Key fields: `type`, `id`, `x`, `y`, `anchor_x`, `anchor_y`, `rotation`, `colour`, `parent`, `first_child`, `next_sibling`, and a union `data` for element-specific data (text, button, div, line, checkbox, radio, input).
-- `TmlElementType`, `TmlAlignment`, `TmlField` — enums used by parser and initializers.
+- `TmlElement` - main element struct. Key fields: `type`, `id`, `x`, `y`, `anchor_x`, `anchor_y`, `rotation`, `colour`, `parent`, `first_child`, `next_sibling`, and a union `data` for element-specific data (text, button, div, line, checkbox, radio, input).
+- `TmlElementType`, `TmlAlignment`, `TmlField` - enums used by parser and initializers.
 
 ### Functions
 - `void tml_render(TmlElement* root)`
@@ -39,19 +39,19 @@ The renderer traverses a TML element tree and issues low-level draw calls; trans
   - `void tml_init_radio(TmlElement* elem, word id, byte x, byte y, byte size, byte colour, byte selected)`
 
 - Tree manipulation:
-  - `void tml_add_child(TmlElement* parent, TmlElement* child)` — appends `child` as the last child of `parent`.
-  - `void tml_add_sibling(TmlElement* elem, TmlElement* sibling)` — insert `sibling` after `elem`.
-  - `TmlElement* tml_find_by_id(TmlElement* root, word id)` — iterative search; returns `NULL` if not found.
+  - `void tml_add_child(TmlElement* parent, TmlElement* child)` - appends `child` as the last child of `parent`.
+  - `void tml_add_sibling(TmlElement* elem, TmlElement* sibling)` - insert `sibling` after `elem`.
+  - `TmlElement* tml_find_by_id(TmlElement* root, word id)` - iterative search; returns `NULL` if not found.
 
 - Property setters:
   - `void tml_set_position(TmlElement* elem, byte x, byte y)`
-  - `void tml_set_rotation(TmlElement* elem, word rotation)` — value is normalized to 0..359.
+  - `void tml_set_rotation(TmlElement* elem, word rotation)` - value is normalized to 0..359.
   - `void tml_set_anchor(TmlElement* elem, byte ax, byte ay)`
   - `void tml_set_colour(TmlElement* elem, byte colour)`
 
 - Utilities:
-  - `void tml_splash(const byte* image_data, word duration)` — blocking splash utility; temporarily writes to real screen.
-  - `TmlElement* tml_parse(const byte* data, TmlElement* elements, byte max_elems)` — parse a compact TML byte stream into `elements` array and return root pointer; uses `TML_START`/`TML_END` and `FIELD_*` tags.
+  - `void tml_splash(const byte* image_data, word duration)` - blocking splash utility; temporarily writes to real screen.
+  - `TmlElement* tml_parse(const byte* data, TmlElement* elements, byte max_elems)` - parse a compact TML byte stream into `elements` array and return root pointer; uses `TML_START`/`TML_END` and `FIELD_*` tags.
 
 Notes:
 - Parser returns a pointer to the first (root) element within the `elements` array; user-supplied storage is required.
@@ -62,34 +62,34 @@ Notes:
 ## TUI Graphics API Reference
 
 ### Enums
-- `enum tui_colour` — see **Colours** above.
-- `enum tui_style` — general style (solid/dotted/dashed/double).
-- `enum tui_line_style` — byte constants for line patterns.
-- `enum tui_font_size` — supported font sizes.
-- `enum tui_fill_style` — fill modes (not extensively used in current APIs).
+- `enum tui_colour` - see **Colours** above.
+- `enum tui_style` - general style (solid/dotted/dashed/double).
+- `enum tui_line_style` - byte constants for line patterns.
+- `enum tui_font_size` - supported font sizes.
+- `enum tui_fill_style` - fill modes (not extensively used in current APIs).
 
 ### Functions (brief)
 - `void tui_rotate_point(byte ax, byte ay, byte px, byte py, word angle, byte *out_x, byte *out_y)`
   - Rotate point `(px,py)` around `(ax,ay)` by `angle` degrees. Outputs clamped byte coordinates.
 
 - Line drawing
-  - `void tui_simple_line(byte x0, byte y0, byte x1, byte y1, byte colour)` — Bresenham, single pixel thickness.
-  - `void tui_advanced_draw_line(byte* data, byte bit_length, byte x0, byte y0, byte x1, byte y1, byte colour, byte thickness)` — patterned stretch based on bit-sequence.
-  - `void tui_pattern_draw_line(byte pattern, byte x0, byte y0, byte x1, byte y1, byte colour, byte thickness)` — repeating pattern.
-  - `void tui_draw_line(byte x0, byte y0, byte x1, byte y1, byte colour, byte thickness, byte style)` — high-level wrapper supporting styles & thickness.
+  - `void tui_simple_line(byte x0, byte y0, byte x1, byte y1, byte colour)` - Bresenham, single pixel thickness.
+  - `void tui_advanced_draw_line(byte* data, byte bit_length, byte x0, byte y0, byte x1, byte y1, byte colour, byte thickness)` - patterned stretch based on bit-sequence.
+  - `void tui_pattern_draw_line(byte pattern, byte x0, byte y0, byte x1, byte y1, byte colour, byte thickness)` - repeating pattern.
+  - `void tui_draw_line(byte x0, byte y0, byte x1, byte y1, byte colour, byte thickness, byte style)` - high-level wrapper supporting styles & thickness.
 
 - Pixel & buffer
-  - `void tui_render_buffer()` — blit VRAM buffer to real VRAM.
-  - `void tui_clear_screen()` — clear real or buffer depending on `Write2RealScreen`.
-  - `byte tui_get_pixel(byte x, byte y)` — read pixel colour (returns 0..3).
-  - `void tui_set_pixel(byte x, byte y, byte colour, byte size)` — draw pixel or small filled circle for `size` > 1.
-  - `void tui_draw_byte(byte x, byte y, byte data, byte data2, byte mask)` — low-level byte blit with mask.
+  - `void tui_render_buffer()` - blit VRAM buffer to real VRAM.
+  - `void tui_clear_screen()` - clear real or buffer depending on `Write2RealScreen`.
+  - `byte tui_get_pixel(byte x, byte y)` - read pixel colour (returns 0..3).
+  - `void tui_set_pixel(byte x, byte y, byte colour, byte size)` - draw pixel or small filled circle for `size` > 1.
+  - `void tui_draw_byte(byte x, byte y, byte data, byte data2, byte mask)` - low-level byte blit with mask.
 
 - Primitives
-  - `void tui_circle(byte cx, byte cy, byte r, byte col)` — filled circle helper.
+  - `void tui_circle(byte cx, byte cy, byte r, byte col)` - filled circle helper.
   - `void tui_draw_rectangle(byte x, byte y, byte width, byte height, sbyte ax, sbyte ay, word rotation, byte colour, byte thickness, byte style)`
-  - `void tui_draw_points(byte cx, byte cy, byte x, byte y, byte thickness, byte colour)` — helper used by circle algorithm.
-  - `void tui_draw_circle(byte cx, byte cy, byte radius, sbyte ax, sbyte ay, byte thickness, byte colour)` — draw (outline) circle with anchor/rotation.
+  - `void tui_draw_points(byte cx, byte cy, byte x, byte y, byte thickness, byte colour)` - helper used by circle algorithm.
+  - `void tui_draw_circle(byte cx, byte cy, byte radius, sbyte ax, sbyte ay, byte thickness, byte colour)` - draw (outline) circle with anchor/rotation.
 
 - Text & images
   - `void tui_get_font_size(byte font_size, byte* width, byte* height)`
@@ -97,6 +97,7 @@ Notes:
   - `void tui_draw_text(byte x, byte y, const char* text, byte font_size, sbyte ax, sbyte ay, word rotation, byte colour)`
   - `void tui_draw_char(byte x, byte y, char c, byte font_size, sbyte ax, sbyte ay, word rotation, byte colour)`
   - `void tui_draw_image(byte x, byte y, byte width, byte height, const byte* bitmap, sbyte ax, sbyte ay, word rotation, byte colour)`
+  - `void tui_invert_area(byte x, byte y, byte width, byte height, sbyte ax, sbyte ay, word rotation)`
   - `void tui_draw_full_image(const word* bitmap, byte colour)`
 
 Notes:

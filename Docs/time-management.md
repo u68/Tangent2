@@ -4,7 +4,7 @@
 This document describes Tangent's time management utilities, including RTC access, time formatting helpers, and millisecond/second delay and tick conversion helpers. The implementation targets the platform RTC and a software delay primitive built on Timer0.
 
 ## Concepts
-- RTC registers: hardware registers are mapped via `RTC_*` macros in `src/time/time.h` (seconds, minutes, hours, day, week, month, year). These registers are encoded in BCD (binary-coded decimal) for display; `get_time_string` converts BCD to human-readable decimal in the selected format.
+- RTC registers: hardware registers are mapped via `RTC_*` macros in `src/libcw.h` (seconds, minutes, hours, day, week, month, year). These registers are encoded in BCD (binary-coded decimal) for display; `get_time_string` converts BCD to human-readable decimal in the selected format.
 - Year offset: the RTC stores `RTC_YEAR` as an 8-bit offset relative to 2026. Use `rtc_set_year` / `rtc_get_year` which apply the offset.
 - Drift: the onboard RTC does not use a crystal oscillator and may drift (~2 minutes/hour). Do not rely on it for precise timekeeping.
 - Ticks: timer ticks are used for delay primitives. Constants: `TICKS_PER_MS = 8`, `TICKS_PER_SECOND = 8000`.
@@ -13,7 +13,7 @@ This document describes Tangent's time management utilities, including RTC acces
 
 ## API Reference
 
-Headers: `src/time/time.h`
+Headers: `src/libcw.h`
 
 ### Time string formatting
 - `void get_time_string(format_t format, char* out)`
@@ -21,9 +21,9 @@ Headers: `src/time/time.h`
   - Buffer requirement: allocate at least 16 bytes to be safe (e.g., "12:34:56 PM" + NUL).
 
 ### RTC control
-- `void rtc_reset()` — Reset RTC registers to a safe default (0s/1s where applicable).
-- `void rtc_enable()` — Enable RTC operation.
-- `void rtc_disable()` — Disable RTC operation.
+- `void rtc_reset()` - Reset RTC registers to a safe default (0s/1s where applicable).
+- `void rtc_enable()` - Enable RTC operation.
+- `void rtc_disable()` - Disable RTC operation.
 
 ### RTC time setters/getters
 - `void rtc_set_time(byte hours, byte minutes, byte seconds)`
@@ -74,12 +74,12 @@ Consider adding these helpers to the public API (`time.h`) if you prefer decimal
 Notes: `rtc_set_year` accepts a full year (e.g., 2026); stored value is offset by 2026 internally. `rtc_get_year` returns the full year.
 
 ### Delay and tick conversions
-- `void delay_ms(word ms)` — block for approximately `ms` milliseconds using Timer0 and platform ticks.
-- `void delay_s(word s)` — block for `s` seconds (loops over `delay_ms`).
-- `word ms_to_ticks(word ms)` — convert ms to timer ticks.
-- `word s_to_ticks(word s)` — convert s to timer ticks.
-- `word ticks_to_ms(word ticks)` — convert ticks to milliseconds.
-- `word ticks_to_s(word ticks)` — convert ticks to seconds.
+- `void delay_ms(word ms)` - block for approximately `ms` milliseconds using Timer0 and platform ticks.
+- `void delay_s(word s)` - block for `s` seconds (loops over `delay_ms`).
+- `word ms_to_ticks(word ms)` - convert ms to timer ticks.
+- `word s_to_ticks(word s)` - convert s to timer ticks.
+- `word ticks_to_ms(word ticks)` - convert ticks to milliseconds.
+- `word ticks_to_s(word ticks)` - convert ticks to seconds.
 
 Notes: Delay resolution is limited by `TICKS_PER_MS` (8 ticks/ms) and underlying `__delay` implementation.
 
@@ -131,7 +131,7 @@ word ms = ticks_to_ms(ticks);
 ---
 
 ## Cross-links and next steps
-- Source: `src/time/time.h`, `src/time/time.c`.
+- Source: `src/libcw.h`, `src/time/time.c`.
 - Suggested follow-ups: add a small helper `dec_to_bcd`/`bcd_to_dec` pair to the public API, add alarm APIs, add unit tests for conversion functions.
 
 ---

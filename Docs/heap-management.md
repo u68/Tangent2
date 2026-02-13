@@ -24,7 +24,7 @@ Key properties:
 - Allocations are aligned to `HEAP_BLOCK_ALIGN` (2 bytes).
 - The heap is managed as a singly linked list of blocks.
 
-Source reference: `src/heap/heap.c`, `src/heap/heap.h`.
+Source reference: `src/heap/heap.c`, `src/libcw.h`.
 
 ---
 
@@ -97,12 +97,12 @@ void hmerge();
 ---
 
 ## API reference
-- `void hinit();` — Initialize the heap.
-- `void hmerge();` — Merge adjacent free blocks.
-- `void *halloc(word size);` — Allocate memory.
-- `void *hcalloc(word num, word size);` — Allocate and zero memory.
-- `void *hrealloc(void *ptr, word size);` — Reallocate memory.
-- `void hfree(void *ptr);` — Free memory.
+- `void hinit();` - Initialize the heap.
+- `void hmerge();` - Merge adjacent free blocks.
+- `void *halloc(word size);` - Allocate memory.
+- `void *hcalloc(word num, word size);` - Allocate and zero memory.
+- `void *hrealloc(void *ptr, word size);` - Reallocate memory.
+- `void hfree(void *ptr);` - Free memory.
 
 ---
 
