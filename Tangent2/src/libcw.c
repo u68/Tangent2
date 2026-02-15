@@ -154,6 +154,39 @@ void tui_render_buffer(void) {
     #endif
 }
 
+// Draw the contents of a buffer to the real VRAM
+void tui_render_adr(word adr) {
+	word i = 0;
+	word j = 0;
+	// Lower bitplane
+    #ifndef IS_CWX
+	BufSelSFR= 0;
+    #endif
+	for(i = 0; i < 0x0600; i+=2)
+	{
+		derefw(0xf800 + j) = derefw(adr + i);
+		j+=2;
+		if((j & 0x001F) == 0x18)
+		{
+			j+=8;
+		}
+	}
+	// Upper bitplane
+    #ifndef IS_CWX
+	BufSelSFR = 4;
+	j = 0;
+	for(i = 0; i < 0x0600; i+=2)
+	{
+		derefw(0xf800 + j) = derefw(adr + i + 0x600);
+		j+=2;
+		if((j & 0x001F) == 0x18)
+		{
+			j+=8;
+		}
+	}
+    #endif
+}
+
 // An attempt to work around compiler optimization issues
 #ifndef IS_CWX
 static void __tui_clear_screen_real_buf_2(void) {

@@ -2,3 +2,15 @@ TangentSDK/src/buildtools/tl_t16.exe
 TangentSDK/src/buildtools/tl_t16.obj
 TangentSDK/src/buildtools/tas_t16.obj
 TangentSDK/src/buildtools/tas_t16.exe
+Tangent2/src/generate_media_asset.py
+Tangent2/src/bench.py
+Tangent2/src/input.png
+Tangent2/src/media/generated_media_asset.c
+Tangent2/src/media/generated_media_asset.h
+Tangent2/src/media/media.c
+Tangent2/src/media/generated_media.bin
+Tangent2/src/media/generated_media_raw.bin
+Tangent2/src/libcw.h
+Tangent2/src/libcw.c
+Tangent2/src/media/media.c
+Tangent2/src/media/media.c
