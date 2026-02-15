@@ -10,4 +10,7 @@
 
 #include "../libcw.h"
 
+byte show_media(fs_node_t *parent, const char *path);
+const byte* compress_media(const byte* data, word size, word* out_size);
+
 #endif

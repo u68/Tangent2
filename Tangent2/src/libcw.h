@@ -39,6 +39,7 @@ void tui_simple_line(byte x0, byte y0, byte x1, byte y1, byte colour);
 void tui_advanced_draw_line(byte* data, byte bit_length, byte x0, byte y0, byte x1, byte y1, byte colour, byte thickness);
 void tui_pattern_draw_line(byte pattern, byte x0, byte y0, byte x1, byte y1, byte colour, byte thickness);
 void tui_render_buffer(void);
+void tui_render_adr(word adr);
 void tui_clear_screen(void);
 byte tui_get_pixel_b(byte x, byte y, byte buf);
 byte tui_get_pixel(byte x, byte y);
