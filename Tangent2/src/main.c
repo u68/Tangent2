@@ -6,7 +6,8 @@
  */
 
 #include "libcw.h"
-#include "input/input.h"
+#include "media/media.h"
+#include "media/generated_media_asset.h"
 
 // Custom breakpoint handler (called when BRK executed in asm)
 void custom_break(void) {
@@ -15,22 +16,82 @@ void custom_break(void) {
 	}
 }
 
-int main(void) {
-	char text[33] = {0}; // 32 chars max + NUL
-
-	Write2RealScreen = 0;
-
-	tui_clear_screen();
-	tui_render_buffer();
-
-	while (1) {
-		if (input_text(text, sizeof(text))) {
-			//tui_clear_screen();
-			tui_draw_text(0, 0, text, TUI_FONT_SIZE_6x7, 0, 0, 0, TUI_COLOUR_BLACK);
-			tui_render_buffer();
+// Help
+static void itoa(word n, char* s) {
+	int i = 0;
+	if (n == 0) s[i++] = '0';
+	else {
+		while (n > 0) {
+			s[i++] = (n % 10) + '0';
+			n /= 10;
 		}
 	}
+	s[i] = '\0';
+	for (int j = 0; j < i / 2; j++) {
+		char t = s[j];
+		s[j] = s[i - j - 1];
+		s[i - j - 1] = t;
+	}
+}
+
+int main(void) {
+	word out_size, ratio;
+	byte t_bcd;
+	char s_str[24], r_str[8], t_str[8];
+
+	hinit();
+	fs_init();
+
+	// Compress
+	Write2RealScreen = 0;
+	tui_clear_screen();
+	tui_draw_text(15, 15, "Compressing...", TUI_FONT_SIZE_7x10, 0, 0, 0, TUI_COLOUR_BLACK);
+	tui_render_buffer();
+	Write2RealScreen = 1;
+
+	RTC_SECONDS = 0;
+	RTC_ENABLE = 1;
+	byte *comp_data = compress_media(generated_media_raw, 0xC00, &out_size);
+	RTC_ENABLE = 0;
+	t_bcd = RTC_SECONDS;
+
+	// Store
+	fs_node_t *cfile = fs_touch(FS_ROOT, "t.tmp", PERMS_RW);
+	fs_write(FS_ROOT, "t.tmp", comp_data, out_size);
+	hfree(comp_data);
+
+	// Show
+	tui_draw_text(15, 15, "Showing...    ", TUI_FONT_SIZE_7x10, 0, 0, 0, TUI_COLOUR_BLACK);
+	show_media(FS_ROOT, "t.tmp");
+
+	// Stats
+
+	// Size formatting
+	itoa(out_size, s_str);
+	int l = 0; while (s_str[l]) l++;
+	s_str[l++] = ' '; s_str[l++] = 'b'; s_str[l++] = 'y'; s_str[l++] = 't'; s_str[l++] = 'e'; s_str[l++] = 's'; s_str[l] = 0;
+
+	// Ratio formatting
+	ratio = ((dword)out_size * 100) / 0xC00;
+	itoa(ratio, r_str);
+	l = 0; while (r_str[l]) l++;
+	r_str[l++] = '%'; r_str[l] = 0;
+
+	// Time formatting (BCD)
+	t_str[0] = ((t_bcd >> 4) & 0xF) + '0';
+	t_str[1] = (t_bcd & 0xF) + '0';
+	t_str[2] = 's';
+	t_str[3] = 0;
+
+	tui_draw_text(10, 10, "Compressed:", TUI_FONT_SIZE_7x10, 0, 0, 0, TUI_COLOUR_BLACK);
+	tui_draw_text(100, 10, s_str, TUI_FONT_SIZE_7x10, 0, 0, 0, TUI_COLOUR_BLACK);
+	tui_draw_text(10, 21, "Ratio:", TUI_FONT_SIZE_7x10, 0, 0, 0, TUI_COLOUR_BLACK);
+	tui_draw_text(100, 21, r_str, TUI_FONT_SIZE_7x10, 0, 0, 0, TUI_COLOUR_BLACK);
+	tui_draw_text(10, 32, "Time:", TUI_FONT_SIZE_7x10, 0, 0, 0, TUI_COLOUR_BLACK);
+	tui_draw_text(100, 32, t_str, TUI_FONT_SIZE_7x10, 0, 0, 0, TUI_COLOUR_BLACK);
+
 	return 0;
 }
+
 
 
