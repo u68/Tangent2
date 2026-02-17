@@ -594,13 +594,9 @@ byte show_media(fs_node_t *parent, const char *path) {
         return 1;
     }
 
-    compressed_data = (byte*)halloc(file->size);
+    // Get raw file data pointer directly from filesystem pool to save heap
+    compressed_data = (byte*)(FS_DATA_POOL + file->data_offset);
     if (compressed_data == 0) {
-        return 2;
-    }
-
-    if (fs_read_file(file, compressed_data, file->size) != file->size) {
-        hfree(compressed_data);
         return 2;
     }
 
@@ -617,7 +613,7 @@ byte show_media(fs_node_t *parent, const char *path) {
 
     tui_render_adr((word)render_buffer);
 
-    hfree(compressed_data);
+    // data is in FS_DATA_POOL, no heap free needed
     return 0;
 }
 
