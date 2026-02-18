@@ -51,18 +51,18 @@ int main(void) {
 
 	RTC_SECONDS = 0;
 	RTC_ENABLE = 1;
-	byte *comp_data = compress_media(generated_media_raw, 0xC00, &out_size);
+	byte *comp_data = compress_media(generated_media_raw, 0xC00, MEDIA_COMPRESS_LZMA, &out_size);
 	RTC_ENABLE = 0;
 	t_bcd = RTC_SECONDS;
 
 	// Store
-	fs_node_t *cfile = fs_touch(FS_ROOT, "t.tmp", PERMS_RW);
-	fs_write(FS_ROOT, "t.tmp", comp_data, out_size);
+	fs_node_t *cfile = fs_touch(FS_ROOT, "t.tz", PERMS_RW);
+	fs_write(FS_ROOT, "t.tz", comp_data, out_size);
 	hfree(comp_data);
 
 	// Show
 	tui_draw_text(15, 15, "Showing...    ", TUI_FONT_SIZE_7x10, 0, 0, 0, TUI_COLOUR_BLACK);
-	show_media(FS_ROOT, "t.tmp");
+	show_media(FS_ROOT, "t.tz", MEDIA_COMPRESS_LZMA);
 
 	// Stats
 
