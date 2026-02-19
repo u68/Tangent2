@@ -615,46 +615,44 @@ static void rle_set_color(byte *planes, word pixel_index, byte color) {
 
 static byte rle_encode(const byte *input, word input_size, byte **out_data, word *out_size) {
     byte *buffer;
-    word out_pos;
-    word pixel_count;
-    word pixel_index;
-    byte color;
+    const word buffer_size = 0xC00;
+    word i = 0;
     byte run_length;
+    byte colour;
 
-    if (input == 0 || out_data == 0 || out_size == 0 || input_size != RENDER_BUFFER_SIZE) {
+    if (input == 0 || out_data == 0 || out_size == 0)
         return 1;
-    }
 
-    pixel_count = (word)(BITPLANE_SIZE << 3);
-    buffer = (byte*)halloc(pixel_count);
-    if (buffer == 0) {
+    buffer = (byte*)halloc(buffer_size);
+    if (buffer == 0)
         return 1;
-    }
 
-    out_pos = 0;
-    color = rle_get_color(input, 0);
-    run_length = 1;
+    *out_size = 0;
 
-    for (pixel_index = 1; pixel_index < pixel_count; pixel_index++) {
-        byte current_color = rle_get_color(input, pixel_index);
+    while (i < input_size && *out_size < buffer_size) {
+        colour = rle_get_color(input, i);
+        run_length = 1;
 
-        if (current_color == color && run_length < 64) {
+        while (run_length < 0x40 && (i + run_length) < input_size && rle_get_color(input, i + run_length) == colour) {
             run_length++;
-            continue;
         }
 
-        buffer[out_pos++] = (byte)((color << 6) | (byte)(run_length - 1));
-        color = current_color;
-        run_length = 1;
+        if (*out_size >= buffer_size)
+            break;
+
+        buffer[*out_size] = (byte)((colour << 6) | (run_length - 1));
+
+        (*out_size)++;
+        i += run_length;
     }
 
-    buffer[out_pos++] = (byte)((color << 6) | (byte)(run_length - 1));
-
     *out_data = buffer;
-    *out_size = out_pos;
+
+    if (*out_size > input_size)
+        return 2;
+
     return 0;
 }
-
 static byte rle_decode(const byte *input, word input_size, byte *output, word output_size) {
     word i;
     word pixel_count;
@@ -756,14 +754,7 @@ const byte* compress_media(const byte* data, word size, media_compression_t meth
 
     switch (method) {
         case MEDIA_COMPRESS_RAW:
-            compressed = (byte*)halloc(size);
-            if (compressed == 0) {
-                *out_size = 0;
-                return 0;
-            }
-            for (i = 0; i < size; i++) {
-                compressed[i] = data[i];
-            }
+            compressed = data;
             compressed_size = size;
             break;
         case MEDIA_COMPRESS_RLE:
