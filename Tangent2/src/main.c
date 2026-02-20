@@ -52,6 +52,10 @@ int main(void) {
 	RTC_SECONDS = 0;
 	RTC_ENABLE = 1;
 	byte *comp_data = compress_media(generated_media_raw, 0xC00, MEDIA_COMPRESS_LZMA, &out_size);
+	if (comp_data == 0) {
+		tui_draw_text(15, 25, "Error compressing media", TUI_FONT_SIZE_7x10, 0, 0, 0, TUI_COLOUR_BLACK);
+		while (1);
+	}
 	RTC_ENABLE = 0;
 	t_bcd = RTC_SECONDS;
 
@@ -59,11 +63,20 @@ int main(void) {
 	fs_node_t *cfile = fs_touch(FS_ROOT, "t.tz", PERMS_RW);
 	fs_write(FS_ROOT, "t.tz", comp_data, out_size);
 	hfree(comp_data);
+	derefw(0xAB30) = cfile->size;
 
 	// Show
 	tui_draw_text(15, 15, "Showing...    ", TUI_FONT_SIZE_7x10, 0, 0, 0, TUI_COLOUR_BLACK);
-	show_media(FS_ROOT, "t.tz", MEDIA_COMPRESS_LZMA);
-
+	byte sm = show_media(FS_ROOT, "t.tz", MEDIA_COMPRESS_LZMA);
+	if (sm != 0) {
+		tui_draw_text(15, 25, "Error showing media", TUI_FONT_SIZE_7x10, 0, 0, 0, TUI_COLOUR_BLACK);
+		tui_draw_text(15, 35, "Error code:", TUI_FONT_SIZE_7x10, 0, 0, 0, TUI_COLOUR_BLACK);
+		char buf[2] = {0};
+		itoa(sm, buf);
+		tui_draw_text(100, 35, buf, TUI_FONT_SIZE_7x10, 0, 0, 0, TUI_COLOUR_BLACK);
+		derefw(0xAB32) = sm;
+		while (1);
+	}
 	// Stats
 
 	// Size formatting

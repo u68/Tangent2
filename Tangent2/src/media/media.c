@@ -589,111 +589,82 @@ static byte decompress_lzma_raw(const byte *input, word input_size, byte *output
 }
 
 static byte rle_get_color(const byte *planes, word pixel_index) {
-    word byte_index = (word)(pixel_index >> 3);
-    byte bit_mask = (byte)(0x80 >> (pixel_index & 7));
+    word row = pixel_index / 192;
+    word col = pixel_index % 192;
+    word byte_index = row * 24 + (col >> 3);
+    byte bit_mask = (byte)(0x80 >> (col & 7));
     byte light = (planes[byte_index] & bit_mask) ? 1 : 0;
     byte dark = (planes[BITPLANE_SIZE + byte_index] & bit_mask) ? 2 : 0;
     return (byte)(light | dark);
 }
 
 static void rle_set_color(byte *planes, word pixel_index, byte color) {
-    word byte_index = (word)(pixel_index >> 3);
-    byte bit_mask = (byte)(0x80 >> (pixel_index & 7));
-
-    if (color & 0x01) {
-        planes[byte_index] |= bit_mask;
-    } else {
-        planes[byte_index] &= (byte)(~bit_mask);
-    }
-
-    if (color & 0x02) {
-        planes[BITPLANE_SIZE + byte_index] |= bit_mask;
-    } else {
-        planes[BITPLANE_SIZE + byte_index] &= (byte)(~bit_mask);
-    }
+    word row = pixel_index / 192;
+    word col = pixel_index % 192;
+    word byte_index = row * 24 + (col >> 3);
+    byte bit_mask = (byte)(0x80 >> (col & 7));
+    if (color & 0x01) planes[byte_index] |= bit_mask;
+    else planes[byte_index] &= (byte)(~bit_mask);
+    if (color & 0x02) planes[BITPLANE_SIZE + byte_index] |= bit_mask;
+    else planes[BITPLANE_SIZE + byte_index] &= (byte)(~bit_mask);
 }
 
 static byte rle_encode(const byte *input, word input_size, byte **out_data, word *out_size) {
-    byte *buffer;
-    const word buffer_size = 0xC00;
-    word i = 0;
-    byte run_length;
-    byte colour;
-
-    if (input == 0 || out_data == 0 || out_size == 0)
-        return 1;
-
-    buffer = (byte*)halloc(buffer_size);
-    if (buffer == 0)
-        return 1;
-
-    *out_size = 0;
-
-    while (i < input_size && *out_size < buffer_size) {
-        colour = rle_get_color(input, i);
-        run_length = 1;
-
-        while (run_length < 0x40 && (i + run_length) < input_size && rle_get_color(input, i + run_length) == colour) {
-            run_length++;
-        }
-
-        if (*out_size >= buffer_size)
-            break;
-
-        buffer[*out_size] = (byte)((colour << 6) | (run_length - 1));
-
-        (*out_size)++;
-        i += run_length;
+    if (input == 0 || out_data == 0 || out_size == 0 || input_size != RENDER_BUFFER_SIZE) return 1;
+    word pixel_count = 192 * 63;
+    word encoded_size = 0;
+    byte run_length, colour, cur;
+    word i;
+    // First pass: count encoded size
+    colour = rle_get_color(input, 0);
+    run_length = 1;
+    for (i = 1; i < pixel_count; i++) {
+        cur = rle_get_color(input, i);
+        if (cur == colour && run_length < 64) run_length++;
+        else { encoded_size++; colour = cur; run_length = 1; }
     }
-
+    encoded_size++;
+    byte *buffer = (byte*)halloc(encoded_size);
+    if (buffer == 0) return 2;
+    *out_size = 0;
+    colour = rle_get_color(input, 0);
+    run_length = 1;
+    for (i = 1; i < pixel_count; i++) {
+        cur = rle_get_color(input, i);
+        if (cur == colour && run_length < 64) run_length++;
+        else {
+            buffer[(*out_size)++] = (byte)((colour << 6) | (run_length - 1));
+            colour = cur; run_length = 1;
+        }
+    }
+    buffer[(*out_size)++] = (byte)((colour << 6) | (run_length - 1));
     *out_data = buffer;
-
-    if (*out_size > input_size)
-        return 2;
-
     return 0;
 }
+
 static byte rle_decode(const byte *input, word input_size, byte *output, word output_size) {
+    if (input == 0 || output == 0 || output_size != RENDER_BUFFER_SIZE) return 1;
+    word expected_pixels = 192 * 63;
+    word clear_index;
+    for (clear_index = 0; clear_index < output_size; clear_index++) {
+        output[clear_index] = 0;
+    }
+    word pixel_index = 0;
     word i;
-    word pixel_count;
-    word pixel_index;
-
-    if (input == 0 || output == 0 || output_size != RENDER_BUFFER_SIZE) {
-        return 1;
-    }
-
-    for (i = 0; i < output_size; i++) {
-        output[i] = 0;
-    }
-
-    pixel_count = (word)(BITPLANE_SIZE << 3);
-    pixel_index = 0;
-
     for (i = 0; i < input_size; i++) {
-        byte token = input[i];
-        byte color = (byte)(token >> 6);
-        byte run_length = (byte)((token & 0x3F) + 1);
-
-        while (run_length--) {
-            if (pixel_index >= pixel_count) {
-                return 1;
-            }
-            rle_set_color(output, pixel_index, color);
-            pixel_index++;
-        }
+        byte packed = input[i];
+        byte colour = (packed >> 6) & 0x03;
+        byte run_length = (packed & 0x3F) + 1;
+        if (pixel_index + run_length > expected_pixels) run_length = (byte)(expected_pixels - pixel_index);
+        while (run_length--) rle_set_color(output, pixel_index++, colour);
+        if (pixel_index == expected_pixels) break;
     }
-
-    if (pixel_index != pixel_count) {
-        return 1;
-    }
-
-    return 0;
+    return (pixel_index == expected_pixels) ? 0 : 2;
 }
 
 byte show_media(fs_node_t *parent, const char *path, media_compression_t method) {
     fs_node_t *file;
     byte *compressed_data;
-    word i;
 
     file = fs_lookup(parent, path);
     if (file == 0) {
@@ -713,18 +684,17 @@ byte show_media(fs_node_t *parent, const char *path, media_compression_t method)
             }
             break;
         case MEDIA_COMPRESS_RAW:
-            if (file->size != RENDER_BUFFER_SIZE) {
-                return 3;
-            }
-            for (i = 0; i < RENDER_BUFFER_SIZE; i++) {
-                render_buffer[i] = compressed_data[i];
-            }
+            tui_render_adr((word)compressed_data);
+            return 0;
             break;
         case MEDIA_COMPRESS_RLE:
-            if (rle_decode(compressed_data, file->size, render_buffer, RENDER_BUFFER_SIZE)) {
-                return 3;
+        {
+        	byte a = rle_decode(compressed_data, file->size, render_buffer, RENDER_BUFFER_SIZE);
+            if (a) {
+                return a;
             }
             break;
+        }
         default:
             return 4; // Unsupported format
     }
@@ -754,7 +724,14 @@ const byte* compress_media(const byte* data, word size, media_compression_t meth
 
     switch (method) {
         case MEDIA_COMPRESS_RAW:
-            compressed = data;
+            compressed = (byte*)halloc(size);
+            if (compressed == 0) {
+				*out_size = 0;
+				return 0;
+			}
+            for (i = 0; i < size; i++) {
+				compressed[i] = data[i];
+			}
             compressed_size = size;
             break;
         case MEDIA_COMPRESS_RLE:
