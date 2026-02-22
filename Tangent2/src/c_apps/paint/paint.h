@@ -12,5 +12,6 @@
 #include "../../libcw.h"
 
 void start_paint(void);
+void paint_open(const char *filename);
 
 #endif /* PAINT_H_ */

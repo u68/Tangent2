@@ -12,5 +12,6 @@
 #include "../../libcw.h"
 
 void start_fs_man(void);
+void fs_man_open(const char *path);
 
 #endif /* FS_MAN_H_ */
