@@ -11,4 +11,6 @@
 
 #include "../../libcw.h"
 
+void start_media_view(void);
+
 #endif /* MEDIA_VIEW_H_ */

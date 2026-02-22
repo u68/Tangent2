@@ -11,4 +11,6 @@
 
 #include "../../libcw.h"
 
+void start_text_edit(void);
+
 #endif /* TEXT_EDIT_H_ */
