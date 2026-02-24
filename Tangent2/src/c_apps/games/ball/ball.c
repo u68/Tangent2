@@ -441,11 +441,11 @@ void start_ball(void) {
 		if(cchar > 2 && cchar < 7)
 		{
 			cchar = 0;
-			delay(250);
+			delay_ms(25);
 			draw_char(cchar,cx,cy);
 			if(cx == 75 && cy == 52)
 			{
-				delay(4000);
+				delay_ms(500);
 				draw_char(7,cx,cy);
 				while (1)
 				win();
