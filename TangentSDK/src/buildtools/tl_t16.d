@@ -139,6 +139,7 @@ LinkResult link(string[] inputFiles, string outputFile) {
     writeln("Linking ", inputFiles.length, " object file(s)...");
 
     ubyte[] combined;
+    uint totalRam = 0;
 
     // Try to read all input files
     foreach (inputFile; inputFiles) {
@@ -155,7 +156,19 @@ LinkResult link(string[] inputFiles, string outputFile) {
                 result.errorMessage = "Invalid input " ~ inputFile ~ ": " ~ headerError;
                 return result;
             }
-            combined ~= payload;
+            
+            if (payload.length < 2) {
+                result.errorCode = LinkError.LINK_ERROR;
+                result.errorMessage = "Object file payload too small to contain RAM size: " ~ inputFile;
+                return result;
+            }
+            
+            // Extract the 2-byte RAM size from the end of the object file payload
+            uint objRamSize = payload[$ - 2] | (payload[$ - 1] << 8);
+            totalRam += objRamSize;
+            
+            // Append only the code/markers, dropping the RAM size
+            combined ~= payload[0 .. $ - 2];
         } catch (FileException e) {
             result.errorCode = LinkError.FILE_NOT_FOUND;
             result.errorMessage = "Failed to read " ~ inputFile ~ ": " ~ e.msg;
@@ -163,9 +176,9 @@ LinkResult link(string[] inputFiles, string outputFile) {
         }
     }
 
-    if (combined.length < 2) {
+    if (combined.length == 0) {
         result.errorCode = LinkError.LINK_ERROR;
-        result.errorMessage = "Linked output too small to contain RAM size";
+        result.errorMessage = "Linked output is empty";
         return result;
     }
 
@@ -265,13 +278,13 @@ LinkResult link(string[] inputFiles, string outputFile) {
         i++;
     }
 
-    if (resolved.length < 2) {
+    if (resolved.length == 0) {
         result.errorCode = LinkError.LINK_ERROR;
-        result.errorMessage = "Linked output too small to contain RAM size";
+        result.errorMessage = "Linked output is empty";
         return result;
     }
 
-    uint codeSize = cast(uint)(resolved.length - 2);
+    uint codeSize = cast(uint)(resolved.length);
     if (codeSize > 0xFFFF) {
         result.errorCode = LinkError.LINK_ERROR;
         result.errorMessage = "Code size exceeds 16-bit limit";
@@ -279,9 +292,10 @@ LinkResult link(string[] inputFiles, string outputFile) {
     }
 
     ubyte[] finalOutput;
+    // Format: <Total Code Size> <Total RAM Size> <Code...>
     appendLe16(finalOutput, codeSize);
-    finalOutput ~= resolved[$ - 2 .. $];
-    finalOutput ~= resolved[0 .. $ - 2];
+    appendLe16(finalOutput, totalRam > 0xFFFF ? 0xFFFF : totalRam);
+    finalOutput ~= resolved;
 
     writeln("Generating output: ", outputFile);
     try {
