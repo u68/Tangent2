@@ -604,49 +604,36 @@ void tui_draw_byte(byte x, byte y, byte data, byte data2, byte mask) {
 	} else {
 		addr = (y << 4) + (y << 3) + (x >> 3) + VRAM;
 	}
-	// Write high bytes first if there's spillover
-	if (bitpos) {
-        #ifndef IS_CWX
-		if (Write2RealScreen) {
-			BufSelSFR = 0;
-		}
-        #endif
-		// Draw first bitplane high byte
-		temp = deref(addr + 1);
-		temp &= ~hmask;
-		temp |= (hbyte & hmask);
-		deref(addr + 1) = temp;
-        #ifndef IS_CWX
-		if (Write2RealScreen) {
-			BufSelSFR = 4;
-		} else {
-			addr += 0x600;
-		}
-		// Draw second bitplane high byte
-		temp = deref(addr + 1);
-		temp &= ~hmask;
-		temp |= (hbyte2 & hmask);
-		deref(addr + 1) = temp;
-		if (!Write2RealScreen) {
-			addr -= 0x600;
-		}
-        #endif
-	}
     #ifndef IS_CWX
 	if (Write2RealScreen) {
 		BufSelSFR = 0;
 	}
     #endif
+	if (bitpos) {
+		// Draw first bitplane high byte
+		temp = deref(addr + 1);
+		temp &= ~hmask;
+		temp |= (hbyte & hmask);
+		deref(addr + 1) = temp;
+	}
 	// Draw low byte (first bitplane)
 	temp = deref(addr);
 	temp &= ~lmask;
 	temp |= (lbyte & lmask);
 	deref(addr) = temp;
+
     #ifndef IS_CWX
 	if (Write2RealScreen) {
 		BufSelSFR = 4;
 	} else {
 		addr += 0x600;
+	}
+	if (bitpos) {
+		// Draw second bitplane high byte
+		temp = deref(addr + 1);
+		temp &= ~hmask;
+		temp |= (hbyte2 & hmask);
+		deref(addr + 1) = temp;
 	}
 	// Draw low byte (second bitplane)
 	temp = deref(addr);
@@ -681,52 +668,58 @@ void tui_draw_image(byte x, byte y, byte width, byte height, const byte* bitmap,
 	word mapindex;
 
 	if (!rotation) {
-		byte osf = (width & 7) ? 1 : 0; // If size is not a multiple of 8
 		byte rem = width & 7; // Remaining bits in last byte
 		byte last_mask = rem ? (0xFF << (8 - rem)) : 0xFF; // Mask for last byte
+		byte sx = x - ax; // Pre-calculate starting x
 		// No rotation, simple blit, but it's massive becuase doing the switch when it comes to draw the byte decreases the amount of cycles
 		switch (colour) {
 		case TUI_COLOUR_WHITE:
 			return;
         #ifndef IS_CWX
 		case TUI_COLOUR_LIGHT_GREY:
+			mapindex = 0;
 			for (iy = 0; iy < height; iy++) {
+				byte sy = y - ay + iy;
 				for (ix = 0; ix < bwidth; ix++) {
-					mapindex = iy * bwidth + ix; // Calculate index in bitmap
-					byte mask = (ix == bwidth - osf && osf) ? last_mask : 0xFF; // If it is the last byte and there is an offset, use last mask
-					tui_draw_byte(x + (ix << 3) - ax, y - ay + iy, bitmap[mapindex], 0, mask); // The draw byte function is surprisingly complicated
+					byte mask = (ix == bwidth - 1) ? last_mask : 0xFF; // If it is the last byte, use last mask
+					tui_draw_byte(sx + (ix << 3), sy, bitmap[mapindex++], 0, mask); // The draw byte function is surprisingly complicated
 				}
 			}
 			return;
 		case TUI_COLOUR_DARK_GREY:
+			mapindex = 0;
 			for (iy = 0; iy < height; iy++) {
+				byte sy = y - ay + iy;
 				for (ix = 0; ix < bwidth; ix++) {
-					mapindex = iy * bwidth + ix;
-					byte mask = (ix == bwidth - osf && osf) ? last_mask : 0xFF;
-					tui_draw_byte(x + (ix << 3) - ax, y - ay + iy, 0, bitmap[mapindex], mask);
+					byte mask = (ix == bwidth - 1) ? last_mask : 0xFF;
+					tui_draw_byte(sx + (ix << 3), sy, 0, bitmap[mapindex++], mask);
 				}
 			}
 			return;
         #endif
 		case TUI_COLOUR_BLACK:
+			mapindex = 0;
 			for (iy = 0; iy < height; iy++) {
+				byte sy = y - ay + iy;
 				for (ix = 0; ix < bwidth; ix++) {
-					mapindex = iy * bwidth + ix;
-					byte mask = (ix == bwidth - osf && osf) ? last_mask : 0xFF;
-					tui_draw_byte(x + (ix << 3) - ax, y - ay + iy, bitmap[mapindex], bitmap[mapindex], mask);
+					byte mask = (ix == bwidth - 1) ? last_mask : 0xFF;
+					tui_draw_byte(sx + (ix << 3), sy, bitmap[mapindex], bitmap[mapindex], mask);
+					mapindex++;
 				}
 			}
 			return;
 		default:
+			mapindex = 0;
 			for (iy = 0; iy < height; iy++) {
+				byte sy = y - ay + iy;
 				for (ix = 0; ix < bwidth; ix++) {
-					mapindex = iy * bwidth + ix;
-					byte mask = (ix == bwidth - osf && osf) ? last_mask : 0xFF;
+					byte mask = (ix == bwidth - 1) ? last_mask : 0xFF;
                     #ifndef IS_CWX
-					tui_draw_byte(x + (ix << 3) - ax, y - ay + iy, bitmap[mapindex], bitmap[mapindex + psize], mask);
+					tui_draw_byte(sx + (ix << 3), sy, bitmap[mapindex], bitmap[mapindex + psize], mask);
                     #else
-                    tui_draw_byte(x + (ix << 3) - ax, y - ay + iy, bitmap[mapindex], bitmap[mapindex], mask);
+                    tui_draw_byte(sx + (ix << 3), sy, bitmap[mapindex], bitmap[mapindex], mask);
                     #endif
+					mapindex++;
 				}
 			}
 			return;
