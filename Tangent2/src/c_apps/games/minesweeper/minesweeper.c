@@ -232,33 +232,23 @@ static void render() {
     tui_render_buffer();
 }
 
-static void render_dark(word addr)
+static void render_dark(byte *addr)
 {
     word i = 0;
     word j = 0;
     for(i = 0; i < 0x0600; i++)
     {
-        j++;
-        if((j & 0x001F) == 0x18)
-        {
-            j+=8;
-        }
-        *((word *)(0x9600 + j)) = *((word *)(addr + i));
+        *((word *)(0x9600 + i)) = addr[i];
     }
 }
 
-static void render_light(word addr)
+static void render_light(byte *addr)
 {
     word i = 0;
     word j = 0;
     for(i = 0; i < 0x0600; i++)
     {
-        j++;
-        if((j & 0x001F) == 0x18)
-        {
-            j+=8;
-        }
-        *((word *)(0x9000 + j)) = *((word *)(addr + i));
+        *((word *)(0x9000 + i)) = addr[i];
     }
 }
 
@@ -337,7 +327,6 @@ static void lose() {
 			draw_tile(get_tile(i,j),i,j);
 		}
 	}
-	custom_break();
 }
 
 static void reveal_tiles_5(word x,word y) {

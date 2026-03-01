@@ -713,6 +713,8 @@ static void draw_tile(word tile,word x,word y)
     }
 }
 
+void move_tiles(byte dir);
+
 void start_2048(void) {
     board = halloc(16);
     clear_buffer();
@@ -723,7 +725,7 @@ void start_2048(void) {
 		//display_tiles();
 		if(pb==0xFF)
 		{
-			delay(100);
+			delay_ms(10);
 			continue;
 		} else if(pb==SP_UP) {
 			move_tiles(1);
@@ -769,6 +771,8 @@ void draw_tiles()
 	}
 	tui_render_buffer();
 }
+
+void check_moves();
 
 void move_tiles(byte dir)
 {
@@ -930,6 +934,9 @@ void move_tiles(byte dir)
 	//draw_tiles();
 }
 
+void win_screen();
+void death_screen();
+
 void check_moves()
 {
 	byte i = 0;
@@ -950,23 +957,23 @@ void check_moves()
 	death_screen();
 }
 
-void render_dark(word addr)
+void render_dark(byte *addr)
 {
     word i = 0;
     word j = 0;
     for(i = 0; i < 0x0600; i++)
     {
-        *((word *)(0x9600 + j)) = *((word *)(addr + i));
+        *((word *)(0x9600 + i)) = addr[i];
     }
 }
 
-void render_light(word addr)
+void render_light(byte *addr)
 {
     word i = 0;
     word j = 0;
     for(i = 0; i < 0x0600; i++)
     {
-        *((word *)(0x9000 + j)) = *((word *)(addr + i));
+        *((word *)(0x9000 + i)) = addr[i];
     }
 }
 
@@ -977,7 +984,7 @@ void death_screen()
 	{
 		render_dark(dlose);
 		render_light(llose);
-		render();
+		tui_render_buffer();
 
 	}
 }
@@ -989,7 +996,7 @@ void win_screen()
 	{
 		render_dark(dwin);
 		render_light(lwin);
-		render();
+		tui_render_buffer();
 
 	}
 }

@@ -329,6 +329,8 @@ static void draw_char(byte id, byte x, byte y)
 	draw_map();
 }
 
+static void lose();
+
 static byte get_pixel(byte x, byte y)
 {
 	y++;

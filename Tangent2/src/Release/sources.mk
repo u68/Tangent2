@@ -41,6 +41,14 @@ STACK_CALCULATOR_OUTPUT_OUTPUTS__QUOTED :=
 
 # Every subdirectory with source files must be described here
 SUBDIRS := \
+c_apps/fs_man \
+c_apps/games/2048 \
+c_apps/games/ball \
+c_apps/games/minesweeper \
+c_apps/games/snake \
+c_apps/media_viewer \
+c_apps/paint \
+c_apps/text_editor \
 debug \
 desktop \
 input \
