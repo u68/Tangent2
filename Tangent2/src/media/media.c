@@ -77,8 +77,8 @@ static byte render_buffer[RENDER_BUFFER_SIZE];
 static byte state_is_literal(byte state);
 static void update_literal_state(byte *state);
 static void reset_decoder_model(void);
-static byte rle_get_color(const byte *planes, word pixel_index);
-static void rle_set_color(byte *planes, word pixel_index, byte color);
+static byte rle_get_bit(const byte *buffer, word bit_index);
+static void rle_set_bit(byte *buffer, word bit_index, byte bit_value);
 static byte rle_encode(const byte *input, word input_size, byte **out_data, word *out_size);
 static byte rle_decode(const byte *input, word input_size, byte *output, word output_size);
 
@@ -588,78 +588,73 @@ static byte decompress_lzma_raw(const byte *input, word input_size, byte *output
     return 0;
 }
 
-static byte rle_get_color(const byte *planes, word pixel_index) {
-    word row = pixel_index / 192;
-    word col = pixel_index % 192;
-    word byte_index = row * 24 + (col >> 3);
-    byte bit_mask = (byte)(0x80 >> (col & 7));
-    byte light = (planes[byte_index] & bit_mask) ? 1 : 0;
-    byte dark = (planes[BITPLANE_SIZE + byte_index] & bit_mask) ? 2 : 0;
-    return (byte)(light | dark);
+static byte rle_get_bit(const byte *buffer, word bit_index) {
+    word byte_index = bit_index >> 3;
+    byte bit_mask = (byte)(0x80 >> (bit_index & 7));
+    return (buffer[byte_index] & bit_mask) ? 1 : 0;
 }
 
-static void rle_set_color(byte *planes, word pixel_index, byte color) {
-    word row = pixel_index / 192;
-    word col = pixel_index % 192;
-    word byte_index = row * 24 + (col >> 3);
-    byte bit_mask = (byte)(0x80 >> (col & 7));
-    if (color & 0x01) planes[byte_index] |= bit_mask;
-    else planes[byte_index] &= (byte)(~bit_mask);
-    if (color & 0x02) planes[BITPLANE_SIZE + byte_index] |= bit_mask;
-    else planes[BITPLANE_SIZE + byte_index] &= (byte)(~bit_mask);
+static void rle_set_bit(byte *buffer, word bit_index, byte bit_value) {
+    word byte_index = bit_index >> 3;
+    byte bit_mask = (byte)(0x80 >> (bit_index & 7));
+    if (bit_value) {
+        buffer[byte_index] |= bit_mask;
+    } else {
+        buffer[byte_index] &= (byte)(~bit_mask);
+    }
 }
 
 static byte rle_encode(const byte *input, word input_size, byte **out_data, word *out_size) {
     if (input == 0 || out_data == 0 || out_size == 0 || input_size != RENDER_BUFFER_SIZE) return 1;
-    word pixel_count = 192 * 63;
+    word bit_count = RENDER_BUFFER_SIZE * 8;
     word encoded_size = 0;
-    byte run_length, colour, cur;
+    byte run_length, bit_val, cur;
     word i;
     // First pass: count encoded size
-    colour = rle_get_color(input, 0);
+    bit_val = rle_get_bit(input, 0);
     run_length = 1;
-    for (i = 1; i < pixel_count; i++) {
-        cur = rle_get_color(input, i);
-        if (cur == colour && run_length < 64) run_length++;
-        else { encoded_size++; colour = cur; run_length = 1; }
+    for (i = 1; i < bit_count; i++) {
+        cur = rle_get_bit(input, i);
+        if (cur == bit_val && run_length < 128) run_length++;
+        else { encoded_size++; bit_val = cur; run_length = 1; }
     }
     encoded_size++;
     byte *buffer = (byte*)halloc(encoded_size);
     if (buffer == 0) return 2;
     *out_size = 0;
-    colour = rle_get_color(input, 0);
+    bit_val = rle_get_bit(input, 0);
     run_length = 1;
-    for (i = 1; i < pixel_count; i++) {
-        cur = rle_get_color(input, i);
-        if (cur == colour && run_length < 64) run_length++;
+    for (i = 1; i < bit_count; i++) {
+        cur = rle_get_bit(input, i);
+        if (cur == bit_val && run_length < 128) run_length++;
         else {
-            buffer[(*out_size)++] = (byte)((colour << 6) | (run_length - 1));
-            colour = cur; run_length = 1;
+            buffer[(*out_size)++] = (byte)((bit_val << 7) | (run_length - 1));
+            bit_val = cur; run_length = 1;
         }
     }
-    buffer[(*out_size)++] = (byte)((colour << 6) | (run_length - 1));
+    buffer[(*out_size)++] = (byte)((bit_val << 7) | (run_length - 1));
     *out_data = buffer;
     return 0;
 }
 
 static byte rle_decode(const byte *input, word input_size, byte *output, word output_size) {
     if (input == 0 || output == 0 || output_size != RENDER_BUFFER_SIZE) return 1;
-    word expected_pixels = 192 * 63;
+    word expected_bits = RENDER_BUFFER_SIZE * 8;
     word clear_index;
     for (clear_index = 0; clear_index < output_size; clear_index++) {
         output[clear_index] = 0;
     }
-    word pixel_index = 0;
+    word bit_index = 0;
     word i;
     for (i = 0; i < input_size; i++) {
         byte packed = input[i];
-        byte colour = (packed >> 6) & 0x03;
-        byte run_length = (packed & 0x3F) + 1;
-        if (pixel_index + run_length > expected_pixels) run_length = (byte)(expected_pixels - pixel_index);
-        while (run_length--) rle_set_color(output, pixel_index++, colour);
-        if (pixel_index == expected_pixels) break;
+        byte bit_val = (packed >> 7) & 0x01;
+        byte run_length = (packed & 0x7F) + 1;
+        if (bit_index + run_length > expected_bits) run_length = (byte)(expected_bits - bit_index);
+        while (run_length--) rle_set_bit(output, bit_index++, bit_val);
+        if (bit_index == expected_bits) break;
     }
-    return (pixel_index == expected_pixels) ? 0 : 2;
+    return (bit_index == expected_bits) ? 0 : 2;
 }
 
 byte show_media(fs_node_t *parent, const char *path, media_compression_t method) {
