@@ -23,6 +23,7 @@ typedef enum {
 	TML_TYPE_CHECKBOX,
 	TML_TYPE_RADIO,
 	TML_TYPE_LINE,
+	TML_TYPE_WINDOW,
 	TML_TYPE_COUNT
 } TmlElementType;
 
@@ -50,7 +51,7 @@ typedef struct {
 
 // Element-specific data for BUTTON elements
 typedef struct {
-	const char *text;
+	const char  *text;
 	byte         font_size;
 	byte         width;
 	byte         height;
@@ -91,7 +92,7 @@ typedef struct {
 
 // Element-specific data for INPUT elements
 typedef struct {
-	char*        text;            // Editable text buffer
+	char        *text;            // Editable text buffer
 	byte         max_length;
 	byte         font_size;
 	byte         width;
@@ -99,6 +100,13 @@ typedef struct {
 	byte         border_thickness;
 	byte         border_style;
 } TmlInputData;
+
+// Element-specific data for WINDOW elements (desktop stuff)
+typedef struct {
+	const char  *title;
+	byte         width;
+	byte         height;
+} TmlWindowData;
 
 typedef union {
 	byte raw;
@@ -117,15 +125,16 @@ typedef struct TmlElement {
 	struct TmlElement *next_sibling;  // Next sibling element (NULL if last)
 	
 	// Common properties
-	byte         type;            // TmlElementType
-	word         id;              // Unique element ID
-	byte         x;               // X position relative to parent
-	byte         y;               // Y position relative to parent
-	byte         anchor_x;        // Anchor point X offset
-	byte         anchor_y;        // Anchor point Y offset
-	word         rotation;        // Rotation in degrees (0-359)
-	byte         colour;          // Element colour
-	TmlSelect    select;          // Selection state
+	TmlElementType type;            // TmlElementType
+	word           id;              // Unique element ID
+	byte           x;               // X position relative to parent
+	byte           y;               // Y position relative to parent
+	byte           z_index;         // Z-index for rendering order (higher = on top)
+	byte           anchor_x;        // Anchor point X offset
+	byte           anchor_y;        // Anchor point Y offset
+	word           rotation;        // Rotation in degrees (0-359)
+	byte           colour;          // Element colour
+	TmlSelect      select;          // Selection state
 	
 	// Element-specific data
 	union {
@@ -136,6 +145,7 @@ typedef struct TmlElement {
 		TmlCheckboxData  checkbox;
 		TmlRadioData     radio;
 		TmlInputData     input;
+		TmlWindowData	 window;
 	} data;
 } TmlElement;
 
@@ -159,6 +169,8 @@ void tml_init_div(TmlElement *elem, word id, byte x, byte y, byte w, byte h, byt
 void tml_init_line(TmlElement *elem, word id, byte x, byte y, byte x1, byte y1, byte colour, byte thickness, byte style);
 void tml_init_checkbox(TmlElement *elem, word id, byte x, byte y, byte size, byte colour, byte checked);
 void tml_init_radio(TmlElement *elem, word id, byte x, byte y, byte size, byte colour, byte selected);
+void tml_init_input(TmlElement *elem, word id, byte x, byte y, byte w, byte h, byte max_length, byte font_size, byte colour);
+void tml_init_window(TmlElement *elem, word id, byte x, byte y, byte w, byte h, const char *title);
 
 // Tree manipulation
 void tml_add_child(TmlElement *parent, TmlElement *child);

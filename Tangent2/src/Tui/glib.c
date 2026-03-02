@@ -16,6 +16,8 @@ static void render_div(TmlElement *elem, byte world_x, byte world_y, word world_
 static void render_line(TmlElement *elem, byte world_x, byte world_y, word world_rot);
 static void render_checkbox(TmlElement *elem, byte world_x, byte world_y, word world_rot);
 static void render_radio(TmlElement *elem, byte world_x, byte world_y, word world_rot);
+static void render_input(TmlElement *elem, byte world_x, byte world_y, word world_rot);
+static void render_window(TmlElement *elem, byte world_x, byte world_y, word world_rot);
 
 // Transform helper
 static void apply_transform(byte parent_wx, byte parent_wy, word parent_rot,
@@ -133,6 +135,12 @@ void tml_render(TmlElement* root) {
 					break;
 				case TML_TYPE_RADIO:
 					render_radio(current, world_x, world_y, world_rot);
+					break;
+				case TML_TYPE_INPUT:
+					render_input(current, world_x, world_y, world_rot);
+					break;
+				case TML_TYPE_WINDOW:
+					render_window(current, world_x, world_y, world_rot);
 					break;
 				default:
 					trigger_bsod(ERROR_TUI_INVALID_ELEMENT);
@@ -387,6 +395,14 @@ static void render_radio(TmlElement* elem, byte world_x, byte world_y, word worl
 	}
 }
 
+static void render_input(TmlElement *elem, byte world_x, byte world_y, word world_rot) {
+	
+}
+
+static void render_window(TmlElement *elem, byte world_x, byte world_y, word world_rot) {
+	
+}
+
 // Initializers (not super required)
 void tml_init_root(TmlElement* e) {
 	e->type = TML_TYPE_ROOT;
@@ -514,6 +530,46 @@ void tml_init_radio(TmlElement* e, word id, byte x, byte y, byte size, byte colo
 	e->data.radio.size = size;
 	e->data.radio.border_thickness = 1;
 	e->select = (TmlSelect){.field.selectable = 1, .field.selected = selected, .field.focused = 0};
+}
+
+void tml_init_input(TmlElement *e, word id, byte x, byte y, byte w, byte h, byte max_length, byte font_size, byte colour) {
+	e->type = TML_TYPE_INPUT;
+	e->id = id;
+	e->x = x;
+	e->y = y;
+	e->rotation = 0;
+	e->anchor_x = 0;
+	e->anchor_y = 0;
+	e->colour = colour;
+	e->parent = 0;
+	e->first_child = 0;
+	e->next_sibling = 0;
+	e->data.input.text = 0; // Will be set later
+	e->data.input.max_length = max_length;
+	e->data.input.font_size = font_size;
+	e->data.input.width = w;
+	e->data.input.height = h;
+	e->data.input.border_thickness = 1;
+	e->data.input.border_style = TUI_LINE_STYLE_SOLID;
+	e->select = (TmlSelect){.field.selectable = 1, .field.selected = 0, .field.focused = 0};
+}
+
+void tml_init_window(TmlElement *e, word id, byte x, byte y, byte w, byte h, const char *title) {
+	e->type = TML_TYPE_WINDOW;
+	e->id = id;
+	e->x = x;
+	e->y = y;
+	e->rotation = 0;
+	e->anchor_x = 0;
+	e->anchor_y = 0;
+	e->colour = 0;
+	e->parent = 0;
+	e->first_child = 0;
+	e->next_sibling = 0;
+	e->data.window.title = title;
+	e->data.window.width = w;
+	e->data.window.height = h;
+	e->select = (TmlSelect){.field.selectable = 1, .field.selected = 0, .field.focused = 0};
 }
 
 // Tree manipulation
@@ -662,6 +718,7 @@ TmlElement* tml_parse(const byte* data, TmlElement* elements, byte max_elems) {
 			elem->id = 0;
 			elem->x = 0;
 			elem->y = 0;
+			elem->z_index = 0; // Any thing that has same z index will be rendered in order of creation
 			elem->rotation = 0;
 			elem->anchor_x = 0;
 			elem->anchor_y = 0;
@@ -709,6 +766,21 @@ TmlElement* tml_parse(const byte* data, TmlElement* elements, byte max_elems) {
 				elem->data.radio.border_thickness = 1;
 				elem->select = (TmlSelect){.field.selectable = 1, .field.selected = 0, .field.focused = 0};
 				break;
+			case TML_TYPE_INPUT:
+				elem->data.input.text = 0;
+				elem->data.input.max_length = 20;
+				elem->data.input.font_size = TUI_FONT_SIZE_6x8;
+				elem->data.input.width = 40;
+				elem->data.input.height = 12;
+				elem->data.input.border_thickness = 1;
+				elem->data.input.border_style = TUI_LINE_STYLE_SOLID;
+				elem->select = (TmlSelect){.field.selectable = 1, .field.selected = 0, .field.focused = 0};
+				break;
+			case TML_TYPE_WINDOW:
+				elem->data.window.title = 0;
+				elem->data.window.width = 56;
+				elem->data.window.height = 32;
+				break;
 			default:
 				trigger_bsod(ERROR_TUI_INVALID_ELEMENT);
 				break;
@@ -730,11 +802,15 @@ TmlElement* tml_parse(const byte* data, TmlElement* elements, byte max_elems) {
 				case FIELD_WIDTH:
 					if (type == TML_TYPE_BUTTON) elem->data.button.width = *p++;
 					else if (type == TML_TYPE_DIV) elem->data.div.width = *p++;
+					else if (type == TML_TYPE_INPUT) elem->data.input.width = *p++;
+					else if (type == TML_TYPE_WINDOW) elem->data.window.width = *p++;
 					else p++;
 					break;
 				case FIELD_HEIGHT:
 					if (type == TML_TYPE_BUTTON) elem->data.button.height = *p++;
 					else if (type == TML_TYPE_DIV) elem->data.div.height = *p++;
+					else if (type == TML_TYPE_INPUT) elem->data.input.height = *p++;
+					else if (type == TML_TYPE_WINDOW) elem->data.window.height = *p++;
 					else p++;
 					break;
 				case FIELD_COLOUR:
@@ -765,6 +841,8 @@ TmlElement* tml_parse(const byte* data, TmlElement* elements, byte max_elems) {
 						elem->data.text.text = (const char*)p;
 					} else if (type == TML_TYPE_BUTTON) {
 						elem->data.button.text = (const char*)p;
+					} else if (type == TML_TYPE_WINDOW) {
+						elem->data.window.title = (const char*)p;
 					}
 					while (*p) p++;  // skip past string
 					p++;  // skip null terminator
