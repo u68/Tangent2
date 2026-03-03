@@ -396,11 +396,65 @@ static void render_radio(TmlElement* elem, byte world_x, byte world_y, word worl
 }
 
 static void render_input(TmlElement *elem, byte world_x, byte world_y, word world_rot) {
-	
+	TmlInputData* input = &elem->data.input;
+
+	// Draw border rectangle
+	tui_draw_rectangle(world_x, world_y,
+	               input->width, input->height,
+	               elem->anchor_x, elem->anchor_y,
+	               world_rot, elem->colour,
+	               input->border_thickness, input->border_style);
+	if (elem->select.field.focused) {
+		byte in_w = input->width, in_h = input->height;
+		tui_draw_rectangle(world_x - 1, world_y - 1, in_w + 2, in_h + 2, elem->anchor_x, elem->anchor_y, world_rot, TUI_COLOUR_DARK_GREY, 1, 0x55);
+	}
+	// Draw text if present
+	if (input->text) {
+		byte text_w, text_h;
+		tui_get_text_size(input->font_size, input->text, &text_w, &text_h);
+		
+		// Apply padding
+		byte text_x = world_x + 2;
+		byte text_y = world_y + (input->height >> 1) - (text_h >> 1);
+		
+		// Apply rotation to text position
+		byte rot_x, rot_y;
+		tui_rotate_point(world_x, world_y, text_x - elem->anchor_x + 2, text_y - elem->anchor_y + 2, world_rot, &rot_x, &rot_y);
+		
+		tui_draw_text(rot_x, rot_y, input->text, input->font_size,
+		          elem->anchor_x, elem->anchor_y, world_rot, elem->colour);
+	}
 }
 
 static void render_window(TmlElement *elem, byte world_x, byte world_y, word world_rot) {
+	TmlWindowData* win = &elem->data.window;
 	
+	// Draw window background
+	tui_draw_rectangle(world_x, world_y,
+	               win->width, win->height,
+	               elem->anchor_x, elem->anchor_y,
+	               world_rot, elem->colour, 0, 0);
+	
+	// Draw title bar if title is set
+	if (win->title) {
+		byte title_h = 7; // Fixed title bar height
+		tui_draw_rectangle(world_x, world_y,
+		                   win->width, title_h,
+		                   elem->anchor_x, elem->anchor_y,
+		                   world_rot, TUI_COLOUR_DARK_GREY, 0, 0);
+		
+		byte text_w, text_h;
+		tui_get_text_size(TUI_FONT_SIZE_6x7, win->title, &text_w, &text_h);
+		
+		byte text_x = world_x + 1; // Padding from left
+		byte text_y = world_y + 1; // Padding from top
+		
+		byte rot_x, rot_y;
+		tui_rotate_point(world_x, world_y, text_x - elem->anchor_x + 2, text_y - elem->anchor_y + 2, world_rot, &rot_x, &rot_y);
+		
+		tui_draw_text(rot_x, rot_y, win->title, TUI_FONT_SIZE_6x7,
+		          elem->anchor_x, elem->anchor_y, world_rot, TUI_COLOUR_WHITE);
+	}
 }
 
 // Initializers (not super required)
@@ -409,6 +463,7 @@ void tml_init_root(TmlElement* e) {
 	e->id = 0;
 	e->x = 0;
 	e->y = 0;
+	e->z_index = 0;
 	e->rotation = 0;
 	e->anchor_x = 0;
 	e->anchor_y = 0;
@@ -424,6 +479,7 @@ void tml_init_text(TmlElement* e, word id, byte x, byte y, const char* text, byt
 	e->id = id;
 	e->x = x;
 	e->y = y;
+	e->z_index = 0;
 	e->rotation = 0;
 	e->anchor_x = 0;
 	e->anchor_y = 0;
@@ -441,6 +497,7 @@ void tml_init_button(TmlElement* e, word id, byte x, byte y, byte w, byte h, con
 	e->id = id;
 	e->x = x;
 	e->y = y;
+	e->z_index = 0;
 	e->rotation = 0;
 	e->anchor_x = 0;
 	e->anchor_y = 0;
@@ -463,6 +520,7 @@ void tml_init_div(TmlElement* e, word id, byte x, byte y, byte w, byte h, byte c
 	e->id = id;
 	e->x = x;
 	e->y = y;
+	e->z_index = 0;
 	e->rotation = 0;
 	e->anchor_x = 0;
 	e->anchor_y = 0;
@@ -483,6 +541,7 @@ void tml_init_line(TmlElement* e, word id, byte x, byte y, byte x1, byte y1, byt
 	e->id = id;
 	e->x = x;
 	e->y = y;
+	e->z_index = 0;
 	e->rotation = 0;
 	e->anchor_x = 0;
 	e->anchor_y = 0;
@@ -502,6 +561,7 @@ void tml_init_checkbox(TmlElement* e, word id, byte x, byte y, byte size, byte c
 	e->id = id;
 	e->x = x;
 	e->y = y;
+	e->z_index = 0;
 	e->rotation = 0;
 	e->anchor_x = 0;
 	e->anchor_y = 0;
@@ -520,6 +580,7 @@ void tml_init_radio(TmlElement* e, word id, byte x, byte y, byte size, byte colo
 	e->id = id;
 	e->x = x;
 	e->y = y;
+	e->z_index = 0;
 	e->rotation = 0;
 	e->anchor_x = 0;
 	e->anchor_y = 0;
@@ -537,6 +598,7 @@ void tml_init_input(TmlElement *e, word id, byte x, byte y, byte w, byte h, byte
 	e->id = id;
 	e->x = x;
 	e->y = y;
+	e->z_index = 0;
 	e->rotation = 0;
 	e->anchor_x = 0;
 	e->anchor_y = 0;
@@ -559,6 +621,7 @@ void tml_init_window(TmlElement *e, word id, byte x, byte y, byte w, byte h, con
 	e->id = id;
 	e->x = x;
 	e->y = y;
+	e->z_index = 0;
 	e->rotation = 0;
 	e->anchor_x = 0;
 	e->anchor_y = 0;
@@ -577,28 +640,65 @@ void tml_add_child(TmlElement* parent, TmlElement* child) {
 	if (!parent || !child) return;
 	
 	child->parent = parent;
-	child->next_sibling = 0;
 	
 	if (!parent->first_child) {
 		// First child
 		parent->first_child = child;
+		child->next_sibling = 0;
+	} else if (child->z_index < parent->first_child->z_index) {
+		// Insert before first child
+		child->next_sibling = parent->first_child;
+		parent->first_child = child;
 	} else {
-		// Find last sibling and append
-		TmlElement* sibling = parent->first_child;
-		while (sibling->next_sibling) {
-			sibling = sibling->next_sibling;
+		// Find correct position based on z_index
+		TmlElement* prev = parent->first_child;
+		while (prev->next_sibling && prev->next_sibling->z_index <= child->z_index) {
+			prev = prev->next_sibling;
 		}
-		sibling->next_sibling = child;
+		child->next_sibling = prev->next_sibling;
+		prev->next_sibling = child;
 	}
 }
 
-// Add sibling after given element
+// Add sibling after given element, respecting z_index if possible
+// Note: It's better to use tml_add_child on the parent rather than explicitly calling this,
+// to ensure z_index sorting across all siblings.
 void tml_add_sibling(TmlElement* elem, TmlElement* sibling) {
 	if (!elem || !sibling) return;
 	
 	sibling->parent = elem->parent;
-	sibling->next_sibling = elem->next_sibling;
-	elem->next_sibling = sibling;
+	
+	// If parent exists, insert sorted into parent's children list
+	if (elem->parent) {
+		TmlElement* parent = elem->parent;
+		if (!parent->first_child) {
+			parent->first_child = sibling;
+			sibling->next_sibling = 0;
+		} else if (sibling->z_index < parent->first_child->z_index) {
+			sibling->next_sibling = parent->first_child;
+			parent->first_child = sibling;
+		} else {
+			TmlElement* prev = parent->first_child;
+			while (prev->next_sibling && prev->next_sibling->z_index <= sibling->z_index) {
+				prev = prev->next_sibling;
+			}
+			sibling->next_sibling = prev->next_sibling;
+			prev->next_sibling = sibling;
+		}
+	} else {
+		// If no parent, we just append to the end of the root level sibling chain 
+		// but sort according to z_index
+		TmlElement* head = elem;
+		// Rewind to actual head
+		// Wait, we don't have back pointers to previous sibling, so we can't rewind.
+		// So we just maintain z_order from this element onwards.
+		TmlElement* curr = elem;
+		while (curr->next_sibling && curr->next_sibling->z_index <= sibling->z_index) {
+			curr = curr->next_sibling;
+		}
+		sibling->next_sibling = curr->next_sibling;
+		curr->next_sibling = sibling;
+	}
 }
 
 // Find element by ID using iterative traversal
@@ -654,6 +754,35 @@ void tml_set_anchor(TmlElement* elem, byte ax, byte ay) {
 void tml_set_colour(TmlElement* elem, byte colour) {
 	if (elem) {
 		elem->colour = colour;
+	}
+}
+
+void tml_set_z_index(TmlElement* elem, byte z_index) {
+	if (!elem || elem->z_index == z_index) return;
+	
+	elem->z_index = z_index;
+	
+	// Re-sort in parent's child list if it has a parent
+	// For root elements, we won't be able to re-sort easily unless we have the root pointer
+	if (elem->parent) {
+		TmlElement* parent = elem->parent;
+		
+		// Remove elem from parent's children list
+		if (parent->first_child == elem) {
+			parent->first_child = elem->next_sibling;
+		} else {
+			TmlElement* curr = parent->first_child;
+			while (curr && curr->next_sibling != elem) {
+				curr = curr->next_sibling;
+			}
+			if (curr) {
+				curr->next_sibling = elem->next_sibling;
+			}
+		}
+		
+		elem->next_sibling = 0;
+		// Re-add to parent (which will insert it sorted by new z_index)
+		tml_add_child(parent, elem);
 	}
 }
 
@@ -881,6 +1010,9 @@ TmlElement* tml_parse(const byte* data, TmlElement* elements, byte max_elems) {
 				case FIELD_ANCHOR_Y:
 					elem->anchor_y = *p++;
 					break;
+				case FIELD_Z_INDEX:
+					elem->z_index = *p++;
+					break;
 				default:
 					trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD);
 					break;
@@ -893,10 +1025,18 @@ TmlElement* tml_parse(const byte* data, TmlElement* elements, byte max_elems) {
 			} else if (stack_ptr > 0) {
 				tml_add_child(parent_stack[stack_ptr - 1], elem);
 			} else {
-				// Top-level sibling - link after root
-				TmlElement* sib = root;
-				while (sib->next_sibling) sib = sib->next_sibling;
-				sib->next_sibling = elem;
+				// Top-level sibling - link after root according to z_index
+				if (elem->z_index < root->z_index) {
+					elem->next_sibling = root;
+					root = elem;
+				} else {
+					TmlElement* sib = root;
+					while (sib->next_sibling && sib->next_sibling->z_index <= elem->z_index) {
+						sib = sib->next_sibling;
+					}
+					elem->next_sibling = sib->next_sibling;
+					sib->next_sibling = elem;
+				}
 			}
 			
 			// If next is '<', this element has children - push onto stack

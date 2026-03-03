@@ -80,6 +80,7 @@ fs_node_t *fs_lookup(fs_node_t *parent, const char *path);
 fs_node_t *fs_dir_lookup(fs_node_t *parent, const char *path);
 word fs_read(fs_node_t *parent, const char *path, void *buffer, word buffer_size);
 byte fs_write(fs_node_t *parent, const char *path, const void *data, word size);
+byte fs_list_dir(fs_node_t *dir, fs_node_t **out_list, byte max_count);
 void get_time_string(format_t format, char* out);
 void rtc_reset(void);
 void rtc_enable(void);

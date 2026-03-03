@@ -182,6 +182,7 @@ void tml_set_position(TmlElement *elem, byte x, byte y);
 void tml_set_rotation(TmlElement *elem, word rotation);
 void tml_set_anchor(TmlElement *elem, byte ax, byte ay);
 void tml_set_colour(TmlElement *elem, byte colour);
+void tml_set_z_index(TmlElement *elem, byte z_index);
 
 // Splash screen utility
 void tml_splash(const byte *image_data, word duration);
@@ -210,7 +211,8 @@ typedef enum {
 	FIELD_END_Y,
 	FIELD_ROTATION,
 	FIELD_ANCHOR_X,
-	FIELD_ANCHOR_Y
+	FIELD_ANCHOR_Y,
+	FIELD_Z_INDEX
 } TmlField;
 
 // Parse data array into element tree, returns root element

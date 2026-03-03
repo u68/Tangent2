@@ -1622,6 +1622,28 @@ byte fs_write(fs_node_t *parent, const char *path, const void *data, word size) 
     return fs_write_file(file, data, size);
 }
 
+// List all files and directories in a directory
+// Returns the number of nodes found, up to max_count.
+byte fs_list_dir(fs_node_t *dir, fs_node_t **out_list, byte max_count) {
+    if (!dir || !dir->perms.field.is_directory || !dir->perms.field.read) {
+        return 0;
+    }
+
+    byte count = 0;
+    byte child_idx = dir->first_child;
+    
+    while (child_idx != FS_INVALID_IDX && count < max_count) {
+        fs_node_t *child = &FS_NODES[child_idx];
+        if (out_list) {
+            out_list[count] = child;
+        }
+        count++;
+        child_idx = child->next_sibling;
+    }
+    
+    return count;
+}
+
 typedef enum time_format {
     TIME_FORMAT_24H,
     TIME_FORMAT_12H,
