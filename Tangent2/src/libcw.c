@@ -514,8 +514,8 @@ void tui_draw_circle(byte cx, byte cy, byte radius, sbyte ax, sbyte ay, byte thi
 }
 
 // Returns the width and height of a given font
-void tui_get_font_size(byte font_size, byte* width, byte* height) {
-	switch(font_size) {
+void tui_get_font_size(tui_font_t font, byte* width, byte* height) {
+	switch(font) {
 	case TUI_FONT_SIZE_6x7:
 		*width = 6;
 		*height = 7;
@@ -552,9 +552,9 @@ void tui_get_font_size(byte font_size, byte* width, byte* height) {
 }
 
 // Returns the width and height of the given text
-void tui_get_text_size(byte font_size, const char* text, byte* width, byte* height) {
+void tui_get_text_size(tui_font_t font, const char* text, byte* width, byte* height) {
 	byte cwidth = 0, cheight = 0, i = 0;
-	tui_get_font_size(font_size, &cwidth, &cheight);
+	tui_get_font_size(font, &cwidth, &cheight);
 	// Count characters and multiply by width
 	while (text[i]) i++;
 	*width = cwidth * i;
@@ -562,14 +562,14 @@ void tui_get_text_size(byte font_size, const char* text, byte* width, byte* heig
 }
 
 // Draw text with specified font size, rotation, and style
-void tui_draw_text(byte x, byte y, const char* text, byte font_size, sbyte ax, sbyte ay, word rotation, byte colour) {
+void tui_draw_text(byte x, byte y, const char* text, tui_font_t font, sbyte ax, sbyte ay, word rotation, byte colour) {
 	byte cheight;
 	byte cwidth;
 	byte i = 0;
 	byte tx, ty;
 	byte ox = x;
 	// Get character dimensions
-	tui_get_font_size(font_size, &cwidth, &cheight);
+	tui_get_font_size(font, &cwidth, &cheight);
 	while (text[i]) {
 		if (rotation) tui_rotate_point(x, y, ox - ax, y - ay, rotation, &tx, &ty); // Rotate around anchor
 		else {
@@ -577,7 +577,7 @@ void tui_draw_text(byte x, byte y, const char* text, byte font_size, sbyte ax, s
 			ty = y - ay;
 		}
 		// Draw character, anchor x, y isn't really used since it was done before but whatever
-		tui_draw_char(tx, ty, text[i], font_size, 0, 0, rotation, colour);
+		tui_draw_char(tx, ty, text[i], font, 0, 0, rotation, colour);
 		ox += cwidth;
 		i++;
 	}
@@ -785,12 +785,12 @@ void tui_draw_image(byte x, byte y, byte width, byte height, const byte* bitmap,
 }
 
 // Draw_image wrapper to draw a character from a font
-void tui_draw_char(byte x, byte y, char c, byte font_size, sbyte ax, sbyte ay, word rotation, byte colour) {
+void tui_draw_char(byte x, byte y, char c, tui_font_t font, sbyte ax, sbyte ay, word rotation, byte colour) {
 	const byte* font_data;
 	byte font_width;
 	byte font_height;
 	// This can probably use tui_get_font_size but tui_get_font_size doesnt get dont_data so like idc
-	switch(font_size) {
+	switch(font) {
 	case TUI_FONT_SIZE_6x7:
 		font_data = YsFont6x7;
 		font_width = 6;

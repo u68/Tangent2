@@ -49,12 +49,12 @@ void tui_draw_line(byte x0, byte y0, byte x1, byte y1, byte colour, byte thickne
 void tui_draw_rectangle(byte x, byte y, byte width, byte height, sbyte ax, sbyte ay, word rotation, byte colour, byte thickness, byte style);
 void tui_draw_points(byte cx, byte cy, byte x, byte y, byte thickness, byte colour);
 void tui_draw_circle(byte cx, byte cy, byte radius, sbyte ax, sbyte ay, byte thickness, byte colour);
-void tui_get_font_size(byte font_size, byte* width, byte* height);
-void tui_get_text_size(byte font_size, const char* text, byte* width, byte* height);
-void tui_draw_text(byte x, byte y, const char* text, byte font_size, sbyte ax, sbyte ay, word rotation, byte colour);
+void tui_get_font_size(tui_font_t font, byte* width, byte* height);
+void tui_get_text_size(tui_font_t font, const char* text, byte* width, byte* height);
+void tui_draw_text(byte x, byte y, const char* text, tui_font_t font, sbyte ax, sbyte ay, word rotation, byte colour);
 void tui_draw_byte(byte x, byte y, byte data, byte data2, byte mask);
 void tui_draw_image(byte x, byte y, byte width, byte height, const byte* bitmap, sbyte ax, sbyte ay, word rotation, byte colour);
-void tui_draw_char(byte x, byte y, char c, byte font_size, sbyte ax, sbyte ay, word rotation, byte colour);
+void tui_draw_char(byte x, byte y, char c, tui_font_t font, sbyte ax, sbyte ay, word rotation, byte colour);
 void tui_draw_full_image(const word* bitmap, byte colour);
 void tui_invert_area(byte x, byte y, byte width, byte height, sbyte ax, sbyte ay, word rotation);
 int abs(int x);
@@ -283,7 +283,7 @@ extern void __EI(void);
 #   define BufSelSFR *((volatile __near byte *)0xF037)
 #endif
 
-enum tui_colour {
+typedef enum tui_colour {
 	TUI_COLOUR_WHITE,
 #ifndef IS_CWX
 	TUI_COLOUR_LIGHT_GREY,
@@ -295,24 +295,24 @@ enum tui_colour {
 #else
     TUI_COLOUR_IMAGE,
 #endif
-};
+} tui_colour_t;
 
-enum tui_style {
+typedef enum tui_style {
 	TUI_STYLE_NONE,
 	TUI_STYLE_SOLID,
 	TUI_STYLE_DOTTED,
 	TUI_STYLE_DASHED,
 	TUI_STYLE_DOUBLE
-};
+} tui_style_t;
 
-enum tui_line_style {
+typedef enum tui_line_style {
 	TUI_LINE_STYLE_NONE,
 	TUI_LINE_STYLE_SOLID = 0xFF,
 	TUI_LINE_STYLE_DOTTED = 0xAA,
 	TUI_LINE_STYLE_DASHED = 0xF8,
-};
+} tui_line_style_t;
 
-enum tui_font_size {
+typedef enum tui_font_size {
 	TUI_FONT_SIZE_6x7,
 	TUI_FONT_SIZE_6x8,
 	TUI_FONT_SIZE_6x10,
@@ -320,15 +320,15 @@ enum tui_font_size {
 	TUI_FONT_SIZE_8x8,
 	TUI_FONT_SIZE_8x12,
 	TUI_FONT_SIZE_12x16,
-};
+} tui_font_t;
 
-enum tui_fill_style {
+typedef enum tui_fill_style {
 	TUI_FILL_STYLE_NONE,
 	TUI_FILL_STYLE_SOLID,
 	TUI_FILL_STYLE_CHECKERED,
 	TUI_FILL_STYLE_GRADIENT,
 	TUI_FILL_STYLE_DITHER,
-};
+} tui_fill_style_t;
 
 //void __tui_clear_screen_real_buf_1();
 //void __tui_clear_screen_real_buf_2();
@@ -398,7 +398,7 @@ typedef struct fs_extent {
 byte CheckButtons();
 
 // Button enums (Cosine)
-enum BUTTON {
+typedef enum BUTTON {
 	B_0 = 0xb,
 	B_1 = 0x3f,
 	B_2 = 0x37,
@@ -442,9 +442,9 @@ enum BUTTON {
 	B_Z = 0xf,
 
 	BUTTON_COUNT = 0x40
-};
+} button_t;
 
-enum SPECIAL_CHARS {
+typedef enum SPECIAL_CHARS {
 	SP_HOME = 0x30,
     SP_UP = 0x20,
     SP_PGUP = 0x10,
@@ -494,9 +494,9 @@ enum SPECIAL_CHARS {
     SP_SCI = 0x0D,
     SP_FORMAT = 0x0E,
     SP_EXE = 0x0F,
-};
+} special_char_t;
 
-enum SHIFT_SPECIAL {
+typedef enum SHIFT_SPECIAL {
     SC_QR = SP_X,
     SC_MIXFRAC = SP_FRAC,
     SC_NROOT = SP_SQRT,
@@ -526,7 +526,7 @@ enum SHIFT_SPECIAL {
     SC_Y = SP_DOT,
     SC_Z = SP_SCI,
     SC_ESTIMATE = SP_EXE,
-};
+} shift_special_t;
 
 
 
