@@ -35,27 +35,27 @@ typedef union fs_perms fs_perms_t;
 typedef enum time_format format_t;
 
 void tui_rotate_point(byte ax, byte ay, byte px, byte py, word angle, byte *out_x, byte *out_y);
-void tui_simple_line(byte x0, byte y0, byte x1, byte y1, byte colour);
-void tui_advanced_draw_line(byte* data, byte bit_length, byte x0, byte y0, byte x1, byte y1, byte colour, byte thickness);
-void tui_pattern_draw_line(byte pattern, byte x0, byte y0, byte x1, byte y1, byte colour, byte thickness);
+void tui_simple_line(byte x0, byte y0, byte x1, byte y1, tui_colour_t colour);
+void tui_advanced_draw_line(byte* data, byte bit_length, byte x0, byte y0, byte x1, byte y1, tui_colour_t colour, byte thickness);
+void tui_pattern_draw_line(byte pattern, byte x0, byte y0, byte x1, byte y1, tui_colour_t colour, byte thickness);
 void tui_render_buffer(void);
 void tui_render_adr(word adr);
 void tui_clear_screen(void);
 byte tui_get_pixel_b(byte x, byte y, byte buf);
 byte tui_get_pixel(byte x, byte y);
-void tui_set_pixel(byte x, byte y, byte colour, byte size);
+void tui_set_pixel(byte x, byte y, tui_colour_t colour, byte size);
 void tui_circle(byte centerX, byte centerY, byte radius, byte c);
-void tui_draw_line(byte x0, byte y0, byte x1, byte y1, byte colour, byte thickness, byte style);
-void tui_draw_rectangle(byte x, byte y, byte width, byte height, sbyte ax, sbyte ay, word rotation, byte colour, byte thickness, byte style);
-void tui_draw_points(byte cx, byte cy, byte x, byte y, byte thickness, byte colour);
-void tui_draw_circle(byte cx, byte cy, byte radius, sbyte ax, sbyte ay, byte thickness, byte colour);
+void tui_draw_line(byte x0, byte y0, byte x1, byte y1, tui_colour_t colour, byte thickness, tui_line_style_t line_style);
+void tui_draw_rectangle(byte x, byte y, byte width, byte height, sbyte ax, sbyte ay, word rotation, tui_colour_t colour, byte thickness, tui_line_style_t line_style);
+void tui_draw_points(byte cx, byte cy, byte x, byte y, byte thickness, tui_colour_t colour);
+void tui_draw_circle(byte cx, byte cy, byte radius, sbyte ax, sbyte ay, byte thickness, tui_colour_t colour);
 void tui_get_font_size(tui_font_t font, byte* width, byte* height);
 void tui_get_text_size(tui_font_t font, const char* text, byte* width, byte* height);
-void tui_draw_text(byte x, byte y, const char* text, tui_font_t font, sbyte ax, sbyte ay, word rotation, byte colour);
+void tui_draw_text(byte x, byte y, const char* text, tui_font_t font, sbyte ax, sbyte ay, word rotation, tui_colour_t colour);
 void tui_draw_byte(byte x, byte y, byte data, byte data2, byte mask);
-void tui_draw_image(byte x, byte y, byte width, byte height, const byte* bitmap, sbyte ax, sbyte ay, word rotation, byte colour);
-void tui_draw_char(byte x, byte y, char c, tui_font_t font, sbyte ax, sbyte ay, word rotation, byte colour);
-void tui_draw_full_image(const word* bitmap, byte colour);
+void tui_draw_image(byte x, byte y, byte width, byte height, const byte* bitmap, sbyte ax, sbyte ay, word rotation, tui_colour_t colour);
+void tui_draw_char(byte x, byte y, char c, tui_font_t font, sbyte ax, sbyte ay, word rotation, tui_colour_t colour);
+void tui_draw_full_image(const word* bitmap, tui_colour_t colour);
 void tui_invert_area(byte x, byte y, byte width, byte height, sbyte ax, sbyte ay, word rotation);
 int abs(int x);
 void hinit(void);
@@ -297,7 +297,7 @@ typedef enum tui_colour {
 #endif
 } tui_colour_t;
 
-typedef enum tui_style {
+typedef enum tui_style { // Not really in use atm
 	TUI_STYLE_NONE,
 	TUI_STYLE_SOLID,
 	TUI_STYLE_DOTTED,
@@ -332,8 +332,8 @@ typedef enum tui_fill_style {
 
 //void __tui_clear_screen_real_buf_1();
 //void __tui_clear_screen_real_buf_2();
-//void __tui_set_pixel_real(byte x, byte y, byte colour);
-//void __tui_set_pixel(byte x, byte y, byte colour);
+//void __tui_set_pixel_real(byte x, byte y, tui_colour_t colour);
+//void __tui_set_pixel(byte x, byte y, tui_colour_t colour);
 
 /*
 static const byte YsFont6x7[1792];
@@ -349,8 +349,8 @@ static const sbyte tui_cos_table[360];
 
 static void __tui_clear_screen_real_buf_2(void);
 static void __tui_clear_screen_real_buf_1(void);
-static void __tui_set_pixel_real(byte x, byte y, byte colour);
-static void __tui_set_pixel(byte x, byte y, byte colour);*/
+static void __tui_set_pixel_real(byte x, byte y, tui_colour_t colour);
+static void __tui_set_pixel(byte x, byte y, tui_colour_t colour);*/
 
 typedef struct block {
     word size;

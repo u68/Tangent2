@@ -24,8 +24,8 @@ static const sbyte tui_cos_table[360];
 
 static void __tui_clear_screen_real_buf_2(void);
 static void __tui_clear_screen_real_buf_1(void);
-static void __tui_set_pixel_real(byte x, byte y, byte colour);
-static void __tui_set_pixel(byte x, byte y, byte colour);
+static void __tui_set_pixel_real(byte x, byte y, tui_colour_t colour);
+static void __tui_set_pixel(byte x, byte y, tui_colour_t colour);
 
 // Rotates point (ax, ay) around anchor (px, py) by angle (in degrees)
 void tui_rotate_point(byte ax, byte ay, byte px, byte py, word angle, byte *out_x, byte *out_y) {
@@ -46,7 +46,7 @@ void tui_rotate_point(byte ax, byte ay, byte px, byte py, word angle, byte *out_
 }
 
 // Simple Bresenham line drawing
-void tui_simple_line(byte x0, byte y0, byte x1, byte y1, byte colour) {
+void tui_simple_line(byte x0, byte y0, byte x1, byte y1, tui_colour_t colour) {
 	int dx = abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
 	int dy = -abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
 	int err = dx + dy, e2;
@@ -66,7 +66,7 @@ void tui_simple_line(byte x0, byte y0, byte x1, byte y1, byte colour) {
 }
 
 // Draw a line with a pattern stretched across its length
-void tui_advanced_draw_line(byte* data, byte bit_length, byte x0, byte y0, byte x1, byte y1, byte colour, byte thickness)
+void tui_advanced_draw_line(byte* data, byte bit_length, byte x0, byte y0, byte x1, byte y1, tui_colour_t colour, byte thickness)
 {
 	int dx = abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
 	int dy = -abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
@@ -93,7 +93,7 @@ void tui_advanced_draw_line(byte* data, byte bit_length, byte x0, byte y0, byte 
 }
 
 // Draw a line with a repeating pattern
-void tui_pattern_draw_line(byte pattern, byte x0, byte y0, byte x1, byte y1, byte colour, byte thickness) {
+void tui_pattern_draw_line(byte pattern, byte x0, byte y0, byte x1, byte y1, tui_colour_t colour, byte thickness) {
 	byte lcount = 0;
 	int dx = abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
 	int dy = -abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
@@ -291,7 +291,7 @@ byte tui_get_pixel(byte x, byte y) {
 }
 
 // Internal function to set a pixel in real VRAM
-static void __tui_set_pixel_real(byte x, byte y, byte colour) {
+static void __tui_set_pixel_real(byte x, byte y, tui_colour_t colour) {
 	if (x > 191 || y > 63) {
 		return;
 	}
@@ -334,7 +334,7 @@ static void __tui_set_pixel_real(byte x, byte y, byte colour) {
 }
 
 // Internal function to set a pixel in VRAM buffer
-static void __tui_set_pixel(byte x, byte y, byte colour) {
+static void __tui_set_pixel(byte x, byte y, tui_colour_t colour) {
 	if (x > 191 || y > 63) {
 		return;
 	} //else
@@ -377,7 +377,7 @@ static void __tui_set_pixel(byte x, byte y, byte colour) {
 }
 
 // Basically drawing a circle, but has some optimizations for small sizes
-void tui_set_pixel(byte x, byte y, byte colour, byte size) {
+void tui_set_pixel(byte x, byte y, tui_colour_t colour, byte size) {
 	switch(size) {
 	case 0:
 		return;
@@ -426,30 +426,12 @@ void tui_circle(byte cx, byte cy, byte r, byte col)
 }
 
 // Draw a line with specified style and thickness
-void tui_draw_line(byte x0, byte y0, byte x1, byte y1, byte colour, byte thickness, byte style) {
-	byte pattern = style;
-	switch(style) {
-	case TUI_STYLE_NONE:
-	case TUI_STYLE_SOLID:
-		pattern = 0xFF;
-		break;
-	case TUI_STYLE_DOTTED:
-		pattern = 0xAA;
-		break;
-	case TUI_STYLE_DASHED:
-		pattern = 0xF8;
-		break;
-	case TUI_STYLE_DOUBLE:
-		break;
-	default:
-		pattern = style; // Assume custom pattern
-		break;
-	}
-	tui_pattern_draw_line(pattern, x0, y0, x1, y1, colour, thickness);
+void tui_draw_line(byte x0, byte y0, byte x1, byte y1, tui_colour_t colour, byte thickness, tui_line_style_t line_style) {
+	tui_pattern_draw_line(line_style, x0, y0, x1, y1, colour, thickness); // lol
 }
 
 // Draw a rectangle with rotation around anchor point
-void tui_draw_rectangle(byte x, byte y, byte width, byte height, sbyte ax, sbyte ay, word rotation, byte colour, byte thickness, byte style) {
+void tui_draw_rectangle(byte x, byte y, byte width, byte height, sbyte ax, sbyte ay, word rotation, tui_colour_t colour, byte thickness, tui_line_style_t line_style) {
 	// Assume rotation is 0
 	byte nx0 = x - ax;
 	byte ny0 = y - ay;
@@ -474,14 +456,14 @@ void tui_draw_rectangle(byte x, byte y, byte width, byte height, sbyte ax, sbyte
 		tui_rotate_point(x, y, x + width - ax, y - ay + height, rotation, &nx3, &ny3);
 	}
 	// Draw lines between points
-	tui_draw_line(nx0, ny0, nx1, ny1, colour, thickness, style);
-	tui_draw_line(nx0, ny0, nx2, ny2, colour, thickness, style);
-	tui_draw_line(nx2, ny2, nx3, ny3, colour, thickness, style);
-	tui_draw_line(nx1, ny1, nx3, ny3, colour, thickness, style);
+	tui_draw_line(nx0, ny0, nx1, ny1, colour, thickness, line_style);
+	tui_draw_line(nx0, ny0, nx2, ny2, colour, thickness, line_style);
+	tui_draw_line(nx2, ny2, nx3, ny3, colour, thickness, line_style);
+	tui_draw_line(nx1, ny1, nx3, ny3, colour, thickness, line_style);
 }
 
 // Helper function to draw circles
-void tui_draw_points(byte cx, byte cy, byte x, byte y, byte thickness, byte colour) {
+void tui_draw_points(byte cx, byte cy, byte x, byte y, byte thickness, tui_colour_t colour) {
 	// Blah blah blah
 	tui_set_pixel(cx + x, cy + y, colour, thickness);
 	tui_set_pixel(cx - x, cy + y, colour, thickness);
@@ -494,7 +476,7 @@ void tui_draw_points(byte cx, byte cy, byte x, byte y, byte thickness, byte colo
 }
 
 // Draw a circle with rotation around cx, cy with anchor point
-void tui_draw_circle(byte cx, byte cy, byte radius, sbyte ax, sbyte ay, byte thickness, byte colour) {
+void tui_draw_circle(byte cx, byte cy, byte radius, sbyte ax, sbyte ay, byte thickness, tui_colour_t colour) {
 	byte x = 0;
 	byte y = radius;
 	sword d = 3 - (radius << 1);
@@ -562,7 +544,7 @@ void tui_get_text_size(tui_font_t font, const char* text, byte* width, byte* hei
 }
 
 // Draw text with specified font size, rotation, and style
-void tui_draw_text(byte x, byte y, const char* text, tui_font_t font, sbyte ax, sbyte ay, word rotation, byte colour) {
+void tui_draw_text(byte x, byte y, const char* text, tui_font_t font, sbyte ax, sbyte ay, word rotation, tui_colour_t colour) {
 	byte cheight;
 	byte cwidth;
 	byte i = 0;
@@ -661,7 +643,7 @@ static byte tui_max4(byte a, byte b, byte c, byte d) {
 }
 
 // Draw an image bitmap with rotation around anchor point
-void tui_draw_image(byte x, byte y, byte width, byte height, const byte* bitmap, sbyte ax, sbyte ay, word rotation, byte colour) {
+void tui_draw_image(byte x, byte y, byte width, byte height, const byte* bitmap, sbyte ax, sbyte ay, word rotation, tui_colour_t colour) {
 	word bwidth = (width + 7) >> 3;
 	word psize = bwidth * height;
 	byte iy, ix;
@@ -785,7 +767,7 @@ void tui_draw_image(byte x, byte y, byte width, byte height, const byte* bitmap,
 }
 
 // Draw_image wrapper to draw a character from a font
-void tui_draw_char(byte x, byte y, char c, tui_font_t font, sbyte ax, sbyte ay, word rotation, byte colour) {
+void tui_draw_char(byte x, byte y, char c, tui_font_t font, sbyte ax, sbyte ay, word rotation, tui_colour_t colour) {
 	const byte* font_data;
 	byte font_width;
 	byte font_height;
@@ -838,7 +820,7 @@ void tui_draw_char(byte x, byte y, char c, tui_font_t font, sbyte ax, sbyte ay, 
 }
 
 // Idk what this is, ill fix latersss
-void tui_draw_full_image(const word* bitmap, byte colour) {
+void tui_draw_full_image(const word* bitmap, tui_colour_t colour) {
 	word i = 0;
 	word j = 0;
 	word* dest = (word*)0xF800;
