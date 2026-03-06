@@ -1,5 +1,5 @@
 /*
- * libcw.h version 1.3
+ * libcw.h version 1.45
  * A compilation of things you might want for CW dev.
  * Contians: 
  *  - Type definitions 
@@ -18,7 +18,7 @@
 #ifndef LIBCW_H_
 #define LIBCW_H_
 
-#define LIBCW_VERSION "1.3"
+#define LIBCW_VERSION "1.45"
 
  // Telecomadm1145 did most of this sfr stuff
  typedef unsigned char byte;
