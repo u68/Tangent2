@@ -5,6 +5,12 @@
 
 This document covers the public surface declared in `Tangent2/src/libcw.h` and the time format enum implemented in `Tangent2/src/libcw.c`.
 
+## IMPORTANT!
+
+### It is advised to not use standard headers/libc with libcw, as libcw aims to replace it and uses hardcoded addresses etc (and basically takes up all ram) and using the stack is risky as it isn't very big (after not much you will start interfereing with the file system).
+
+### I have never tested it with standard headers/libraries/whatever/witchcraft and I never will.
+
 ## Table of contents
 - [Integration And Configuration](#integration-and-configuration)
 - [Core Types](#core-types)
