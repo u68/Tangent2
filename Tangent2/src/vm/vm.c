@@ -68,6 +68,10 @@ static psw_flags_t cmp_words(word a, word b);
 
 static void vm_syscall(TangentMachine* vm, syscall_t syscall_number);
 
+// Syscall glib stuff
+static void vm_get_element_field(TangentMachine* vm, TmlElement* elem, byte field);
+static void vm_set_element_field(TangentMachine* vm, TmlElement* elem, byte field);
+
 // ALU operation implementations
 static psw_flags_t alu_operation_byte(alu_op_t op, byte a, byte b, byte* result) {
     psw_flags_t flags = {0};
@@ -371,6 +375,359 @@ static psw_flags_t cmp_words(word a, word b) {
     return flags;
 }
 
+// Syscall glib
+static void vm_get_element_field(TangentMachine* vm, TmlElement* elem, byte field) {
+    switch (field) {
+        case FIELD_ID:
+            vm->registers.ern[2] = elem->id;
+            break;
+        case FIELD_X:
+            vm->registers.rn[4] = elem->x;
+            break;
+        case FIELD_Y:
+            vm->registers.rn[4] = elem->y;
+            break;
+        case FIELD_WIDTH:
+            switch (elem->type) {
+                case TML_TYPE_BUTTON:
+                    vm->registers.rn[4] = elem->data.button.width;
+                    break;
+                case TML_TYPE_DIV:
+                    vm->registers.rn[4] = elem->data.div.width;
+                    break;
+                default:
+                    trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD);
+            }
+            break;
+        case FIELD_HEIGHT:
+            switch (elem->type) {
+                case TML_TYPE_BUTTON:
+                    vm->registers.rn[4] = elem->data.button.height;
+                    break;
+                case TML_TYPE_DIV:
+                    vm->registers.rn[4] = elem->data.div.height;
+                    break;
+                default:
+                    trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD);
+            }
+            break;
+        case FIELD_COLOUR:
+            vm->registers.rn[4] = elem->colour;
+            break;
+        case FIELD_THICKNESS:
+            switch (elem->type) {
+                case TML_TYPE_BUTTON:
+                    vm->registers.rn[4] = elem->data.button.border_thickness;
+                    break;
+                case TML_TYPE_DIV:
+                    vm->registers.rn[4] = elem->data.div.border_thickness;
+                    break;
+                case TML_TYPE_LINE:
+                    vm->registers.rn[4] = elem->data.line.thickness;
+                    break;
+                case TML_TYPE_CHECKBOX:
+                    vm->registers.rn[4] = elem->data.checkbox.border_thickness;
+                    break;
+                case TML_TYPE_RADIO:
+                    vm->registers.rn[4] = elem->data.radio.border_thickness;
+                    break;
+                default:
+                    trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD);
+            }
+            break;
+        case FIELD_STYLE:
+            switch (elem->type) {
+                case TML_TYPE_BUTTON:
+                    vm->registers.rn[4] = elem->data.button.border_style;
+                    break;
+                case TML_TYPE_DIV:
+                    vm->registers.rn[4] = elem->data.div.border_style;
+                    break;
+                case TML_TYPE_LINE:
+                    vm->registers.rn[4] = elem->data.line.style;
+                    break;
+                case TML_TYPE_CHECKBOX:
+                    vm->registers.rn[4] = elem->data.checkbox.border_style;
+                    break;
+                default:
+                    trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD);
+            }
+            break;
+        case FIELD_FONT:
+            switch (elem->type) {
+                case TML_TYPE_TEXT:
+                    vm->registers.rn[4] = elem->data.text.font_size;
+                    break;
+                case TML_TYPE_BUTTON:
+                    vm->registers.rn[4] = elem->data.button.font_size;
+                    break;
+                default:
+                    trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD);
+            }
+            break;
+        case FIELD_TEXT:
+            switch (elem->type) {
+                case TML_TYPE_TEXT:
+                    vm->registers.ern[2] = (word)elem->data.text.text;
+                    break;
+                case TML_TYPE_BUTTON:
+                    vm->registers.ern[2] = (word)elem->data.button.text;
+                    break;
+                default:
+                    trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD);
+            }
+            break;
+        case FIELD_ALIGN:
+            switch (elem->type) {
+                case TML_TYPE_BUTTON:
+                    vm->registers.rn[4] = elem->data.button.text_align;
+                    break;
+                default:
+                    trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD);
+            }
+            break;
+        case FIELD_CHECKED:
+            switch (elem->type) {
+                case TML_TYPE_CHECKBOX:
+                    vm->registers.rn[4] = elem->select.field.selected;
+                    break;
+                default:
+                    trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD);
+            }
+            break;
+        case FIELD_SELECTED:
+            switch (elem->type) {
+                case TML_TYPE_RADIO:
+                    vm->registers.rn[4] = elem->select.field.selected;
+                    break;
+                default:
+                    trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD);
+            }
+            break;
+        case FIELD_SIZE:
+            switch (elem->type) {
+                case TML_TYPE_CHECKBOX:
+                    vm->registers.rn[4] = elem->data.checkbox.size;
+                    break;
+                case TML_TYPE_RADIO:
+                    vm->registers.rn[4] = elem->data.radio.size;
+                    break;
+                default:
+                    trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD);
+            }
+            break;
+        case FIELD_END_X:
+            switch (elem->type) {
+                case TML_TYPE_LINE:
+                    vm->registers.rn[4] = elem->data.line.x1;
+                    break;
+                default:
+                    trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD);
+            }
+            break;
+        case FIELD_END_Y:
+            switch (elem->type) {
+                case TML_TYPE_LINE:
+                    vm->registers.rn[4] = elem->data.line.y1;
+                    break;
+                default:
+                    trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD);
+            }
+            break;
+        case FIELD_ROTATION:
+            vm->registers.ern[2] = elem->rotation;
+            break;
+        case FIELD_ANCHOR_X:
+            vm->registers.rn[4] = elem->anchor_x;
+            break;
+        case FIELD_ANCHOR_Y:
+            vm->registers.rn[4] = elem->anchor_y;
+            break;
+        default:
+            trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD);
+            break;
+    }
+}
+
+static void vm_set_element_field(TangentMachine* vm, TmlElement* elem, byte field) {
+    switch (field) {
+        case FIELD_ID:
+            elem->id = (word)vm->registers.ern[2];
+            break;
+        case FIELD_X:
+            elem->x = (byte)vm->registers.rn[4];
+            break;
+        case FIELD_Y:
+            elem->y = (byte)vm->registers.rn[4];
+            break;
+        case FIELD_WIDTH:
+            switch (elem->type) {
+                case TML_TYPE_BUTTON:
+                    elem->data.button.width = (byte)vm->registers.rn[4];
+                    break;
+                case TML_TYPE_DIV:
+                    elem->data.div.width = (byte)vm->registers.rn[4];
+                    break;
+                default:
+                    trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD);
+            }
+            break;
+        case FIELD_HEIGHT:
+            switch (elem->type) {
+                case TML_TYPE_BUTTON:
+                    elem->data.button.height = (byte)vm->registers.rn[4];
+                    break;
+                case TML_TYPE_DIV:
+                    elem->data.div.height = (byte)vm->registers.rn[4];
+                    break;
+                default:
+                    trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD);
+            }
+            break;
+        case FIELD_COLOUR:
+            tml_set_colour(elem, (byte)vm->registers.rn[4]);
+            break;
+        case FIELD_THICKNESS:
+            switch (elem->type) {
+                case TML_TYPE_BUTTON:
+                    elem->data.button.border_thickness = (byte)vm->registers.rn[4];
+                    break;
+                case TML_TYPE_DIV:
+                    elem->data.div.border_thickness = (byte)vm->registers.rn[4];
+                    break;
+                case TML_TYPE_LINE:
+                    elem->data.line.thickness = (byte)vm->registers.rn[4];
+                    break;
+                case TML_TYPE_CHECKBOX:
+                    elem->data.checkbox.border_thickness = (byte)vm->registers.rn[4];
+                    break;
+                case TML_TYPE_RADIO:
+                    elem->data.radio.border_thickness = (byte)vm->registers.rn[4];
+                    break;
+                default:
+                    trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD);
+            }
+            break;
+        case FIELD_STYLE:
+            switch (elem->type) {
+                case TML_TYPE_BUTTON:
+                    elem->data.button.border_style = (byte)vm->registers.rn[4];
+                    break;
+                case TML_TYPE_DIV:
+                    elem->data.div.border_style = (byte)vm->registers.rn[4];
+                    break;
+                case TML_TYPE_LINE:
+                    elem->data.line.style = (byte)vm->registers.rn[4];
+                    break;
+                case TML_TYPE_CHECKBOX:
+                    elem->data.checkbox.border_style = (byte)vm->registers.rn[4];
+                    break;
+                default:
+                    trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD);
+            }
+            break;
+        case FIELD_FONT:
+            switch (elem->type) {
+                case TML_TYPE_TEXT:
+                    elem->data.text.font_size = (byte)vm->registers.rn[4];
+                    break;
+                case TML_TYPE_BUTTON:
+                    elem->data.button.font_size = (byte)vm->registers.rn[4];
+                    break;
+                default:
+                    trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD);
+            }
+            break;
+        case FIELD_TEXT:
+            switch (elem->type) {
+                case TML_TYPE_TEXT:
+                    elem->data.text.text = (const char*)(&vm->ram[vm->registers.ern[2]]);
+                    break;
+                case TML_TYPE_BUTTON:
+                    elem->data.button.text = (const char*)(&vm->ram[vm->registers.ern[2]]);
+                    break;
+                case TML_TYPE_INPUT:
+                    elem->data.input.text = (char*)(&vm->ram[vm->registers.ern[2]]);
+                    break;
+                default:
+                    trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD);
+            }
+            break;
+        case FIELD_ALIGN:
+            switch (elem->type) {
+                case TML_TYPE_BUTTON:
+                    elem->data.button.text_align = (byte)vm->registers.rn[4];
+                    break;
+                default:
+                    trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD);
+            }
+            break;
+        case FIELD_CHECKED:
+            switch (elem->type) {
+                case TML_TYPE_CHECKBOX:
+                    elem->select.field.selected = (byte)vm->registers.rn[4];
+                    break;
+                default:
+                    trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD);
+            }
+            break;
+        case FIELD_SELECTED:
+            switch (elem->type) {
+                case TML_TYPE_RADIO:
+                    elem->select.field.selected = (byte)vm->registers.rn[4];
+                    break;
+                default:
+                    trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD);
+            }
+            break;
+        case FIELD_SIZE:
+            switch (elem->type) {
+                case TML_TYPE_CHECKBOX:
+                    elem->data.checkbox.size = (byte)vm->registers.rn[4];
+                    break;
+                case TML_TYPE_RADIO:
+                    elem->data.radio.size = (byte)vm->registers.rn[4];
+                    break;
+                default:
+                    trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD);
+            }
+            break;
+        case FIELD_END_X:
+            switch (elem->type) {
+                case TML_TYPE_LINE:
+                    elem->data.line.x1 = (byte)vm->registers.rn[4];
+                    break;
+                default:
+                    trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD);
+            }
+            break;
+        case FIELD_END_Y:
+            switch (elem->type) {
+                case TML_TYPE_LINE:
+                    elem->data.line.y1 = (byte)vm->registers.rn[4];
+                    break;
+                default:
+                    trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD);
+            }
+            break;
+        case FIELD_ROTATION:
+            elem->rotation = vm->registers.ern[2] % 360;
+            break;
+        case FIELD_ANCHOR_X:
+            elem->anchor_x = (byte)vm->registers.rn[4];
+            break;
+        case FIELD_ANCHOR_Y:
+            elem->anchor_y = (byte)vm->registers.rn[4];
+            break;
+        case FIELD_Z_INDEX:
+            elem->z_index = (byte)vm->registers.rn[4];
+            break;
+        default:
+            trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD);
+            break;
+    }
+}
+
 // Syscall handler
 static void vm_syscall(TangentMachine* vm, syscall_t syscall_number) {
     switch (syscall_number) {
@@ -398,92 +755,7 @@ static void vm_syscall(TangentMachine* vm, syscall_t syscall_number) {
         case GET_ELEMENT_FIELD: {
             TmlElement* elem = (TmlElement*)(&vm->ram[vm->registers.ern[0]]);
             byte field = vm->registers.rn[2];
-            switch (field) {
-                case FIELD_ID:
-                    vm->registers.ern[2] = elem->id;
-                    break;
-                case FIELD_X:
-                    vm->registers.rn[4] = elem->x;
-                    break;
-                case FIELD_Y:
-                    vm->registers.rn[4] = elem->y;
-                    break;
-                case FIELD_WIDTH:
-                    if (elem->type == TML_TYPE_BUTTON) vm->registers.rn[4] = elem->data.button.width;
-                    else if (elem->type == TML_TYPE_DIV) vm->registers.rn[4] = elem->data.div.width;
-                    else { trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD); }
-                    break;
-                case FIELD_HEIGHT:
-                    if (elem->type == TML_TYPE_BUTTON) vm->registers.rn[4] = elem->data.button.height;
-                    else if (elem->type == TML_TYPE_DIV) vm->registers.rn[4] = elem->data.div.height;
-                    else { trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD); }
-                    break;
-                case FIELD_COLOUR:
-                    vm->registers.rn[4] = elem->colour;
-                    break;
-                case FIELD_THICKNESS:
-                    if (elem->type == TML_TYPE_BUTTON) vm->registers.rn[4] = elem->data.button.border_thickness;
-                    else if (elem->type == TML_TYPE_DIV) vm->registers.rn[4] = elem->data.div.border_thickness;
-                    else if (elem->type == TML_TYPE_LINE) vm->registers.rn[4] = elem->data.line.thickness;
-                    else if (elem->type == TML_TYPE_CHECKBOX) vm->registers.rn[4] = elem->data.checkbox.border_thickness;
-                    else if (elem->type == TML_TYPE_RADIO) vm->registers.rn[4] = elem->data.radio.border_thickness;
-                    else { trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD); }
-                    break;
-                case FIELD_STYLE:
-                    if (elem->type == TML_TYPE_BUTTON) vm->registers.rn[4] = elem->data.button.border_style;
-                    else if (elem->type == TML_TYPE_DIV) vm->registers.rn[4] = elem->data.div.border_style;
-                    else if (elem->type == TML_TYPE_LINE) vm->registers.rn[4] = elem->data.line.style;
-                    else if (elem->type == TML_TYPE_CHECKBOX) vm->registers.rn[4] = elem->data.checkbox.border_style;
-                    else { trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD); }
-                    break;
-                case FIELD_FONT:
-                    if (elem->type == TML_TYPE_TEXT) vm->registers.rn[4] = elem->data.text.font_size;
-                    else if (elem->type == TML_TYPE_BUTTON) vm->registers.rn[4] = elem->data.button.font_size;
-                    else { trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD); }
-                    break;
-                case FIELD_TEXT:
-                    if (elem->type == TML_TYPE_TEXT) vm->registers.ern[2] = (word)elem->data.text.text;
-                    else if (elem->type == TML_TYPE_BUTTON) vm->registers.ern[2] = (word)elem->data.button.text;
-                    else { trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD); }
-                    break;
-                case FIELD_ALIGN:
-                    if (elem->type == TML_TYPE_BUTTON) vm->registers.rn[4] = elem->data.button.text_align;
-                    else { trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD); }
-                    break;
-                case FIELD_CHECKED:
-                    if (elem->type == TML_TYPE_CHECKBOX) vm->registers.rn[4] = elem->select.field.selected;
-                    else { trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD); }
-                    break;
-                case FIELD_SELECTED:
-                    if (elem->type == TML_TYPE_RADIO) vm->registers.rn[4] = elem->select.field.selected;
-                    else { trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD); }
-                    break;
-                case FIELD_SIZE:
-                    if (elem->type == TML_TYPE_CHECKBOX) vm->registers.rn[4] = elem->data.checkbox.size;
-                    else if (elem->type == TML_TYPE_RADIO) vm->registers.rn[4] = elem->data.radio.size;
-                    else { trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD); }
-                    break;
-                case FIELD_END_X:
-                    if (elem->type == TML_TYPE_LINE) vm->registers.rn[4] = elem->data.line.x1;
-                    else { trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD); }
-                    break;
-                case FIELD_END_Y:
-                    if (elem->type == TML_TYPE_LINE) vm->registers.rn[4] = elem->data.line.y1;
-                    else { trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD); }
-                    break;
-                case FIELD_ROTATION:
-                    vm->registers.ern[2] = elem->rotation;
-                    break;
-                case FIELD_ANCHOR_X:
-                    vm->registers.rn[4] = elem->anchor_x;
-                    break;
-                case FIELD_ANCHOR_Y:
-                    vm->registers.rn[4] = elem->anchor_y;
-                    break;
-                default:
-                    trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD);
-                    break;
-            }
+            vm_get_element_field(vm, elem, field);
             break;
         }
         case SET_ELEMENT_FIELD: {
@@ -491,93 +763,7 @@ static void vm_syscall(TangentMachine* vm, syscall_t syscall_number) {
             if (elem_addr < 4 || elem_addr >= (word)(vm->vm_properties.code_size + 4)) { trigger_bsod(ERROR_TUI_INVALID_ELEMENT); return; }
             TmlElement* elem = (TmlElement*)(vm->code + elem_addr);
             byte field = vm->registers.rn[2];
-            switch (field) {
-                case FIELD_ID:
-                    elem->id = (word)vm->registers.ern[2];
-                    break;
-                case FIELD_X:
-                    elem->x = (byte)vm->registers.rn[4];
-                    break;
-                case FIELD_Y:
-                    elem->y = (byte)vm->registers.rn[4];
-                    break;
-                case FIELD_WIDTH:
-                    if (elem->type == TML_TYPE_BUTTON) elem->data.button.width = (byte)vm->registers.rn[4];
-                    else if (elem->type == TML_TYPE_DIV) elem->data.div.width = (byte)vm->registers.rn[4];
-                    else { trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD); }
-                    break;
-                case FIELD_HEIGHT:
-                    if (elem->type == TML_TYPE_BUTTON) elem->data.button.height = (byte)vm->registers.rn[4];
-                    else if (elem->type == TML_TYPE_DIV) elem->data.div.height = (byte)vm->registers.rn[4];
-                    else { trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD); }
-                    break;
-                case FIELD_COLOUR:
-                    tml_set_colour(elem, (byte)vm->registers.rn[4]);
-                    break;
-                case FIELD_THICKNESS:
-                    if (elem->type == TML_TYPE_BUTTON) elem->data.button.border_thickness = (byte)vm->registers.rn[4];
-                    else if (elem->type == TML_TYPE_DIV) elem->data.div.border_thickness = (byte)vm->registers.rn[4];
-                    else if (elem->type == TML_TYPE_LINE) elem->data.line.thickness = (byte)vm->registers.rn[4];
-                    else if (elem->type == TML_TYPE_CHECKBOX) elem->data.checkbox.border_thickness = (byte)vm->registers.rn[4];
-                    else if (elem->type == TML_TYPE_RADIO) elem->data.radio.border_thickness = (byte)vm->registers.rn[4];
-                    else { trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD); }
-                    break;
-                case FIELD_STYLE:
-                    if (elem->type == TML_TYPE_BUTTON) elem->data.button.border_style = (byte)vm->registers.rn[4];
-                    else if (elem->type == TML_TYPE_DIV) elem->data.div.border_style = (byte)vm->registers.rn[4];
-                    else if (elem->type == TML_TYPE_LINE) elem->data.line.style = (byte)vm->registers.rn[4];
-                    else if (elem->type == TML_TYPE_CHECKBOX) elem->data.checkbox.border_style = (byte)vm->registers.rn[4];
-                    else { trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD); }
-                    break;
-                case FIELD_FONT:
-                    if (elem->type == TML_TYPE_TEXT) elem->data.text.font_size = (byte)vm->registers.rn[4];
-                    else if (elem->type == TML_TYPE_BUTTON) elem->data.button.font_size = (byte)vm->registers.rn[4];
-                    else { trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD); }
-                    break;
-                case FIELD_TEXT:
-                    if (elem->type == TML_TYPE_TEXT) elem->data.text.text = (const char*)(&vm->ram[vm->registers.ern[2]]);
-                    else if (elem->type == TML_TYPE_BUTTON) elem->data.button.text = (const char*)(&vm->ram[vm->registers.ern[2]]);
-                    else if (elem->type == TML_TYPE_INPUT) elem->data.input.text = (char*)(&vm->ram[vm->registers.ern[2]]);
-                    else { trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD); }
-                    break;
-                case FIELD_ALIGN:
-                    if (elem->type == TML_TYPE_BUTTON) elem->data.button.text_align = (byte)vm->registers.rn[4];
-                    else { trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD); }
-                    break;
-                case FIELD_CHECKED:
-                    if (elem->type == TML_TYPE_CHECKBOX) elem->select.field.selected = (byte)vm->registers.rn[4];
-                    else { trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD); }
-                    break;
-                case FIELD_SELECTED:
-                    if (elem->type == TML_TYPE_RADIO) elem->select.field.selected = (byte)vm->registers.rn[4];
-                    else { trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD); }
-                    break;
-                case FIELD_SIZE:
-                    if (elem->type == TML_TYPE_CHECKBOX) elem->data.checkbox.size = (byte)vm->registers.rn[4];
-                    else if (elem->type == TML_TYPE_RADIO) elem->data.radio.size = (byte)vm->registers.rn[4];
-                    else { trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD); }
-                    break;
-                case FIELD_END_X:
-                    if (elem->type == TML_TYPE_LINE) elem->data.line.x1 = (byte)vm->registers.rn[4];
-                    else { trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD); }
-                    break;
-                case FIELD_END_Y:
-                    if (elem->type == TML_TYPE_LINE) elem->data.line.y1 = (byte)vm->registers.rn[4];
-                    else { trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD); }
-                    break;
-                case FIELD_ROTATION:
-                    elem->rotation = vm->registers.ern[2] % 360;
-                    break;
-                case FIELD_ANCHOR_X:
-                    elem->anchor_x = (byte)vm->registers.rn[4];
-                    break;
-                case FIELD_ANCHOR_Y:
-                    elem->anchor_y = (byte)vm->registers.rn[4];
-                    break;
-                default:
-                    trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD);
-                    break;
-            }
+            vm_set_element_field(vm, elem, field);
             break;
         }
         case RENDER_ELEMENT: {
