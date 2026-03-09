@@ -6,27 +6,27 @@
  *      Author: harma
  */
 
-#include "minesweeper.h"
+??=include "minesweeper.h"
 
-static const unsigned char dark_data[] = {
+static const unsigned char dark_data??(??) = ??<
 
     0xFE, 0x98, 0xB8, 0x98, 0x98, 0x98, 0xBC, 0x00, 0xFE, 0xBC, 0xE6, 0x86, 0xBC, 0xE0, 0xFE, 0x00, 0xFE, 0xBC, 0x86, 0x9C, 0x86, 0xE6, 0xBC, 0x00,
     0xFE, 0x8C, 0x9C, 0xBC, 0xEC, 0xFE, 0x8C, 0x00, 0xFE, 0xFC, 0xE0, 0xFC, 0x86, 0xE6, 0xBC, 0x00, 0xFE, 0xBC, 0xE0, 0xFC, 0xE6, 0xE6, 0xBC, 0x00,
     0xFE, 0xFE, 0xE6, 0x86, 0x8C, 0x98, 0x98, 0x00, 0xFE, 0xBC, 0xE6, 0xBC, 0xE6, 0xE6, 0xBC, 0x00, 0x00, 0x09, 0x19, 0x39, 0x19, 0x09, 0x3D, 0x7F,
     0xFE, 0x88, 0xBC, 0xE2, 0xFA, 0xFE, 0xBC, 0x00, 0x00, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x7F, 0xFE, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x00,
 	0xFF, 0x81, 0x81, 0x81, 0x81, 0x81, 0x81, 0xFF
-};
+??>;
 
-static const unsigned char light_data[] = {
+static const unsigned char light_data??(??) = ??<
 
     0x01, 0x7E, 0x7E, 0x7E, 0x7E, 0x7E, 0x7E, 0x80, 0x01, 0x7E, 0x7E, 0x7E, 0x7E, 0x7E, 0x7E, 0x80, 0x01, 0x7E, 0x7E, 0x7E, 0x7E, 0x7E, 0x7E, 0x80,
     0x01, 0x7E, 0x7E, 0x7E, 0x7E, 0x7E, 0x7E, 0x80, 0x01, 0x7E, 0x7E, 0x7E, 0x7E, 0x7E, 0x7E, 0x80, 0x01, 0x7E, 0x7E, 0x7E, 0x7E, 0x7E, 0x7E, 0x80,
     0x01, 0x7E, 0x7E, 0x7E, 0x7E, 0x7E, 0x7E, 0x80, 0x01, 0x7E, 0x7E, 0x7E, 0x7E, 0x7E, 0x7E, 0x80, 0x01, 0x7E, 0x7E, 0x7E, 0x7E, 0x7E, 0x7E, 0x80,
     0x01, 0x7E, 0x7E, 0x7E, 0x7E, 0x7E, 0x7E, 0x80, 0x01, 0x7E, 0x7E, 0x7E, 0x7E, 0x7E, 0x7E, 0x80, 0x01, 0x7E, 0x7E, 0x7E, 0x7E, 0x7E, 0x7E, 0x80,
 	0xFF, 0x81, 0x81, 0x81, 0x81, 0x81, 0x81, 0xFF
-};
+??>;
 
-static const unsigned char st_dd[] = {
+static const unsigned char st_dd??(??) = ??<
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -91,9 +91,9 @@ static const unsigned char st_dd[] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x1F, 0xEB, 0xBF, 0xFF, 0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x1F, 0xF7, 0xFF, 0xFF, 0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x1F, 0xFF, 0xFF, 0xFF, 0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-};
+??>;
 
-static const unsigned char st_ll[] = {
+static const unsigned char st_ll??(??) = ??<
 
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -159,294 +159,294 @@ static const unsigned char st_ll[] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x1F, 0xEB, 0xBF, 0xFF, 0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x1F, 0xF7, 0xFF, 0xFF, 0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x1F, 0xFF, 0xFF, 0xFF, 0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-};
+??>;
 
 static word get_random(word max)
-{
+??<
 	return deref(0xF00D) % max;
-}
+??>
 
 static void smtren(word addr)
-{
+??<
     word i = 0;
     word j = 0;
     for(i = 0; i < 0x0600; i++)
-    {
+    ??<
         j++;
         if((j & 0x001F) == 0x18)
-        {
+        ??<
             j+=8;
-        }
+        ??>
         *((word *)(0x9000 + j)) = *((word *)(addr + i));
-    }
-}
+    ??>
+??>
 
 static void cooler()
-{
+??<
 	word i = 0x8080;
 	word j = 0;
 	for(j=0;j<deref(i);j++)
-	{
+	??<
 		deref(0x9000+i) = deref(i+1);
-	}
-}
+	??>
+??>
 
 static void samtren(word addr)
-{
+??<
     word i = 0;
     word j = 0;
     for(i = 0; i < 0x0600; i++)
-    {
+    ??<
         j++;
         if((j & 0x001F) == 0x18)
-        {
+        ??<
             j+=8;
-        }
+        ??>
         *((word *)(0x9600 + j)) = *((word *)(addr + i));
-    }
-}
+    ??>
+??>
 
-static void set_pixel(word x, word y,byte color) {
+static void set_pixel(word x, word y,byte color) ??<
 	word addr = (y<<5) + (x >> 3) + 0xF800;
 	byte ty = 0x80>>(x & 7);
 	if(color)
-	{
-		val(addr) |= ty;
+	??<
+		val(addr) ??!= ty;
 		return;
-	}
-	val(addr) &= ~ty;
-}
+	??>
+	val(addr) &= ??-ty;
+??>
 
-static void set_pixel_buf(word x, word y,byte color) {
+static void set_pixel_buf(word x, word y,byte color) ??<
 	word addr = (y<<4) + (y<<3) + (x >> 3) + 0x9000;
 	byte ty = 0x80>>(x & 7);
 	if(color)
-	{
-		val(addr) |= ty;
+	??<
+		val(addr) ??!= ty;
 		return;
-	}
-	val(addr) &= ~ty;
-}
+	??>
+	val(addr) &= ??-ty;
+??>
 
-static void render() {
+static void render() ??<
     tui_render_buffer();
-}
+??>
 
 static void render_dark(byte *addr)
-{
+??<
     word i = 0;
     word j = 0;
     for(i = 0; i < 0x0600; i++)
-    {
-        *((word *)(0x9600 + i)) = addr[i];
-    }
-}
+    ??<
+        *((word *)(0x9600 + i)) = addr??(i??);
+    ??>
+??>
 
 static void render_light(byte *addr)
-{
+??<
     word i = 0;
     word j = 0;
     for(i = 0; i < 0x0600; i++)
-    {
-        *((word *)(0x9000 + i)) = addr[i];
-    }
-}
+    ??<
+        *((word *)(0x9000 + i)) = addr??(i??);
+    ??>
+??>
 
-static void draw_tile(word tile,word x,word y) {
+static void draw_tile(word tile,word x,word y) ??<
 	word i = 0;
 	word j = 0;
 	y*=8;
-	for(i=0;i<8;i++) {
+	for(i=0;i<8;i++) ??<
 		deref(0xf037) = 0;
 		deref(0xF800+x+(y<<5)) = *(light_data + (tile<<3)+i);
 		deref(0xf037) = 4;
 		deref(0xF800+x+(y<<5)) = *(dark_data + (tile<<3)+i);
 
 		y++;
-	}
-}
+	??>
+??>
 
-static void draw_tile3(word tile,word x,word y) {
+static void draw_tile3(word tile,word x,word y) ??<
 	word i = 0;
 	word j = 0;
 	y*=8;
-	for(i=0;i<8;i++) {
+	for(i=0;i<8;i++) ??<
 		deref(0xf037) = 0;
-		deref(0xF800+x+(y<<5)) |= *(light_data + (tile<<3)+i);
+		deref(0xF800+x+(y<<5)) ??!= *(light_data + (tile<<3)+i);
 		deref(0xf037) = 4;
-		deref(0xF800+x+(y<<5)) |= *(dark_data + (tile<<3)+i);
+		deref(0xF800+x+(y<<5)) ??!= *(dark_data + (tile<<3)+i);
 
 		y++;
-	}
-}
+	??>
+??>
 
-static void draw_tile2(word x,word y) {
+static void draw_tile2(word x,word y) ??<
 	word i = 0;
 	word j = 0;
 	y*=8;
-	for(i=0;i<8;i++) {
+	for(i=0;i<8;i++) ??<
 		deref(0xf037) = 0;
 		deref(0xF800+x+(y<<5)) = deref(0x9800+i);
 		deref(0xf037) = 4;
 		deref(0xF800+x+(y<<5)) = deref(0x9808+i);
 
 		y++;
-	}
-}
+	??>
+??>
 
-static void set_tile2(word x,word y) {
+static void set_tile2(word x,word y) ??<
 	word i = 0;
 	word j = 0;
 	y*=8;
-	for(i=0;i<8;i++) {
+	for(i=0;i<8;i++) ??<
 		deref(0xf037) = 0;
 		deref(0x9800+i) = deref(0xF800+x+(y<<5));
 		deref(0xf037) = 4;
 		deref(0x9808+i) = deref(0xF800+x+(y<<5));
 
 		y++;
-	}
-}
+	??>
+??>
 
-static void set_tile(word tile,word x, word y) {
+static void set_tile(word tile,word x, word y) ??<
 	deref(0x9000+x+(y*24)) = tile;
-}
+??>
 
-static word get_tile(word x, word y) {
-	if(x<0||x>23||y<0||y>7) {
+static word get_tile(word x, word y) ??<
+	if(x<0??!??!x>23??!??!y<0??!??!y>7) ??<
 		return 10;
-	}
+	??>
 	return deref(0x9000+x+(y*24));
-}
+??>
 
-static void lose() {
+static void lose() ??<
 	word i = 0;
 	word j = 0;
-	for(i=0;i<24;i++) {
-		for(j=0;j<8;j++) {
+	for(i=0;i<24;i++) ??<
+		for(j=0;j<8;j++) ??<
 			draw_tile(get_tile(i,j),i,j);
-		}
-	}
-}
+		??>
+	??>
+??>
 
-static void reveal_tiles_5(word x,word y) {
+static void reveal_tiles_5(word x,word y) ??<
 	word coloffset = 0;
 	word rowoffset = 0;
 
-	for(coloffset = 0;coloffset <= 2; coloffset++) {
-		for(rowoffset = 0;rowoffset <= 2; rowoffset++) {
-			if(rowoffset == 1 && coloffset == 1) {
+	for(coloffset = 0;coloffset <= 2; coloffset++) ??<
+		for(rowoffset = 0;rowoffset <= 2; rowoffset++) ??<
+			if(rowoffset == 1 && coloffset == 1) ??<
 				continue;
-			}
+			??>
 			draw_tile(get_tile(x+coloffset-1,y+rowoffset-1),x+coloffset-1,y+rowoffset-1);
 			deref(0x9901) += 1;
 			//reveal_tiles(x+coloffset-1,y+rowoffset-1);
-		}
-	}
-}
+		??>
+	??>
+??>
 
-static void reveal_tiles_4(word x,word y) {
+static void reveal_tiles_4(word x,word y) ??<
 	word coloffset = 0;
 	word rowoffset = 0;
 
-	for(coloffset = 0;coloffset <= 2; coloffset++) {
-		for(rowoffset = 0;rowoffset <= 2; rowoffset++) {
-			if(rowoffset == 1 && coloffset == 1) {
+	for(coloffset = 0;coloffset <= 2; coloffset++) ??<
+		for(rowoffset = 0;rowoffset <= 2; rowoffset++) ??<
+			if(rowoffset == 1 && coloffset == 1) ??<
 				continue;
-			}
+			??>
 			draw_tile(get_tile(x+coloffset-1,y+rowoffset-1),x+coloffset-1,y+rowoffset-1);
-			if(get_tile(x+coloffset-1,y+rowoffset-1)==11) {
+			if(get_tile(x+coloffset-1,y+rowoffset-1)==11) ??<
 				reveal_tiles_5(x+coloffset-1,y+rowoffset-1);
-			}
+			??>
 			deref(0x9901) += 1;
 			//reveal_tiles(x+coloffset-1,y+rowoffset-1);
-		}
-	}
-}
+		??>
+	??>
+??>
 
-static void reveal_tiles_3(word x,word y) {
+static void reveal_tiles_3(word x,word y) ??<
 	word coloffset = 0;
 	word rowoffset = 0;
 
-	for(coloffset = 0;coloffset <= 2; coloffset++) {
-		for(rowoffset = 0;rowoffset <= 2; rowoffset++) {
-			if(rowoffset == 1 && coloffset == 1) {
+	for(coloffset = 0;coloffset <= 2; coloffset++) ??<
+		for(rowoffset = 0;rowoffset <= 2; rowoffset++) ??<
+			if(rowoffset == 1 && coloffset == 1) ??<
 				continue;
-			}
+			??>
 			draw_tile(get_tile(x+coloffset-1,y+rowoffset-1),x+coloffset-1,y+rowoffset-1);
-			if(get_tile(x+coloffset-1,y+rowoffset-1)==11) {
+			if(get_tile(x+coloffset-1,y+rowoffset-1)==11) ??<
 				reveal_tiles_4(x+coloffset-1,y+rowoffset-1);
-			}
+			??>
 			deref(0x9901) += 1;
 			//reveal_tiles(x+coloffset-1,y+rowoffset-1);
-		}
-	}
-}
+		??>
+	??>
+??>
 
-static void reveal_tiles_2(word x,word y) {
+static void reveal_tiles_2(word x,word y) ??<
 	word coloffset = 0;
 	word rowoffset = 0;
 
-	for(coloffset = 0;coloffset <= 2; coloffset++) {
-		for(rowoffset = 0;rowoffset <= 2; rowoffset++) {
-			if(rowoffset == 1 && coloffset == 1) {
+	for(coloffset = 0;coloffset <= 2; coloffset++) ??<
+		for(rowoffset = 0;rowoffset <= 2; rowoffset++) ??<
+			if(rowoffset == 1 && coloffset == 1) ??<
 				continue;
-			}
+			??>
 			draw_tile(get_tile(x+coloffset-1,y+rowoffset-1),x+coloffset-1,y+rowoffset-1);
-			if(get_tile(x+coloffset-1,y+rowoffset-1)==11) {
+			if(get_tile(x+coloffset-1,y+rowoffset-1)==11) ??<
 				reveal_tiles_3(x+coloffset-1,y+rowoffset-1);
-			}
+			??>
 			deref(0x9901) += 1;
 			//reveal_tiles(x+coloffset-1,y+rowoffset-1);
-		}
-	}
-}
+		??>
+	??>
+??>
 
-static void reveal_tiles(word x,word y) {
+static void reveal_tiles(word x,word y) ??<
 	word coloffset = 0;
 	word rowoffset = 0;
 
-	for(coloffset = 0;coloffset <= 2; coloffset++) {
-		for(rowoffset = 0;rowoffset <= 2; rowoffset++) {
-			if(rowoffset == 1 && coloffset == 1) {
+	for(coloffset = 0;coloffset <= 2; coloffset++) ??<
+		for(rowoffset = 0;rowoffset <= 2; rowoffset++) ??<
+			if(rowoffset == 1 && coloffset == 1) ??<
 				continue;
-			}
+			??>
 			draw_tile(get_tile(x+coloffset-1,y+rowoffset-1),x+coloffset-1,y+rowoffset-1);
-			if(get_tile(x+coloffset-1,y+rowoffset-1)==11) {
+			if(get_tile(x+coloffset-1,y+rowoffset-1)==11) ??<
 				reveal_tiles_2(x+coloffset-1,y+rowoffset-1);
-			}
+			??>
 
 			deref(0x9901) += 1;
 			//reveal_tiles(x+coloffset-1,y+rowoffset-1);
-		}
-	}
-}
+		??>
+	??>
+??>
 
-void start_screen() {
+void start_screen() ??<
 	byte button = 0;
 	render_dark(st_dd);
 	render_light(st_ll);
 	render();
-	while(1) {
+	while(1) ??<
 		button = CheckButtons();
-		if(button==SP_EXE) {
+		if(button==SP_EXE) ??<
 			break;
-		}
-	}
-}
+		??>
+	??>
+??>
 
-static byte bomb_here(word x, word y) {
-	if(get_tile(x,y) == 9) {
+static byte bomb_here(word x, word y) ??<
+	if(get_tile(x,y) == 9) ??<
 		return 1;
-	}
+	??>
 	return 0;
-}
+??>
 
-static word get_sum(word x, word y) {
+static word get_sum(word x, word y) ??<
 	return bomb_here(x-1,y-1) + bomb_here(x,y-1) + bomb_here(x+1,y-1) + bomb_here(x+1,y) + bomb_here(x+1,y+1) + bomb_here(x,y+1) + bomb_here(x-1,y+1) + bomb_here(x-1,y);
-}
+??>
 
-void start_minesweeper(void) {
+void start_minesweeper(void) ??<
 	word i = 0;
 	word j = 0;
 	word k = 0;
@@ -464,79 +464,79 @@ void start_minesweeper(void) {
 	byte f_count = 0;
 	start_screen();
 
-	for(i=0;i<24;i++) {
-		for(j=0;j<8;j++) {
-			if(get_random(get_random(10))==1) {
+	for(i=0;i<24;i++) ??<
+		for(j=0;j<8;j++) ??<
+			if(get_random(get_random(10))==1) ??<
 				bomb = 9;
 				b_count++;
-			} else {
+			??> else ??<
 				bomb = 11;
-			}
+			??>
 			set_tile(bomb,i,j);
 			draw_tile(10,i,j);
-		}
-	}
-	for(i=0;i<24;i++) {
-		for(j=0;j<8;j++) {
-			if(get_sum(i,j)==0||get_tile(i,j)==9) {
+		??>
+	??>
+	for(i=0;i<24;i++) ??<
+		for(j=0;j<8;j++) ??<
+			if(get_sum(i,j)==0??!??!get_tile(i,j)==9) ??<
 				//set_tile(10,i,j);
 				continue;
-			}
+			??>
 			set_tile(get_sum(i,j)-1,i,j);
 			//draw_tile(get_sum(i,j)-1,i,j);
-		}
-	}
-	while(1) {
+		??>
+	??>
+	while(1) ??<
 		button = CheckButtons();
-		if(button==0xFF) {
+		if(button==0xFF) ??<
 			continue;
-		}
-		if(button==SP_DOWN) {
+		??>
+		if(button==SP_DOWN) ??<
 			cus_y++;
-		} else if(button==SP_LEFT) {
+		??> else if(button==SP_LEFT) ??<
 			cus_x--;
-		} else if(button==SP_RIGHT) {
+		??> else if(button==SP_RIGHT) ??<
 			cus_x++;
-		} else if(button==SP_UP) {
+		??> else if(button==SP_UP) ??<
 			cus_y--;
-		} else if(button==0x0B) {
-			if(get_tile(cus_x,cus_y)==8) {
+		??> else if(button==0x0B) ??<
+			if(get_tile(cus_x,cus_y)==8) ??<
 				draw_tile(10,cus_x,cus_y);
-			} else {
+			??> else ??<
 				draw_tile(8,cus_x,cus_y);
-			}
+			??>
 			set_tile2(cus_x,cus_y);
-		} else if(button==SP_EXE) {
-			if(get_tile(cus_x,cus_y)==9) {
+		??> else if(button==SP_EXE) ??<
+			if(get_tile(cus_x,cus_y)==9) ??<
 				lose();
-			}
+			??>
 			draw_tile(get_tile(cus_x,cus_y),cus_x,cus_y);
 			f_count++;
-			if(get_tile(cus_x,cus_y)==11) {
+			if(get_tile(cus_x,cus_y)==11) ??<
 				reveal_tiles(cus_x,cus_y);
-			}
+			??>
 			set_tile2(cus_x,cus_y);
 			first_button = 0;
 			continue;
 			//custom_break();
-		}
+		??>
 		draw_tile2(px,py);
-		if(cus_y==-1) {
+		if(cus_y==-1) ??<
 			cus_y = 7;
-		}
-		if(cus_x==-1) {
+		??>
+		if(cus_x==-1) ??<
 			cus_x = 23;
-		}
-		if(cus_y==8) {
+		??>
+		if(cus_y==8) ??<
 			cus_y = 0;
-		}
-		if(cus_x==24) {
+		??>
+		if(cus_x==24) ??<
 			cus_x = 0;
-		}
+		??>
 		py = cus_y;
 		px = cus_x;
 		set_tile2(cus_x,cus_y);
 		draw_tile3(12,cus_x,cus_y);
 		//draw_tile2(px,py);
-	}
-}
+	??>
+??>

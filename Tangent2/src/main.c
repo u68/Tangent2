@@ -5,39 +5,39 @@
  *      Author: harma
  */
 
-#include "libcw.h"
-#include "media/media.h"
-#include "media/generated_media_asset.h"
+??=include "libcw.h"
+??=include "media/media.h"
+??=include "media/generated_media_asset.h"
 
 // Custom breakpoint handler (called when BRK executed in asm)
-void custom_break(void) {
-	while (1) {
+void custom_break(void) ??<
+	while (1) ??<
 		deref(0x9000) += 1;
-	}
-}
+	??>
+??>
 
 // Help
-static void itoa(word n, char* s) {
+static void itoa(word n, char* s) ??<
 	int i = 0;
-	if (n == 0) s[i++] = '0';
-	else {
-		while (n > 0) {
-			s[i++] = (n % 10) + '0';
+	if (n == 0) s??(i++??) = '0';
+	else ??<
+		while (n > 0) ??<
+			s??(i++??) = (n % 10) + '0';
 			n /= 10;
-		}
-	}
-	s[i] = '\0';
-	for (int j = 0; j < i / 2; j++) {
-		char t = s[j];
-		s[j] = s[i - j - 1];
-		s[i - j - 1] = t;
-	}
-}
+		??>
+	??>
+	s??(i??) = '??/0';
+	for (int j = 0; j < i / 2; j++) ??<
+		char t = s??(j??);
+		s??(j??) = s??(i - j - 1??);
+		s??(i - j - 1??) = t;
+	??>
+??>
 
-int main(void) {
+int main(void) ??<
 	word out_size, ratio;
 	byte t_bcd;
-	char s_str[24], r_str[8], t_str[8];
+	char s_str??(24??), r_str??(8??), t_str??(8??);
 
 	hinit();
 	fs_init();
@@ -52,10 +52,10 @@ int main(void) {
 	RTC_SECONDS = 0;
 	RTC_ENABLE = 1;
 	byte *comp_data = compress_media(generated_media_raw, 0xC00, MEDIA_COMPRESS_LZMA, &out_size);
-	if (comp_data == 0) {
+	if (comp_data == 0) ??<
 		tui_draw_text(15, 25, "Error compressing media", TUI_FONT_SIZE_7x10, 0, 0, 0, TUI_COLOUR_BLACK);
 		while (1);
-	}
+	??>
 	RTC_ENABLE = 0;
 	t_bcd = RTC_SECONDS;
 
@@ -68,33 +68,33 @@ int main(void) {
 	// Show
 	tui_draw_text(15, 15, "Showing...    ", TUI_FONT_SIZE_7x10, 0, 0, 0, TUI_COLOUR_BLACK);
 	byte sm = show_media(FS_ROOT, "t.tz", MEDIA_COMPRESS_LZMA);
-	if (sm != 0) {
+	if (sm != 0) ??<
 		tui_draw_text(15, 25, "Error showing media", TUI_FONT_SIZE_7x10, 0, 0, 0, TUI_COLOUR_BLACK);
 		tui_draw_text(15, 35, "Error code:", TUI_FONT_SIZE_7x10, 0, 0, 0, TUI_COLOUR_BLACK);
-		char buf[2] = {0};
+		char buf??(2??) = ??<0??>;
 		itoa(sm, buf);
 		tui_draw_text(100, 35, buf, TUI_FONT_SIZE_7x10, 0, 0, 0, TUI_COLOUR_BLACK);
 		derefw(0xAB32) = sm;
 		while (1);
-	}
+	??>
 	// Stats
 
 	// Size formatting
 	itoa(out_size, s_str);
-	int l = 0; while (s_str[l]) l++;
-	s_str[l++] = ' '; s_str[l++] = 'b'; s_str[l++] = 'y'; s_str[l++] = 't'; s_str[l++] = 'e'; s_str[l++] = 's'; s_str[l] = 0;
+	int l = 0; while (s_str??(l??)) l++;
+	s_str??(l++??) = ' '; s_str??(l++??) = 'b'; s_str??(l++??) = 'y'; s_str??(l++??) = 't'; s_str??(l++??) = 'e'; s_str??(l++??) = 's'; s_str??(l??) = 0;
 
 	// Ratio formatting
 	ratio = ((dword)out_size * 100) / 0xC00;
 	itoa(ratio, r_str);
-	l = 0; while (r_str[l]) l++;
-	r_str[l++] = '%'; r_str[l] = 0;
+	l = 0; while (r_str??(l??)) l++;
+	r_str??(l++??) = '%'; r_str??(l??) = 0;
 
 	// Time formatting (BCD)
-	t_str[0] = ((t_bcd >> 4) & 0xF) + '0';
-	t_str[1] = (t_bcd & 0xF) + '0';
-	t_str[2] = 's';
-	t_str[3] = 0;
+	t_str??(0??) = ((t_bcd >> 4) & 0xF) + '0';
+	t_str??(1??) = (t_bcd & 0xF) + '0';
+	t_str??(2??) = 's';
+	t_str??(3??) = 0;
 
 	tui_draw_text(10, 10, "Compressed:", TUI_FONT_SIZE_7x10, 0, 0, 0, TUI_COLOUR_BLACK);
 	tui_draw_text(100, 10, s_str, TUI_FONT_SIZE_7x10, 0, 0, 0, TUI_COLOUR_BLACK);
@@ -104,7 +104,7 @@ int main(void) {
 	tui_draw_text(100, 32, t_str, TUI_FONT_SIZE_7x10, 0, 0, 0, TUI_COLOUR_BLACK);
 
 	return 0;
-}
+??>
 
 
 

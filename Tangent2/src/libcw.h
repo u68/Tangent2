@@ -15,10 +15,10 @@
  * Copyright (C) 2026 u68
  */
 
-#ifndef LIBCW_H_
-#define LIBCW_H_
+??=ifndef LIBCW_H_
+??=define LIBCW_H_
 
-#define LIBCW_VERSION "1.45"
+??=define LIBCW_VERSION "1.45"
 
  // Telecomadm1145 did most of this sfr stuff
  typedef unsigned char byte;
@@ -109,78 +109,78 @@ word ticks_to_ms(word ticks);
 word ticks_to_s(word ticks);
 
 // Settings
-#ifdef IS_CWX
-#   define VRAM 0xD000
-#   define Write2RealScreen *((volatile __near byte *)(VRAM + 0x602))
-#   define HEAP_START_ADDR (VRAM + 0x604)
-#   define HEAP_MAX_SIZE 0xA00
-#   define FS_MAX_SIZE 0x1000
-#   define FS_MAX_NODES 64
-#else
-#   define VRAM 0x9000
-#   define Write2RealScreen *((volatile __near byte *)(VRAM + 0xC02))
-#   define HEAP_START_ADDR (VRAM + 0xC04)
-#   define HEAP_MAX_SIZE 0x1400
-#   define FS_MAX_SIZE 0x3800
-#   define FS_MAX_NODES 255
-#endif
+??=ifdef IS_CWX
+??=   define VRAM 0xD000
+??=   define Write2RealScreen *((volatile __near byte *)(VRAM + 0x602))
+??=   define HEAP_START_ADDR (VRAM + 0x604)
+??=   define HEAP_MAX_SIZE 0xA00
+??=   define FS_MAX_SIZE 0x1000
+??=   define FS_MAX_NODES 64
+??=else
+??=   define VRAM 0x9000
+??=   define Write2RealScreen *((volatile __near byte *)(VRAM + 0xC02))
+??=   define HEAP_START_ADDR (VRAM + 0xC04)
+??=   define HEAP_MAX_SIZE 0x1400
+??=   define FS_MAX_SIZE 0x3800
+??=   define FS_MAX_NODES 255
+??=endif
 
-#define HEAP_BLOCK_ALIGN 2
+??=define HEAP_BLOCK_ALIGN 2
 
 // File system
-#define FS_START_ADDR (HEAP_START_ADDR + HEAP_MAX_SIZE)
-#define FS_NAME_MAX_LEN 12
-#define FS_INVALID_IDX 0xFF
-#define FS_NULL_OFFSET 0xFFFF
+??=define FS_START_ADDR (HEAP_START_ADDR + HEAP_MAX_SIZE)
+??=define FS_NAME_MAX_LEN 12
+??=define FS_INVALID_IDX 0xFF
+??=define FS_NULL_OFFSET 0xFFFF
 
 // Perm presets
-#define PERMS_RWX  ((fs_perms_t){ .field.read=1, .field.write=1, .field.execute=1 })
-#define PERMS_RW   ((fs_perms_t){ .field.read=1, .field.write=1, .field.execute=0 })
-#define PERMS_R    ((fs_perms_t){ .field.read=1, .field.write=0, .field.execute=0 })
-#define PERMS_WX   ((fs_perms_t){ .field.read=0, .field.write=1, .field.execute=1 })
-#define PERMS_W    ((fs_perms_t){ .field.read=0, .field.write=1, .field.execute=0 })
-#define PERMS_X    ((fs_perms_t){ .field.read=0, .field.write=0, .field.execute=1 })
-#define PERMS_RX   ((fs_perms_t){ .field.read=1, .field.write=0, .field.execute=1 })
-#define PERMS_NONE ((fs_perms_t){ .field.read=0, .field.write=0, .field.execute=0 })
+??=define PERMS_RWX  ((fs_perms_t)??< .field.read=1, .field.write=1, .field.execute=1 ??>)
+??=define PERMS_RW   ((fs_perms_t)??< .field.read=1, .field.write=1, .field.execute=0 ??>)
+??=define PERMS_R    ((fs_perms_t)??< .field.read=1, .field.write=0, .field.execute=0 ??>)
+??=define PERMS_WX   ((fs_perms_t)??< .field.read=0, .field.write=1, .field.execute=1 ??>)
+??=define PERMS_W    ((fs_perms_t)??< .field.read=0, .field.write=1, .field.execute=0 ??>)
+??=define PERMS_X    ((fs_perms_t)??< .field.read=0, .field.write=0, .field.execute=1 ??>)
+??=define PERMS_RX   ((fs_perms_t)??< .field.read=1, .field.write=0, .field.execute=1 ??>)
+??=define PERMS_NONE ((fs_perms_t)??< .field.read=0, .field.write=0, .field.execute=0 ??>)
 
 // Rewt
-#define FS_ROOT (&FS_NODES[0])
+??=define FS_ROOT (&FS_NODES??(0??))
 
 // Time
-#define RTC_ENABLE *((volatile __near byte *)0xF0C7)
-#define RTC_SECONDS *((volatile __near byte *)0xF0C0)
-#define RTC_MINUTES *((volatile __near byte *)0xF0C1)
-#define RTC_HOURS *((volatile __near byte *)0xF0C2)
-#define RTC_DAY *((volatile __near byte *)0xF0C3) // Note: ML620909 RTC clock does not use crystal oscillator.
-#define RTC_WEEK *((volatile __near byte *)0xF0C4) // Therefore, it may drift significantly over time (~2 minutes per hour)
-#define RTC_MONTH *((volatile __near byte *)0xF0C5) // It also depends on certain core configurations and battery voltage, 
-#define RTC_YEAR *((volatile __near byte *)0xF0C6) // so it is advised to not use the RTC for precise timekeeping.
+??=define RTC_ENABLE *((volatile __near byte *)0xF0C7)
+??=define RTC_SECONDS *((volatile __near byte *)0xF0C0)
+??=define RTC_MINUTES *((volatile __near byte *)0xF0C1)
+??=define RTC_HOURS *((volatile __near byte *)0xF0C2)
+??=define RTC_DAY *((volatile __near byte *)0xF0C3) // Note: ML620909 RTC clock does not use crystal oscillator.
+??=define RTC_WEEK *((volatile __near byte *)0xF0C4) // Therefore, it may drift significantly over time (??-2 minutes per hour)
+??=define RTC_MONTH *((volatile __near byte *)0xF0C5) // It also depends on certain core configurations and battery voltage, 
+??=define RTC_YEAR *((volatile __near byte *)0xF0C6) // so it is advised to not use the RTC for precise timekeeping.
 
 // Time constants
-#define SECONDS_PER_MINUTE 60
-#define MINUTES_PER_HOUR 60
-#define HOURS_PER_DAY 24
-#define DAYS_PER_WEEK 7
-#define MONTHS_PER_YEAR 12
+??=define SECONDS_PER_MINUTE 60
+??=define MINUTES_PER_HOUR 60
+??=define HOURS_PER_DAY 24
+??=define DAYS_PER_WEEK 7
+??=define MONTHS_PER_YEAR 12
 
-#define TICKS_PER_MS 8
-#define TICKS_PER_SECOND 8000
+??=define TICKS_PER_MS 8
+??=define TICKS_PER_SECOND 8000
 
 // Continuing from Telecomadm1145's sfr stuff
- #define deref(x) (*((__near byte*)(x)))
- #define derefw(x) (*((__near word*)(x)))
+ ??=define deref(x) (*((__near byte*)(x)))
+ ??=define derefw(x) (*((__near word*)(x)))
 
- #ifndef __near
- #define __near
- #endif
+ ??=ifndef __near
+ ??=define __near
+ ??=endif
 
  typedef unsigned short ushort;
 
- #define val(x) *((volatile __near byte *)x)
- #define valw(x) *((volatile __near word *)x)
+ ??=define val(x) *((volatile __near byte *)x)
+ ??=define valw(x) *((volatile __near word *)x)
 
- #define hw_deref(x)  (*((volatile __near byte*)(x)))
- #define hw_derefw(x) (*((volatile __near word*)(x)))
+ ??=define hw_deref(x)  (*((volatile __near byte*)(x)))
+ ??=define hw_derefw(x) (*((volatile __near word*)(x)))
  // STPACP
  // STPACP is a write-only special function register (SFR) that is used for setting a STOP mode.
  // When STPACP is read, “0x00” is read.
@@ -192,31 +192,31 @@ word ticks_to_s(word ticks);
  // written to STPACP after “0x5n” is written, the “0x5n” write processing becomes invalid so that data must be written
  // again starting from “0x5n”.
  // During a system reset, the stop code acceptor is disabled.
- #define StopAcceptor *((volatile __near byte *)0xF008)
+ ??=define StopAcceptor *((volatile __near byte *)0xF008)
  // SBYCON
  // 0b00 Program run mode (initial value)
  // 0b01 HALT mode
  // 0b10 STOP mode
  // 0b11 Prohibited
- #define StopControl *((volatile __near byte *)0xF009)
+ ??=define StopControl *((volatile __near byte *)0xF009)
  // FCON
  // 0 OSCLK_1 OSCLK_2 OSCLK_3
  // 0 0       LSCLK_1 LSCLK_2
  // OSCLK is the clock divider.
  // Only when LSCLK = 1, low speed clock is enabled.
- #define FCON *((volatile __near byte *)0xF00A)
- #define InterruptMask0 *((volatile __near byte *)0xF010)
- #define InterruptMask1 *((volatile __near byte *)0xF011)
- #define InterruptMask_W0 *((volatile __near ushort *)0xF010)
- #define InterruptMask2 *((volatile __near byte *)0xF012)
- #define InterruptMask3 *((volatile __near byte *)0xF013)
- #define InterruptMask_W1 *((volatile __near ushort *)0xF012)
- #define InterruptPending0 *((volatile __near byte *)0xF014)
- #define InterruptPending1 *((volatile __near byte *)0xF015)
- #define InterruptPending_W0 *((volatile __near ushort *)0xF014)
- #define InterruptPending2 *((volatile __near byte *)0xF016)
- #define InterruptPending3 *((volatile __near byte *)0xF017)
- #define InterruptPending_W1 *((volatile __near ushort *)0xF016)
+ ??=define FCON *((volatile __near byte *)0xF00A)
+ ??=define InterruptMask0 *((volatile __near byte *)0xF010)
+ ??=define InterruptMask1 *((volatile __near byte *)0xF011)
+ ??=define InterruptMask_W0 *((volatile __near ushort *)0xF010)
+ ??=define InterruptMask2 *((volatile __near byte *)0xF012)
+ ??=define InterruptMask3 *((volatile __near byte *)0xF013)
+ ??=define InterruptMask_W1 *((volatile __near ushort *)0xF012)
+ ??=define InterruptPending0 *((volatile __near byte *)0xF014)
+ ??=define InterruptPending1 *((volatile __near byte *)0xF015)
+ ??=define InterruptPending_W0 *((volatile __near ushort *)0xF014)
+ ??=define InterruptPending2 *((volatile __near byte *)0xF016)
+ ??=define InterruptPending3 *((volatile __near byte *)0xF017)
+ ??=define InterruptPending_W1 *((volatile __near ushort *)0xF016)
  // EXICON
  // Each external input uses 2 bits.
  // External input 0 is keyboard.
@@ -224,11 +224,11 @@ word ticks_to_s(word ticks);
  // 0b01 means trigger when L level turns to H level
  // 0b10 means trigger when H level
  // 0b11 means trigger when L level
- #define ExternalInterruptControl *((volatile __near byte *)0xF018)
+ ??=define ExternalInterruptControl *((volatile __near byte *)0xF018)
  // TM0D
- #define Timer0Interval *((volatile __near ushort *)0xF020)
+ ??=define Timer0Interval *((volatile __near ushort *)0xF020)
  // TM0C
- #define Timer0Counter *((volatile __near ushort *)0xF022)
+ ??=define Timer0Counter *((volatile __near ushort *)0xF022)
  // TM0CON
  // 0   0   0   0
  // CS3 CS2 CS1 CS0
@@ -237,82 +237,82 @@ word ticks_to_s(word ticks);
  // CS0-2 mean clock divider
  // CS3 enables HSCLK
  // E: Enables the timer.
- #define Timer0Control *((volatile __near ushort *)0xF024)
+ ??=define Timer0Control *((volatile __near ushort *)0xF024)
  // TM0CON0
  // 0   0   0   0
  // CS3 CS2 CS1 CS0
  // CS0-2 mean clock divider
  // CS3 enables HSCLK
- #define Timer0Control0 *((volatile __near byte *)0xF024)
+ ??=define Timer0Control0 *((volatile __near byte *)0xF024)
  // TM0CON1
  // 0 0 0 0
  // 0 0 0 E
  // E: Enables the timer.
- #define Timer0Control1 *((volatile __near byte *)0xF025)
+ ??=define Timer0Control1 *((volatile __near byte *)0xF025)
  // BLKCON
- #define BlockControl *((volatile __near byte *)0xF028)
+ ??=define BlockControl *((volatile __near byte *)0xF028)
  // Screen display range
- #define ScreenRange *((volatile __near byte *)0xF030)
+ ??=define ScreenRange *((volatile __near byte *)0xF030)
  // Screen mode
- #define ScreenMode *((volatile __near byte *)0xF031)
- #define ScreenContrast *((volatile __near byte *)0xF032)
- #define ScreenBrightness *((volatile __near byte *)0xF033)
- #define ScreenInterval *((volatile __near byte *)0xF034)
- #define ScreenUnk1 *((volatile __near byte *)0xF035)
- #define ScreenUnk2 *((volatile __near byte *)0xF036)
- #define ScreenSelect *((volatile __near byte *)0xF037)
- #define ScreenOffset *((volatile __near byte *)0xF039)
- #define ScreenPower *((volatile __near byte *)0xF03D)
- #define KeyboardIn *((volatile __near byte *)0xF040)
- #define KeyboardInPullUp *((volatile __near byte *)0xF041)
- #define KeyboardInMask *((volatile __near byte *)0xF042)
+ ??=define ScreenMode *((volatile __near byte *)0xF031)
+ ??=define ScreenContrast *((volatile __near byte *)0xF032)
+ ??=define ScreenBrightness *((volatile __near byte *)0xF033)
+ ??=define ScreenInterval *((volatile __near byte *)0xF034)
+ ??=define ScreenUnk1 *((volatile __near byte *)0xF035)
+ ??=define ScreenUnk2 *((volatile __near byte *)0xF036)
+ ??=define ScreenSelect *((volatile __near byte *)0xF037)
+ ??=define ScreenOffset *((volatile __near byte *)0xF039)
+ ??=define ScreenPower *((volatile __near byte *)0xF03D)
+ ??=define KeyboardIn *((volatile __near byte *)0xF040)
+ ??=define KeyboardInPullUp *((volatile __near byte *)0xF041)
+ ??=define KeyboardInMask *((volatile __near byte *)0xF042)
  // Although KO has 2 bytes.but only 7 bits are used. so just ignore that.
- #define KeyboardOutMask *((volatile __near byte *)0xF044)
- #define KeyboardOut *((volatile __near byte *)0xF046)
+ ??=define KeyboardOutMask *((volatile __near byte *)0xF044)
+ ??=define KeyboardOut *((volatile __near byte *)0xF046)
 
 // Back to my stuff
 
-#ifndef __DI
+??=ifndef __DI
 extern void __DI(void);
-#endif
-#ifndef __EI
+??=endif
+??=ifndef __EI
 extern void __EI(void);
-#endif
+??=endif
 
-#ifndef IS_CWX
-#   define BufSelSFR *((volatile __near byte *)0xF037)
-#endif
+??=ifndef IS_CWX
+??=   define BufSelSFR *((volatile __near byte *)0xF037)
+??=endif
 
-typedef enum tui_colour {
+typedef enum tui_colour ??<
 	TUI_COLOUR_WHITE,
-#ifndef IS_CWX
+??=ifndef IS_CWX
 	TUI_COLOUR_LIGHT_GREY,
 	TUI_COLOUR_DARK_GREY,
-#endif
+??=endif
 	TUI_COLOUR_BLACK,
-#ifdef IS_CWX
+??=ifdef IS_CWX
 	TUI_COLOUR_IMAGE = TUI_COLOUR_BLACK, // CWX is only black and white so colour image will just be the same as drawing a black image
-#else
+??=else
     TUI_COLOUR_IMAGE,
-#endif
-} tui_colour_t;
+??=endif
+??> tui_colour_t;
 
-typedef enum tui_style { // Not really in use atm
+typedef enum tui_style ??< // Not really in use atm
 	TUI_STYLE_NONE,
 	TUI_STYLE_SOLID,
 	TUI_STYLE_DOTTED,
 	TUI_STYLE_DASHED,
 	TUI_STYLE_DOUBLE
-} tui_style_t;
+??> tui_style_t;
 
-typedef enum tui_line_style {
+typedef enum tui_line_style ??<
 	TUI_LINE_STYLE_NONE,
 	TUI_LINE_STYLE_SOLID = 0xFF,
 	TUI_LINE_STYLE_DOTTED = 0xAA,
 	TUI_LINE_STYLE_DASHED = 0xF8,
-} tui_line_style_t;
+??> tui_line_style_t;
 
-typedef enum tui_font_size {
+typedef enum tui_font_size ??<
 	TUI_FONT_SIZE_6x7,
 	TUI_FONT_SIZE_6x8,
 	TUI_FONT_SIZE_6x10,
@@ -320,15 +320,15 @@ typedef enum tui_font_size {
 	TUI_FONT_SIZE_8x8,
 	TUI_FONT_SIZE_8x12,
 	TUI_FONT_SIZE_12x16,
-} tui_font_t;
+??> tui_font_t;
 
-typedef enum tui_fill_style {
+typedef enum tui_fill_style ??<
 	TUI_FILL_STYLE_NONE,
 	TUI_FILL_STYLE_SOLID,
 	TUI_FILL_STYLE_CHECKERED,
 	TUI_FILL_STYLE_GRADIENT,
 	TUI_FILL_STYLE_DITHER,
-} tui_fill_style_t;
+??> tui_fill_style_t;
 
 //void __tui_clear_screen_real_buf_1();
 //void __tui_clear_screen_real_buf_2();
@@ -336,69 +336,69 @@ typedef enum tui_fill_style {
 //void __tui_set_pixel(byte x, byte y, tui_colour_t colour);
 
 /*
-static const byte YsFont6x7[1792];
-static const byte YsFont6x8[2048];
-static const byte YsFont6x10[2560];
-static const byte YsFont7x10[2560];
-static const byte YsFont8x8[2048];
-static const byte YsFont8x12[3072];
-static const byte YsFont12x16[8192];
+static const byte YsFont6x7??(1792??);
+static const byte YsFont6x8??(2048??);
+static const byte YsFont6x10??(2560??);
+static const byte YsFont7x10??(2560??);
+static const byte YsFont8x8??(2048??);
+static const byte YsFont8x12??(3072??);
+static const byte YsFont12x16??(8192??);
 
-static const sbyte tui_sin_table[360];
-static const sbyte tui_cos_table[360];
+static const sbyte tui_sin_table??(360??);
+static const sbyte tui_cos_table??(360??);
 
 static void __tui_clear_screen_real_buf_2(void);
 static void __tui_clear_screen_real_buf_1(void);
 static void __tui_set_pixel_real(byte x, byte y, tui_colour_t colour);
 static void __tui_set_pixel(byte x, byte y, tui_colour_t colour);*/
 
-typedef struct block {
+typedef struct block ??<
     word size;
     struct block *next;
     byte free;
-} block_t;
+??> block_t;
 
 // File permissions structure (type is within fs_perms for that one extra byte of less space)
-typedef union fs_perms {
+typedef union fs_perms ??<
     byte raw;
-    struct {
+    struct ??<
         byte read:1;
         byte write:1;
         byte execute:1;
         byte is_directory:1;
         byte reserved:4;
-    } field;
-} fs_perms_t;
+    ??> field;
+??> fs_perms_t;
 
 // Filesystem node structure
-typedef struct fs_node {
+typedef struct fs_node ??<
     fs_perms_t perms;
-    char name[FS_NAME_MAX_LEN];
+    char name??(FS_NAME_MAX_LEN??);
     byte parent;
     byte first_child;
     byte next_sibling;
     word size;
     word data_offset;
-} fs_node_t;
+??> fs_node_t;
 
 // Filesystem extent structure for file data chaining
-typedef struct fs_extent {
+typedef struct fs_extent ??<
     word size;
     word next;
-} fs_extent_t;
+??> fs_extent_t;
 
 // More filesystem definitions
-#define FS_FREE_LIST (*(word*)FS_START_ADDR)
-#define FS_NODES ((fs_node_t*)((byte*)FS_START_ADDR + sizeof(word)))
-#define FS_NODE_TABLE_SIZE (sizeof(fs_node_t) * FS_MAX_NODES)
-#define FS_DATA_POOL ((byte*)FS_START_ADDR + sizeof(word) + FS_NODE_TABLE_SIZE)
-#define FS_DATA_POOL_SIZE (FS_MAX_SIZE - sizeof(word) - FS_NODE_TABLE_SIZE)
+??=define FS_FREE_LIST (*(word*)FS_START_ADDR)
+??=define FS_NODES ((fs_node_t*)((byte*)FS_START_ADDR + sizeof(word)))
+??=define FS_NODE_TABLE_SIZE (sizeof(fs_node_t) * FS_MAX_NODES)
+??=define FS_DATA_POOL ((byte*)FS_START_ADDR + sizeof(word) + FS_NODE_TABLE_SIZE)
+??=define FS_DATA_POOL_SIZE (FS_MAX_SIZE - sizeof(word) - FS_NODE_TABLE_SIZE)
 
 // Get key
 byte CheckButtons();
 
 // Button enums (Cosine)
-typedef enum BUTTON {
+typedef enum BUTTON ??<
 	B_0 = 0xb,
 	B_1 = 0x3f,
 	B_2 = 0x37,
@@ -442,9 +442,9 @@ typedef enum BUTTON {
 	B_Z = 0xf,
 
 	BUTTON_COUNT = 0x40
-} button_t;
+??> button_t;
 
-typedef enum SPECIAL_CHARS {
+typedef enum SPECIAL_CHARS ??<
 	SP_HOME = 0x30,
     SP_UP = 0x20,
     SP_PGUP = 0x10,
@@ -494,9 +494,9 @@ typedef enum SPECIAL_CHARS {
     SP_SCI = 0x0D,
     SP_FORMAT = 0x0E,
     SP_EXE = 0x0F,
-} special_char_t;
+??> special_char_t;
 
-typedef enum SHIFT_SPECIAL {
+typedef enum SHIFT_SPECIAL ??<
     SC_QR = SP_X,
     SC_MIXFRAC = SP_FRAC,
     SC_NROOT = SP_SQRT,
@@ -526,8 +526,8 @@ typedef enum SHIFT_SPECIAL {
     SC_Y = SP_DOT,
     SC_Z = SP_SCI,
     SC_ESTIMATE = SP_EXE,
-} shift_special_t;
+??> shift_special_t;
 
 
 
-#endif /* LIBCW_H_ */
+??=endif /* LIBCW_H_ */

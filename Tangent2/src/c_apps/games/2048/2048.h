@@ -6,11 +6,11 @@
  *      Author: harma
  */
 
-#ifndef _2048_H_
-#define _2048_H_
+??=ifndef _2048_H_
+??=define _2048_H_
 
-#include "../../../libcw.h"
+??=include "../../../libcw.h"
 
 void start_2048(void);
 
-#endif /* _2048_H_ */
+??=endif /* _2048_H_ */

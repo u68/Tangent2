@@ -5,12 +5,12 @@
  *      Author: harma
  */
 
-#ifndef INPUT_INPUT_H_
-#define INPUT_INPUT_H_
+??=ifndef INPUT_INPUT_H_
+??=define INPUT_INPUT_H_
 
-#include "../libcw.h"
+??=include "../libcw.h"
 
 // Just one function :)
 byte input_text(char *buffer, byte max_len);
 
-#endif /* INPUT_INPUT_H_ */
+??=endif /* INPUT_INPUT_H_ */

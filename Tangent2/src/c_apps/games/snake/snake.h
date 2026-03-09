@@ -6,11 +6,11 @@
  *      Author: harma
  */
 
-#ifndef SNAKE_H_
-#define SNAKE_H_
+??=ifndef SNAKE_H_
+??=define SNAKE_H_
 
-#include "../../../libcw.h"
+??=include "../../../libcw.h"
 
 void start_snake(void);
 
-#endif /* SNAKE_H_ */
+??=endif /* SNAKE_H_ */

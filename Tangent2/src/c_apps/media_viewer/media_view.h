@@ -6,12 +6,12 @@
  *      Author: harma
  */
 
-#ifndef MEDIA_VIEW_H_
-#define MEDIA_VIEW_H_
+??=ifndef MEDIA_VIEW_H_
+??=define MEDIA_VIEW_H_
 
-#include "../../libcw.h"
+??=include "../../libcw.h"
 
 void start_media_view(void);
 void media_view_open(const char *filename);
 
-#endif /* MEDIA_VIEW_H_ */
+??=endif /* MEDIA_VIEW_H_ */

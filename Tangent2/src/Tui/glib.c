@@ -6,8 +6,8 @@
  *      Author: harma
  */
 
-#include "glib.h"
-#include "../debug/debug.h"
+??=include "glib.h"
+??=include "../debug/debug.h"
 
 // Internal stuff
 static void render_text(TmlElement *elem, byte world_x, byte world_y, word world_rot);
@@ -22,102 +22,102 @@ static void render_window(TmlElement *elem, byte world_x, byte world_y, word wor
 // Transform helper
 static void apply_transform(byte parent_wx, byte parent_wy, word parent_rot,
                             byte local_x, byte local_y,
-                            byte* out_wx, byte* out_wy) {
+                            byte* out_wx, byte* out_wy) ??<
 	byte rx, ry;
 	
-	if (parent_rot == 0) {
+	if (parent_rot == 0) ??<
 		// No rotation - simple offset
 		*out_wx = parent_wx + local_x;
 		*out_wy = parent_wy + local_y;
-	} else {
+	??> else ??<
 		// Rotate local position around parent origin, then add parent position
 		tui_rotate_point(0, 0, local_x, local_y, parent_rot, &rx, &ry);
 		*out_wx = parent_wx + rx;
 		*out_wy = parent_wy + ry;
-	}
-}
+	??>
+??>
 
 // Main render function - traverses tree and renders elements
-void tml_render(TmlElement* root) {
+void tml_render(TmlElement* root) ??<
 	if (!root) return;
 	
 	// Stack for traversal state
-	TmlElement* elem_stack[TML_MAX_DEPTH];
-	TmlTransform transform_stack[TML_MAX_DEPTH];
+	TmlElement* elem_stack??(TML_MAX_DEPTH??);
+	TmlTransform transform_stack??(TML_MAX_DEPTH??);
 	byte stack_ptr = 0;
 	
 	// Start with root
 	TmlElement* current = root;
-	TmlTransform current_transform = {0, 0, 0};
+	TmlTransform current_transform = ??<0, 0, 0??>;
 
 	TmlElement* focused_elem = root;
 	byte current_key = CheckButtons();
-	if (current_key != 0xff) {
-		switch(current_key) {
+	if (current_key != 0xff) ??<
+		switch(current_key) ??<
 			case SP_BACK:
 			case SP_UP:
-				if (focused_elem->parent && focused_elem->parent->select.field.selectable) {
+				if (focused_elem->parent && focused_elem->parent->select.field.selectable) ??<
 					focused_elem->select.field.focused = 0;
 					focused_elem->parent->select.field.focused = 1;
-				}
+				??>
 				break;
 			case SP_DOWN:
-				if (focused_elem->first_child && focused_elem->first_child->select.field.selectable) {
+				if (focused_elem->first_child && focused_elem->first_child->select.field.selectable) ??<
 					focused_elem->select.field.focused = 0;
 					focused_elem = focused_elem->first_child;
 					focused_elem->select.field.focused = 1;
-				}
+				??>
 				break;
 			case SP_RIGHT:
-			{
+			??<
 				TmlElement* candidate = focused_elem->next_sibling;
-				while (candidate && !candidate->select.field.selectable) {
+				while (candidate && !candidate->select.field.selectable) ??<
 					candidate = candidate->next_sibling;
-				}
-				if (candidate) {
+				??>
+				if (candidate) ??<
 					focused_elem->select.field.focused = 0;
 					focused_elem = candidate;
 					focused_elem->select.field.focused = 1;
-				}
+				??>
 				break;
-			}
+			??>
 				break;
 			case SP_EXE:
-				if (focused_elem->select.field.selectable) {
+				if (focused_elem->select.field.selectable) ??<
 					focused_elem->select.field.selected = 1;
-				}
+				??>
 				break;
 			case SP_AC:
 				focused_elem->select.field.selected = 0;
 				focused_elem->select.field.focused = 0;
 				focused_elem = root;
-		}
-	}
+		??>
+	??>
 	
-	while (current || stack_ptr > 0) {
+	while (current ??!??! stack_ptr > 0) ??<
 		// Go as deep as possible through first children
-		while (current) {
+		while (current) ??<
 			// Calculate this element's world transform
 			byte world_x, world_y;
 			word world_rot;
 			
-			if (stack_ptr > 0) {
+			if (stack_ptr > 0) ??<
 				// Apply parent's transform to get our world position
-				TmlTransform* parent_t = &transform_stack[stack_ptr - 1];
+				TmlTransform* parent_t = &transform_stack??(stack_ptr - 1??);
 				apply_transform(parent_t->x, parent_t->y, parent_t->rotation,
 				                current->x, current->y,
 				                &world_x, &world_y);
 				world_rot = (parent_t->rotation + current->rotation) % 360;
-			} else {
+			??> else ??<
 				// Root element - local = world
 				world_x = current->x;
 				world_y = current->y;
 				world_rot = current->rotation;
-			}
+			??>
 			
 			// Render this element (skip ROOT type)
-			if (current->type != TML_TYPE_ROOT) {
-				switch (current->type) {
+			if (current->type != TML_TYPE_ROOT) ??<
+				switch (current->type) ??<
 				case TML_TYPE_TEXT:
 					render_text(current, world_x, world_y, world_rot);
 					break;
@@ -145,86 +145,86 @@ void tml_render(TmlElement* root) {
 				default:
 					trigger_bsod(ERROR_TUI_INVALID_ELEMENT);
 					break;
-				}
-			}
+				??>
+			??>
 			
 			// If has children, push current state and descend
-			if (current->first_child) {
+			if (current->first_child) ??<
 				// Push current element and its world transform
-				elem_stack[stack_ptr] = current;
-				transform_stack[stack_ptr].x = world_x;
-				transform_stack[stack_ptr].y = world_y;
-				transform_stack[stack_ptr].rotation = world_rot;
-			if (stack_ptr >= TML_MAX_DEPTH) {
+				elem_stack??(stack_ptr??) = current;
+				transform_stack??(stack_ptr??).x = world_x;
+				transform_stack??(stack_ptr??).y = world_y;
+				transform_stack??(stack_ptr??).rotation = world_rot;
+			if (stack_ptr >= TML_MAX_DEPTH) ??<
 				trigger_bsod(ERROR_TUI_INVALID_ELEMENT);
 				return;
-			}
+			??>
 				
 				current = current->first_child;
-			} else {
+			??> else ??<
 				// No children - try sibling
-				if (current->next_sibling) {
+				if (current->next_sibling) ??<
 					current = current->next_sibling;
-				} else {
+				??> else ??<
 					// No sibling - need to backtrack
 					current = 0;
-				}
-			}
-		}
+				??>
+			??>
+		??>
 		
 		// Backtrack: pop stack and try sibling of popped element
-		while (stack_ptr > 0 && !current) {
+		while (stack_ptr > 0 && !current) ??<
 			stack_ptr--;
-			TmlElement* parent = elem_stack[stack_ptr];
+			TmlElement* parent = elem_stack??(stack_ptr??);
 			
-			if (parent->next_sibling) {
+			if (parent->next_sibling) ??<
 				current = parent->next_sibling;
-			}
-		}
-	}
-}
+			??>
+		??>
+	??>
+??>
 
 // Element renderers
-static void render_text(TmlElement* elem, byte world_x, byte world_y, word world_rot) {
+static void render_text(TmlElement* elem, byte world_x, byte world_y, word world_rot) ??<
 	if (!elem->data.text.text) return;
-	if (elem->select.field.focused) {
+	if (elem->select.field.focused) ??<
 		byte text_w, text_h;
 		tui_get_text_size(elem->data.text.font_size, elem->data.text.text, &text_w, &text_h);
 		tui_draw_rectangle(world_x - 1, world_y -1, 
 						   text_w + 2, text_h + 2, 
 						   elem->anchor_x, elem->anchor_y, 
 						   world_rot, TUI_COLOUR_DARK_GREY, 1, 0x55);
-	} else if (elem->select.field.selected) {
+	??> else if (elem->select.field.selected) ??<
 		byte text_w, text_h;
 		tui_get_text_size(elem->data.text.font_size, elem->data.text.text, &text_w, &text_h);
 		tui_draw_rectangle(world_x - 1, world_y -1, 
 						   text_w + 2, text_h + 2, 
 						   elem->anchor_x, elem->anchor_y, 
 						   world_rot, TUI_COLOUR_BLACK, 1, TUI_LINE_STYLE_SOLID);
-	}
+	??>
 	tui_draw_text(world_x, world_y, 
 	          elem->data.text.text, 
 	          elem->data.text.font_size,
 	          elem->anchor_x, elem->anchor_y,
 	          world_rot, elem->colour);
-}
+??>
 
-static void render_button(TmlElement* elem, byte world_x, byte world_y, word world_rot) {
+static void render_button(TmlElement* elem, byte world_x, byte world_y, word world_rot) ??<
 	TmlButtonData* btn = &elem->data.button;
 	
-	if (elem->select.field.focused) {
+	if (elem->select.field.focused) ??<
 		byte but_w = btn->width, but_h = btn->height;
 		tui_draw_rectangle(world_x - 1, world_y -1, 
 						   but_w + 2, but_h + 2, 
 						   elem->anchor_x, elem->anchor_y, 
 						   world_rot, TUI_COLOUR_DARK_GREY, 1, 0x55);
-	} else if (elem->select.field.selected) {
+	??> else if (elem->select.field.selected) ??<
 		byte but_w = btn->width, but_h = btn->height;
 		tui_draw_rectangle(world_x - 1, world_y -1, 
 						   but_w + 2, but_h + 2, 
 						   elem->anchor_x, elem->anchor_y, 
 						   world_rot, TUI_COLOUR_BLACK, 1, TUI_LINE_STYLE_SOLID);
-	}
+	??>
 
 	// Draw border rectangle
 	tui_draw_rectangle(world_x, world_y,
@@ -234,7 +234,7 @@ static void render_button(TmlElement* elem, byte world_x, byte world_y, word wor
 	               btn->border_thickness, btn->border_style);
 	
 	// Draw text if present
-	if (btn->text) {
+	if (btn->text) ??<
 		byte text_w, text_h;
 		byte text_x = world_x;
 		byte text_y = world_y;
@@ -242,7 +242,7 @@ static void render_button(TmlElement* elem, byte world_x, byte world_y, word wor
 		tui_get_text_size(btn->font_size, btn->text, &text_w, &text_h);
 		
 		// Calculate text position based on alignment
-		switch (btn->text_align) {
+		switch (btn->text_align) ??<
 		case TML_ALIGN_CENTER_LEFT:
 			text_y += (btn->height >> 1) - (text_h >> 1);
 			break;
@@ -268,7 +268,7 @@ static void render_button(TmlElement* elem, byte world_x, byte world_y, word wor
 		default:
 			trigger_bsod(ERROR_TUI_INVALID_TEXT_ALIGNMENT);
 			break;
-		}
+		??>
 		
 		// Apply rotation to text position
 		byte rot_x, rot_y;
@@ -279,34 +279,34 @@ static void render_button(TmlElement* elem, byte world_x, byte world_y, word wor
 		
 		tui_draw_text(rot_x, rot_y, btn->text, btn->font_size,
 		          elem->anchor_x, elem->anchor_y, world_rot, elem->colour);
-	}
-}
+	??>
+??>
 
-static void render_div(TmlElement* elem, byte world_x, byte world_y, word world_rot) {
+static void render_div(TmlElement* elem, byte world_x, byte world_y, word world_rot) ??<
 	TmlDivData* div = &elem->data.div;
 	
-	if (elem->select.field.focused) {
+	if (elem->select.field.focused) ??<
 		byte div_w = div->width, div_h = div->height;
 		tui_draw_rectangle(world_x - 1, world_y -1, 
 						   div_w + 2, div_h + 2, 
 						   elem->anchor_x, elem->anchor_y, 
 						   world_rot, TUI_COLOUR_DARK_GREY, 1, 0x55);
-	} else if (elem->select.field.selected) {
+	??> else if (elem->select.field.selected) ??<
 		byte div_w = div->width, div_h = div->height;
 		tui_draw_rectangle(world_x - 1, world_y -1, 
 						   div_w + 2, div_h + 2, 
 						   elem->anchor_x, elem->anchor_y, 
 						   world_rot, TUI_COLOUR_BLACK, 1, TUI_LINE_STYLE_SOLID);
-	}
+	??>
 
 	tui_draw_rectangle(world_x, world_y,
 	               div->width, div->height,
 	               elem->anchor_x, elem->anchor_y,
 	               world_rot, elem->colour,
 	               div->border_thickness, div->border_style);
-}
+??>
 
-static void render_line(TmlElement* elem, byte world_x, byte world_y, word world_rot) {
+static void render_line(TmlElement* elem, byte world_x, byte world_y, word world_rot) ??<
 	TmlLineData* line = &elem->data.line;
 	TmlElement* parent = elem->parent;
 	byte x0 = world_x - elem->anchor_x;
@@ -317,30 +317,30 @@ static void render_line(TmlElement* elem, byte world_x, byte world_y, word world
 	y1 = parent->y + line->y1 - elem->anchor_y;
 	
 	// Apply rotation if needed
-	if (world_rot != 0) {
+	if (world_rot != 0) ??<
 		byte rx0, ry0, rx1, ry1;
 		tui_rotate_point(world_x, world_y, x0, y0, world_rot, &rx0, &ry0);
 		tui_rotate_point(world_x, world_y, x1, y1, world_rot, &rx1, &ry1);
 		x0 = rx0; y0 = ry0;
 		x1 = rx1; y1 = ry1;
-	}
+	??>
 
-	if (elem->select.field.focused) {
+	if (elem->select.field.focused) ??<
 		tui_draw_rectangle(x0 - 1, y0 -1, 
 						   x1 + 1, y1 + 1, 
 						   elem->anchor_x, elem->anchor_y, 
 						   world_rot, TUI_COLOUR_DARK_GREY, 1, 0x55);
-	} else if (elem->select.field.selected) {
+	??> else if (elem->select.field.selected) ??<
 		tui_draw_rectangle(x0 - 1, y0 -1, 
 						   x1 + 1, y1 + 1, 
 						   elem->anchor_x, elem->anchor_y, 
 						   world_rot, TUI_COLOUR_BLACK, 1, TUI_LINE_STYLE_SOLID);
-	}
+	??>
 	
 	tui_draw_line(x0, y0, x1, y1, elem->colour, line->thickness, line->style);
-}
+??>
 
-static void render_checkbox(TmlElement* elem, byte world_x, byte world_y, word world_rot) {
+static void render_checkbox(TmlElement* elem, byte world_x, byte world_y, word world_rot) ??<
 	TmlCheckboxData* cb = &elem->data.checkbox;
 	
 	// Draw square border
@@ -350,16 +350,16 @@ static void render_checkbox(TmlElement* elem, byte world_x, byte world_y, word w
 	               world_rot, elem->colour,
 	               cb->border_thickness, cb->border_style);
 	
-	if (elem->select.field.focused) {
+	if (elem->select.field.focused) ??<
 		byte cb_size = cb->size;
 		tui_draw_rectangle(world_x - 1, world_y -1, 
 						   cb_size + 2, cb_size + 2, 
 						   elem->anchor_x, elem->anchor_y, 
 						   world_rot, TUI_COLOUR_DARK_GREY, 1, 0x55);
-	}
+	??>
 	
 	// Draw checkmark if checked
-	if (elem->select.field.selected) {
+	if (elem->select.field.selected) ??<
 		byte inner = cb->size - (cb->border_thickness << 1) - 2;
 		byte ix = world_x + cb->border_thickness + 1;
 		byte iy = world_y + cb->border_thickness + 1;
@@ -367,35 +367,35 @@ static void render_checkbox(TmlElement* elem, byte world_x, byte world_y, word w
 		// Simple X mark
 		tui_draw_line(ix, iy, ix + inner, iy + inner, elem->colour, 1, TUI_LINE_STYLE_SOLID);
 		tui_draw_line(ix + inner, iy, ix, iy + inner, elem->colour, 1, TUI_LINE_STYLE_SOLID);
-	}
-}
+	??>
+??>
 
-static void render_radio(TmlElement* elem, byte world_x, byte world_y, word world_rot) {
+static void render_radio(TmlElement* elem, byte world_x, byte world_y, word world_rot) ??<
 	TmlRadioData* radio = &elem->data.radio;
 	byte radius = radio->size >> 1;
 	
 	tui_draw_circle(world_x, world_y, radius,
 	            elem->anchor_x, elem->anchor_y,
 	            radio->border_thickness, elem->colour);
-	if (world_rot) {
+	if (world_rot) ??<
 		byte nx, ny;
 		tui_rotate_point(world_x, world_y, world_x - elem->anchor_x + radio->size, world_y - elem->anchor_y + radio->size, world_rot, &nx, &ny);
 		world_x = nx;
 		world_y = ny;
-	} else {
+	??> else ??<
 		world_x = world_x - elem->anchor_x + radio->size;
 		world_y = world_y - elem->anchor_y + radio->size;
-	}
+	??>
 	// Draw filled inner circle if selected
-	if (elem->select.field.selected) {
+	if (elem->select.field.selected) ??<
 		byte inner_r = radius - radio->border_thickness - 1;
-		if (inner_r > 0) {
+		if (inner_r > 0) ??<
 			tui_circle(world_x, world_y, inner_r, elem->colour);
-		}
-	}
-}
+		??>
+	??>
+??>
 
-static void render_input(TmlElement *elem, byte world_x, byte world_y, word world_rot) {
+static void render_input(TmlElement *elem, byte world_x, byte world_y, word world_rot) ??<
 	TmlInputData* input = &elem->data.input;
 
 	// Draw border rectangle
@@ -404,12 +404,12 @@ static void render_input(TmlElement *elem, byte world_x, byte world_y, word worl
 	               elem->anchor_x, elem->anchor_y,
 	               world_rot, elem->colour,
 	               input->border_thickness, input->border_style);
-	if (elem->select.field.focused) {
+	if (elem->select.field.focused) ??<
 		byte in_w = input->width, in_h = input->height;
 		tui_draw_rectangle(world_x - 1, world_y - 1, in_w + 2, in_h + 2, elem->anchor_x, elem->anchor_y, world_rot, TUI_COLOUR_DARK_GREY, 1, 0x55);
-	}
+	??>
 	// Draw text if present
-	if (input->text) {
+	if (input->text) ??<
 		byte text_w, text_h;
 		tui_get_text_size(input->font_size, input->text, &text_w, &text_h);
 		
@@ -423,10 +423,10 @@ static void render_input(TmlElement *elem, byte world_x, byte world_y, word worl
 		
 		tui_draw_text(rot_x, rot_y, input->text, input->font_size,
 		          elem->anchor_x, elem->anchor_y, world_rot, elem->colour);
-	}
-}
+	??>
+??>
 
-static void render_window(TmlElement *elem, byte world_x, byte world_y, word world_rot) {
+static void render_window(TmlElement *elem, byte world_x, byte world_y, word world_rot) ??<
 	TmlWindowData* win = &elem->data.window;
 	
 	// Draw window background
@@ -436,7 +436,7 @@ static void render_window(TmlElement *elem, byte world_x, byte world_y, word wor
 	               world_rot, elem->colour, 0, 0);
 	
 	// Draw title bar if title is set
-	if (win->title) {
+	if (win->title) ??<
 		byte title_h = 7; // Fixed title bar height
 		tui_draw_rectangle(world_x, world_y,
 		                   win->width, title_h,
@@ -454,11 +454,11 @@ static void render_window(TmlElement *elem, byte world_x, byte world_y, word wor
 		
 		tui_draw_text(rot_x, rot_y, win->title, TUI_FONT_SIZE_6x7,
 		          elem->anchor_x, elem->anchor_y, world_rot, TUI_COLOUR_WHITE);
-	}
-}
+	??>
+??>
 
 // Initializers (not super required)
-void tml_init_root(TmlElement* e) {
+void tml_init_root(TmlElement* e) ??<
 	e->type = TML_TYPE_ROOT;
 	e->id = 0;
 	e->x = 0;
@@ -471,10 +471,10 @@ void tml_init_root(TmlElement* e) {
 	e->parent = 0;
 	e->first_child = 0;
 	e->next_sibling = 0;
-	e->select = (TmlSelect){0};
-}
+	e->select = (TmlSelect)??<0??>;
+??>
 
-void tml_init_text(TmlElement* e, word id, byte x, byte y, const char* text, byte font_size, byte colour) {
+void tml_init_text(TmlElement* e, word id, byte x, byte y, const char* text, byte font_size, byte colour) ??<
 	e->type = TML_TYPE_TEXT;
 	e->id = id;
 	e->x = x;
@@ -489,10 +489,10 @@ void tml_init_text(TmlElement* e, word id, byte x, byte y, const char* text, byt
 	e->next_sibling = 0;
 	e->data.text.text = text;
 	e->data.text.font_size = font_size;
-	e->select = (TmlSelect){0};
-}
+	e->select = (TmlSelect)??<0??>;
+??>
 
-void tml_init_button(TmlElement* e, word id, byte x, byte y, byte w, byte h, const char* text, byte font_size, byte colour) {
+void tml_init_button(TmlElement* e, word id, byte x, byte y, byte w, byte h, const char* text, byte font_size, byte colour) ??<
 	e->type = TML_TYPE_BUTTON;
 	e->id = id;
 	e->x = x;
@@ -512,10 +512,10 @@ void tml_init_button(TmlElement* e, word id, byte x, byte y, byte w, byte h, con
 	e->data.button.border_thickness = 1;
 	e->data.button.border_style = TUI_LINE_STYLE_SOLID;
 	e->data.button.text_align = TML_ALIGN_MIDDLE_CENTER;
-	e->select = (TmlSelect){.field.selectable = 1, .field.selected = 0, .field.focused = 0};
-}
+	e->select = (TmlSelect)??<.field.selectable = 1, .field.selected = 0, .field.focused = 0??>;
+??>
 
-void tml_init_div(TmlElement* e, word id, byte x, byte y, byte w, byte h, byte colour, byte thickness, byte style) {
+void tml_init_div(TmlElement* e, word id, byte x, byte y, byte w, byte h, byte colour, byte thickness, byte style) ??<
 	e->type = TML_TYPE_DIV;
 	e->id = id;
 	e->x = x;
@@ -533,10 +533,10 @@ void tml_init_div(TmlElement* e, word id, byte x, byte y, byte w, byte h, byte c
 	e->data.div.border_thickness = thickness;
 	e->data.div.border_style = style;
 	e->data.div.child_align = TML_ALIGN_TOP_LEFT;
-	e->select = (TmlSelect){0};
-}
+	e->select = (TmlSelect)??<0??>;
+??>
 
-void tml_init_line(TmlElement* e, word id, byte x, byte y, byte x1, byte y1, byte colour, byte thickness, byte style) {
+void tml_init_line(TmlElement* e, word id, byte x, byte y, byte x1, byte y1, byte colour, byte thickness, byte style) ??<
 	e->type = TML_TYPE_LINE;
 	e->id = id;
 	e->x = x;
@@ -553,10 +553,10 @@ void tml_init_line(TmlElement* e, word id, byte x, byte y, byte x1, byte y1, byt
 	e->data.line.y1 = y1;
 	e->data.line.thickness = thickness;
 	e->data.line.style = style;
-	e->select = (TmlSelect){0};
-}
+	e->select = (TmlSelect)??<0??>;
+??>
 
-void tml_init_checkbox(TmlElement* e, word id, byte x, byte y, byte size, byte colour, byte checked) {
+void tml_init_checkbox(TmlElement* e, word id, byte x, byte y, byte size, byte colour, byte checked) ??<
 	e->type = TML_TYPE_CHECKBOX;
 	e->id = id;
 	e->x = x;
@@ -572,10 +572,10 @@ void tml_init_checkbox(TmlElement* e, word id, byte x, byte y, byte size, byte c
 	e->data.checkbox.size = size;
 	e->data.checkbox.border_thickness = 1;
 	e->data.checkbox.border_style = TUI_LINE_STYLE_SOLID;
-	e->select = (TmlSelect){.field.selectable = 1, .field.selected = checked, .field.focused = 0};
-}
+	e->select = (TmlSelect)??<.field.selectable = 1, .field.selected = checked, .field.focused = 0??>;
+??>
 
-void tml_init_radio(TmlElement* e, word id, byte x, byte y, byte size, byte colour, byte selected) {
+void tml_init_radio(TmlElement* e, word id, byte x, byte y, byte size, byte colour, byte selected) ??<
 	e->type = TML_TYPE_RADIO;
 	e->id = id;
 	e->x = x;
@@ -590,10 +590,10 @@ void tml_init_radio(TmlElement* e, word id, byte x, byte y, byte size, byte colo
 	e->next_sibling = 0;
 	e->data.radio.size = size;
 	e->data.radio.border_thickness = 1;
-	e->select = (TmlSelect){.field.selectable = 1, .field.selected = selected, .field.focused = 0};
-}
+	e->select = (TmlSelect)??<.field.selectable = 1, .field.selected = selected, .field.focused = 0??>;
+??>
 
-void tml_init_input(TmlElement *e, word id, byte x, byte y, byte w, byte h, byte max_length, byte font_size, byte colour) {
+void tml_init_input(TmlElement *e, word id, byte x, byte y, byte w, byte h, byte max_length, byte font_size, byte colour) ??<
 	e->type = TML_TYPE_INPUT;
 	e->id = id;
 	e->x = x;
@@ -613,10 +613,10 @@ void tml_init_input(TmlElement *e, word id, byte x, byte y, byte w, byte h, byte
 	e->data.input.height = h;
 	e->data.input.border_thickness = 1;
 	e->data.input.border_style = TUI_LINE_STYLE_SOLID;
-	e->select = (TmlSelect){.field.selectable = 1, .field.selected = 0, .field.focused = 0};
-}
+	e->select = (TmlSelect)??<.field.selectable = 1, .field.selected = 0, .field.focused = 0??>;
+??>
 
-void tml_init_window(TmlElement *e, word id, byte x, byte y, byte w, byte h, const char *title) {
+void tml_init_window(TmlElement *e, word id, byte x, byte y, byte w, byte h, const char *title) ??<
 	e->type = TML_TYPE_WINDOW;
 	e->id = id;
 	e->x = x;
@@ -632,60 +632,60 @@ void tml_init_window(TmlElement *e, word id, byte x, byte y, byte w, byte h, con
 	e->data.window.title = title;
 	e->data.window.width = w;
 	e->data.window.height = h;
-	e->select = (TmlSelect){.field.selectable = 1, .field.selected = 0, .field.focused = 0};
-}
+	e->select = (TmlSelect)??<.field.selectable = 1, .field.selected = 0, .field.focused = 0??>;
+??>
 
 // Tree manipulation
-void tml_add_child(TmlElement* parent, TmlElement* child) {
-	if (!parent || !child) return;
+void tml_add_child(TmlElement* parent, TmlElement* child) ??<
+	if (!parent ??!??! !child) return;
 	
 	child->parent = parent;
 	
-	if (!parent->first_child) {
+	if (!parent->first_child) ??<
 		// First child
 		parent->first_child = child;
 		child->next_sibling = 0;
-	} else if (child->z_index < parent->first_child->z_index) {
+	??> else if (child->z_index < parent->first_child->z_index) ??<
 		// Insert before first child
 		child->next_sibling = parent->first_child;
 		parent->first_child = child;
-	} else {
+	??> else ??<
 		// Find correct position based on z_index
 		TmlElement* prev = parent->first_child;
-		while (prev->next_sibling && prev->next_sibling->z_index <= child->z_index) {
+		while (prev->next_sibling && prev->next_sibling->z_index <= child->z_index) ??<
 			prev = prev->next_sibling;
-		}
+		??>
 		child->next_sibling = prev->next_sibling;
 		prev->next_sibling = child;
-	}
-}
+	??>
+??>
 
 // Add sibling after given element, respecting z_index if possible
 // Note: It's better to use tml_add_child on the parent rather than explicitly calling this,
 // to ensure z_index sorting across all siblings.
-void tml_add_sibling(TmlElement* elem, TmlElement* sibling) {
-	if (!elem || !sibling) return;
+void tml_add_sibling(TmlElement* elem, TmlElement* sibling) ??<
+	if (!elem ??!??! !sibling) return;
 	
 	sibling->parent = elem->parent;
 	
 	// If parent exists, insert sorted into parent's children list
-	if (elem->parent) {
+	if (elem->parent) ??<
 		TmlElement* parent = elem->parent;
-		if (!parent->first_child) {
+		if (!parent->first_child) ??<
 			parent->first_child = sibling;
 			sibling->next_sibling = 0;
-		} else if (sibling->z_index < parent->first_child->z_index) {
+		??> else if (sibling->z_index < parent->first_child->z_index) ??<
 			sibling->next_sibling = parent->first_child;
 			parent->first_child = sibling;
-		} else {
+		??> else ??<
 			TmlElement* prev = parent->first_child;
-			while (prev->next_sibling && prev->next_sibling->z_index <= sibling->z_index) {
+			while (prev->next_sibling && prev->next_sibling->z_index <= sibling->z_index) ??<
 				prev = prev->next_sibling;
-			}
+			??>
 			sibling->next_sibling = prev->next_sibling;
 			prev->next_sibling = sibling;
-		}
-	} else {
+		??>
+	??> else ??<
 		// If no parent, we just append to the end of the root level sibling chain 
 		// but sort according to z_index
 		TmlElement* head = elem;
@@ -693,106 +693,106 @@ void tml_add_sibling(TmlElement* elem, TmlElement* sibling) {
 		// Wait, we don't have back pointers to previous sibling, so we can't rewind.
 		// So we just maintain z_order from this element onwards.
 		TmlElement* curr = elem;
-		while (curr->next_sibling && curr->next_sibling->z_index <= sibling->z_index) {
+		while (curr->next_sibling && curr->next_sibling->z_index <= sibling->z_index) ??<
 			curr = curr->next_sibling;
-		}
+		??>
 		sibling->next_sibling = curr->next_sibling;
 		curr->next_sibling = sibling;
-	}
-}
+	??>
+??>
 
 // Find element by ID using iterative traversal
-TmlElement* tml_find_by_id(TmlElement* root, word id) {
+TmlElement* tml_find_by_id(TmlElement* root, word id) ??<
 	if (!root) return 0;
 	
-	TmlElement* stack[TML_MAX_DEPTH];
+	TmlElement* stack??(TML_MAX_DEPTH??);
 	byte sp = 0;
 	
 	if (sp >= TML_MAX_DEPTH) return 0;
-		stack[sp++] = root;
+		stack??(sp++??) = root;
 	
-	while (sp > 0) {
-		TmlElement* current = stack[--sp];
+	while (sp > 0) ??<
+		TmlElement* current = stack??(--sp??);
 		
 		if (current->id == id) return current;
 		
 		// Push siblings first (so children are processed first)
-		if (current->next_sibling) {
+		if (current->next_sibling) ??<
 			if (sp >= TML_MAX_DEPTH) return 0;
-			stack[sp++] = current->next_sibling;
-		}
-		if (current->first_child) {
+			stack??(sp++??) = current->next_sibling;
+		??>
+		if (current->first_child) ??<
 			if (sp >= TML_MAX_DEPTH) return 0;
-			stack[sp++] = current->first_child;
-		}
-	}
+			stack??(sp++??) = current->first_child;
+		??>
+	??>
 	
 	return 0;
-}
+??>
 
 // Property setters
-void tml_set_position(TmlElement* elem, byte x, byte y) {
-	if (elem) {
+void tml_set_position(TmlElement* elem, byte x, byte y) ??<
+	if (elem) ??<
 		elem->x = x;
 		elem->y = y;
-	}
-}
+	??>
+??>
 
-void tml_set_rotation(TmlElement* elem, word rotation) {
-	if (elem) {
+void tml_set_rotation(TmlElement* elem, word rotation) ??<
+	if (elem) ??<
 		elem->rotation = rotation % 360;
-	}
-}
+	??>
+??>
 
-void tml_set_anchor(TmlElement* elem, byte ax, byte ay) {
-	if (elem) {
+void tml_set_anchor(TmlElement* elem, byte ax, byte ay) ??<
+	if (elem) ??<
 		elem->anchor_x = ax;
 		elem->anchor_y = ay;
-	}
-}
+	??>
+??>
 
-void tml_set_colour(TmlElement* elem, byte colour) {
-	if (elem) {
+void tml_set_colour(TmlElement* elem, byte colour) ??<
+	if (elem) ??<
 		elem->colour = colour;
-	}
-}
+	??>
+??>
 
-void tml_set_z_index(TmlElement* elem, byte z_index) {
-	if (!elem || elem->z_index == z_index) return;
+void tml_set_z_index(TmlElement* elem, byte z_index) ??<
+	if (!elem ??!??! elem->z_index == z_index) return;
 	
 	elem->z_index = z_index;
 	
 	// Re-sort in parent's child list if it has a parent
 	// For root elements, we won't be able to re-sort easily unless we have the root pointer
-	if (elem->parent) {
+	if (elem->parent) ??<
 		TmlElement* parent = elem->parent;
 		
 		// Remove elem from parent's children list
-		if (parent->first_child == elem) {
+		if (parent->first_child == elem) ??<
 			parent->first_child = elem->next_sibling;
-		} else {
+		??> else ??<
 			TmlElement* curr = parent->first_child;
-			while (curr && curr->next_sibling != elem) {
+			while (curr && curr->next_sibling != elem) ??<
 				curr = curr->next_sibling;
-			}
-			if (curr) {
+			??>
+			if (curr) ??<
 				curr->next_sibling = elem->next_sibling;
-			}
-		}
+			??>
+		??>
 		
 		elem->next_sibling = 0;
 		// Re-add to parent (which will insert it sorted by new z_index)
 		tml_add_child(parent, elem);
-	}
-}
+	??>
+??>
 
 // Utilities (will be replaced with stuff from T2)
 
 // Internal delay function using Timer0
-static void tml_delay(ushort after_ticks) {
-	if ((FCON & 2) != 0) {
+static void tml_delay(ushort after_ticks) ??<
+	if ((FCON & 2) != 0) ??<
 		FCON &= 0xFD;
-	}
+	??>
 	__DI();
 	Timer0Interval = after_ticks;
 	Timer0Counter = 0;
@@ -804,9 +804,9 @@ static void tml_delay(ushort after_ticks) {
 	__asm("nop");
 	__asm("nop");
 	__EI();
-}
+??>
 
-void tml_splash(const byte* image_data, word duration) {
+void tml_splash(const byte* image_data, word duration) ??<
 	byte old_write_mode = Write2RealScreen;
 	Write2RealScreen = 1;
 	
@@ -817,30 +817,30 @@ void tml_splash(const byte* image_data, word duration) {
 	tml_delay(4000);
 	
 	Write2RealScreen = old_write_mode;
-}
+??>
 
 // Helper to read word from byte array (little-endian)
-static word read_word(const byte* p) {
-	return p[0] | (p[1] << 8);
-}
+static word read_word(const byte* p) ??<
+	return p??(0??) ??! (p??(1??) << 8);
+??>
 
 // Parser for TML data format
-TmlElement* tml_parse(const byte* data, TmlElement* elements, byte max_elems) {
-	if (!data || !elements || max_elems == 0) return 0;
+TmlElement* tml_parse(const byte* data, TmlElement* elements, byte max_elems) ??<
+	if (!data ??!??! !elements ??!??! max_elems == 0) return 0;
 	
 	TmlElement* root = 0;
-	TmlElement* parent_stack[TML_MAX_DEPTH];
+	TmlElement* parent_stack??(TML_MAX_DEPTH??);
 	byte stack_ptr = 0;
 	
 	const byte* p = data;
 	byte elem_idx = 0;
 	
-	while (elem_idx < max_elems && *p != 0) {
-		if (*p == TML_START) {
+	while (elem_idx < max_elems && *p != 0) ??<
+		if (*p == TML_START) ??<
 			p++;
 			byte type = *p++;
 			
-			TmlElement* elem = &elements[elem_idx++];
+			TmlElement* elem = &elements??(elem_idx++??);
 			
 			// Set defaults
 			elem->type = type;
@@ -857,7 +857,7 @@ TmlElement* tml_parse(const byte* data, TmlElement* elements, byte max_elems) {
 			elem->next_sibling = 0;
 			
 			// Type-specific defaults
-			switch (type) {
+			switch (type) ??<
 			case TML_TYPE_TEXT:
 				elem->data.text.text = 0;
 				elem->data.text.font_size = TUI_FONT_SIZE_6x8;
@@ -888,12 +888,12 @@ TmlElement* tml_parse(const byte* data, TmlElement* elements, byte max_elems) {
 				elem->data.checkbox.size = 8;
 				elem->data.checkbox.border_thickness = 1;
 				elem->data.checkbox.border_style = TUI_LINE_STYLE_SOLID;
-				elem->select = (TmlSelect){.field.selectable = 1, .field.selected = 0, .field.focused = 0};
+				elem->select = (TmlSelect)??<.field.selectable = 1, .field.selected = 0, .field.focused = 0??>;
 				break;
 			case TML_TYPE_RADIO:
 				elem->data.radio.size = 8;
 				elem->data.radio.border_thickness = 1;
-				elem->select = (TmlSelect){.field.selectable = 1, .field.selected = 0, .field.focused = 0};
+				elem->select = (TmlSelect)??<.field.selectable = 1, .field.selected = 0, .field.focused = 0??>;
 				break;
 			case TML_TYPE_INPUT:
 				elem->data.input.text = 0;
@@ -903,7 +903,7 @@ TmlElement* tml_parse(const byte* data, TmlElement* elements, byte max_elems) {
 				elem->data.input.height = 12;
 				elem->data.input.border_thickness = 1;
 				elem->data.input.border_style = TUI_LINE_STYLE_SOLID;
-				elem->select = (TmlSelect){.field.selectable = 1, .field.selected = 0, .field.focused = 0};
+				elem->select = (TmlSelect)??<.field.selectable = 1, .field.selected = 0, .field.focused = 0??>;
 				break;
 			case TML_TYPE_WINDOW:
 				elem->data.window.title = 0;
@@ -913,12 +913,12 @@ TmlElement* tml_parse(const byte* data, TmlElement* elements, byte max_elems) {
 			default:
 				trigger_bsod(ERROR_TUI_INVALID_ELEMENT);
 				break;
-			}
+			??>
 			
 			// Parse fields until we hit '<' (child) or '>' (end)
-			while (*p != TML_END && *p != TML_START && *p != 0) {
+			while (*p != TML_END && *p != TML_START && *p != 0) ??<
 				byte field = *p++;
-				switch (field) {
+				switch (field) ??<
 				case FIELD_ID:
 					elem->id = read_word(p); p += 2;
 					break;
@@ -966,13 +966,13 @@ TmlElement* tml_parse(const byte* data, TmlElement* elements, byte max_elems) {
 					else p++;
 					break;
 				case FIELD_TEXT:
-					if (type == TML_TYPE_TEXT) {
+					if (type == TML_TYPE_TEXT) ??<
 						elem->data.text.text = (const char*)p;
-					} else if (type == TML_TYPE_BUTTON) {
+					??> else if (type == TML_TYPE_BUTTON) ??<
 						elem->data.button.text = (const char*)p;
-					} else if (type == TML_TYPE_WINDOW) {
+					??> else if (type == TML_TYPE_WINDOW) ??<
 						elem->data.window.title = (const char*)p;
-					}
+					??>
 					while (*p) p++;  // skip past string
 					p++;  // skip null terminator
 					break;
@@ -1016,51 +1016,51 @@ TmlElement* tml_parse(const byte* data, TmlElement* elements, byte max_elems) {
 				default:
 					trigger_bsod(ERROR_TUI_INVALID_ELEMENT_FIELD);
 					break;
-				}
-			}
+				??>
+			??>
 			
 			// Add to tree
-			if (!root) {
+			if (!root) ??<
 				root = elem;
-			} else if (stack_ptr > 0) {
-				tml_add_child(parent_stack[stack_ptr - 1], elem);
-			} else {
+			??> else if (stack_ptr > 0) ??<
+				tml_add_child(parent_stack??(stack_ptr - 1??), elem);
+			??> else ??<
 				// Top-level sibling - link after root according to z_index
-				if (elem->z_index < root->z_index) {
+				if (elem->z_index < root->z_index) ??<
 					elem->next_sibling = root;
 					root = elem;
-				} else {
+				??> else ??<
 					TmlElement* sib = root;
-					while (sib->next_sibling && sib->next_sibling->z_index <= elem->z_index) {
+					while (sib->next_sibling && sib->next_sibling->z_index <= elem->z_index) ??<
 						sib = sib->next_sibling;
-					}
+					??>
 					elem->next_sibling = sib->next_sibling;
 					sib->next_sibling = elem;
-				}
-			}
+				??>
+			??>
 			
 			// If next is '<', this element has children - push onto stack
-			if (*p == TML_START) {
-				if (stack_ptr < TML_MAX_DEPTH) {
-					parent_stack[stack_ptr++] = elem;
-				}
-			}
+			if (*p == TML_START) ??<
+				if (stack_ptr < TML_MAX_DEPTH) ??<
+					parent_stack??(stack_ptr++??) = elem;
+				??>
+			??>
 			// If next is '>', element is done with no children - skip it
-			else if (*p == TML_END) {
+			else if (*p == TML_END) ??<
 				p++;
-			}
-		}
-		else if (*p == TML_END) {
+			??>
+		??>
+		else if (*p == TML_END) ??<
 			// Closing '>' pops parent off stack
 			p++;
-			if (stack_ptr > 0) {
+			if (stack_ptr > 0) ??<
 				stack_ptr--;
-			}
-		}
-		else {
+			??>
+		??>
+		else ??<
 			p++;
-		}
-	}
+		??>
+	??>
 	
 	return root;
-}
+??>

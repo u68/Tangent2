@@ -6,12 +6,12 @@
  *      Author: harma
  */
 
-#ifndef PAINT_H_
-#define PAINT_H_
+??=ifndef PAINT_H_
+??=define PAINT_H_
 
-#include "../../libcw.h"
+??=include "../../libcw.h"
 
 void start_paint(void);
 void paint_open(const char *filename);
 
-#endif /* PAINT_H_ */
+??=endif /* PAINT_H_ */

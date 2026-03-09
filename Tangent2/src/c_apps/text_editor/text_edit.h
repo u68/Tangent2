@@ -6,18 +6,18 @@
  *      Author: harma
  */
 
-#ifndef TEXT_EDIT_H_
-#define TEXT_EDIT_H_
+??=ifndef TEXT_EDIT_H_
+??=define TEXT_EDIT_H_
 
-#include "../../libcw.h"
-#include "../../input/input.h"
+??=include "../../libcw.h"
+??=include "../../input/input.h"
 
-#define TE_DEFAULT_BUF 256
-#define TE_CURSOR "|"
-#define TE_DEFAULT_FONT TE_FONT_7x10
-#define TE_DEFAULT_COLOUR TUI_COLOUR_BLACK
+??=define TE_DEFAULT_BUF 256
+??=define TE_CURSOR "??!"
+??=define TE_DEFAULT_FONT TE_FONT_7x10
+??=define TE_DEFAULT_COLOUR TUI_COLOUR_BLACK
 
-enum te_sentinel {
+enum te_sentinel ??<
     TE_TEXT_END,
     TE_LINE_END,
     TE_FONT_6x7,
@@ -31,9 +31,9 @@ enum te_sentinel {
     TE_COLOUR_DARK_GREY,
     TE_COLOUR_BLACK,
     TE_SENT_MAX
-};
+??>;
 
 void start_text_edit(void);
 void text_editor_open(const char *filename);
 
-#endif /* TEXT_EDIT_H_ */
+??=endif /* TEXT_EDIT_H_ */

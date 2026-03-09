@@ -5,42 +5,42 @@
  *      Author: harma
  */
 
-#include "media.h"
+??=include "media.h"
 
-#define IMAGE_WIDTH 192
-#define IMAGE_HEIGHT 63
-#define BYTES_PER_ROW 24
-#define IMAGE_PIXELS (IMAGE_WIDTH * IMAGE_HEIGHT)
-#define BITPLANE_SIZE 0x600
-#define RENDER_BUFFER_SIZE 0xC00
+??=define IMAGE_WIDTH 192
+??=define IMAGE_HEIGHT 63
+??=define BYTES_PER_ROW 24
+??=define IMAGE_PIXELS (IMAGE_WIDTH * IMAGE_HEIGHT)
+??=define BITPLANE_SIZE 0x600
+??=define RENDER_BUFFER_SIZE 0xC00
 
-#define LZ_STATES 12
-#define LZ_POS_STATES 16
-#define LZ_LEN_TO_POS_STATES 4
-#define LZ_POS_SLOT_BITS 6
-#define LZ_ALIGN_BITS 4
-#define LZ_END_POS_MODEL_INDEX 14
-#define LZ_FULL_DISTANCES (1 << (LZ_END_POS_MODEL_INDEX / 2))
-#define LZ_POS_SPECIAL_PROBS (LZ_FULL_DISTANCES - LZ_END_POS_MODEL_INDEX)
-#define LZ_MATCH_MIN 2
-#define LZ_LOW_LEN_BITS 3
-#define LZ_MID_LEN_BITS 3
-#define LZ_HIGH_LEN_BITS 8
-#define LZ_LOW_LEN_SYMBOLS (1 << LZ_LOW_LEN_BITS)
-#define LZ_MID_LEN_SYMBOLS (1 << LZ_MID_LEN_BITS)
-#define LZ_HIGH_LEN_SYMBOLS (1 << LZ_HIGH_LEN_BITS)
-#define LZ_PROB_INIT 1024
+??=define LZ_STATES 12
+??=define LZ_POS_STATES 16
+??=define LZ_LEN_TO_POS_STATES 4
+??=define LZ_POS_SLOT_BITS 6
+??=define LZ_ALIGN_BITS 4
+??=define LZ_END_POS_MODEL_INDEX 14
+??=define LZ_FULL_DISTANCES (1 << (LZ_END_POS_MODEL_INDEX / 2))
+??=define LZ_POS_SPECIAL_PROBS (LZ_FULL_DISTANCES - LZ_END_POS_MODEL_INDEX)
+??=define LZ_MATCH_MIN 2
+??=define LZ_LOW_LEN_BITS 3
+??=define LZ_MID_LEN_BITS 3
+??=define LZ_HIGH_LEN_BITS 8
+??=define LZ_LOW_LEN_SYMBOLS (1 << LZ_LOW_LEN_BITS)
+??=define LZ_MID_LEN_SYMBOLS (1 << LZ_MID_LEN_BITS)
+??=define LZ_HIGH_LEN_SYMBOLS (1 << LZ_HIGH_LEN_BITS)
+??=define LZ_PROB_INIT 1024
 
-typedef struct {
+typedef struct ??<
     const byte *source;
     word source_size;
     word source_pos;
     dword range;
     dword code;
     byte error;
-} lz_decoder_t;
+??> lz_decoder_t;
 
-typedef struct {
+typedef struct ??<
     byte *dest;
     word dest_size;
     word dest_pos;
@@ -49,30 +49,30 @@ typedef struct {
     dword cache_size;
     byte cache;
     byte error;
-} lz_encoder_t;
+??> lz_encoder_t;
 
-typedef struct {
+typedef struct ??<
     word choice_1;
     word choice_2;
-    word low[LZ_POS_STATES][LZ_LOW_LEN_SYMBOLS];
-    word mid[LZ_POS_STATES][LZ_MID_LEN_SYMBOLS];
-    word high[LZ_HIGH_LEN_SYMBOLS];
-} lz_length_model_t;
+    word low??(LZ_POS_STATES??)??(LZ_LOW_LEN_SYMBOLS??);
+    word mid??(LZ_POS_STATES??)??(LZ_MID_LEN_SYMBOLS??);
+    word high??(LZ_HIGH_LEN_SYMBOLS??);
+??> lz_length_model_t;
 
-static word prob_is_match[LZ_STATES][LZ_POS_STATES];
-static word prob_is_rep[LZ_STATES];
-static word prob_rep_g0[LZ_STATES];
-static word prob_rep_g1[LZ_STATES];
-static word prob_rep_g2[LZ_STATES];
-static word prob_rep0_long[LZ_STATES][LZ_POS_STATES];
-static word prob_pos_slot[LZ_LEN_TO_POS_STATES][1 << LZ_POS_SLOT_BITS];
-static word prob_pos_special[LZ_POS_SPECIAL_PROBS];
-static word prob_pos_align[1 << LZ_ALIGN_BITS];
-static word prob_literal[0x300];
+static word prob_is_match??(LZ_STATES??)??(LZ_POS_STATES??);
+static word prob_is_rep??(LZ_STATES??);
+static word prob_rep_g0??(LZ_STATES??);
+static word prob_rep_g1??(LZ_STATES??);
+static word prob_rep_g2??(LZ_STATES??);
+static word prob_rep0_long??(LZ_STATES??)??(LZ_POS_STATES??);
+static word prob_pos_slot??(LZ_LEN_TO_POS_STATES??)??(1 << LZ_POS_SLOT_BITS??);
+static word prob_pos_special??(LZ_POS_SPECIAL_PROBS??);
+static word prob_pos_align??(1 << LZ_ALIGN_BITS??);
+static word prob_literal??(0x300??);
 static lz_length_model_t len_model;
 static lz_length_model_t rep_len_model;
 
-static byte render_buffer[RENDER_BUFFER_SIZE];
+static byte render_buffer??(RENDER_BUFFER_SIZE??);
 
 static byte state_is_literal(byte state);
 static void update_literal_state(byte *state);
@@ -82,92 +82,92 @@ static void rle_set_bit(byte *buffer, word bit_index, byte bit_value);
 static byte rle_encode(const byte *input, word input_size, byte **out_data, word *out_size);
 static byte rle_decode(const byte *input, word input_size, byte *output, word output_size);
 
-static byte write_encoded_byte(lz_encoder_t *encoder, byte value) {
-    if (encoder->dest_pos >= encoder->dest_size) {
+static byte write_encoded_byte(lz_encoder_t *encoder, byte value) ??<
+    if (encoder->dest_pos >= encoder->dest_size) ??<
         encoder->error = 1;
         return 1;
-    }
-    encoder->dest[encoder->dest_pos++] = value;
+    ??>
+    encoder->dest??(encoder->dest_pos++??) = value;
     return 0;
-}
+??>
 
-static void shift_low(lz_encoder_t *encoder) {
+static void shift_low(lz_encoder_t *encoder) ??<
     dword low32;
     dword high32;
 
-    if (encoder->error) {
+    if (encoder->error) ??<
         return;
-    }
+    ??>
 
     low32 = (dword)encoder->low;
     high32 = (dword)(encoder->low >> 32);
 
-    if (low32 < 0xFF000000UL || high32 != 0) {
+    if (low32 < 0xFF000000UL ??!??! high32 != 0) ??<
         byte temp = encoder->cache;
-        do {
-            if (write_encoded_byte(encoder, (byte)(temp + (byte)high32))) {
+        do ??<
+            if (write_encoded_byte(encoder, (byte)(temp + (byte)high32))) ??<
                 return;
-            }
+            ??>
             temp = 0xFF;
-        } while (--encoder->cache_size != 0);
+        ??> while (--encoder->cache_size != 0);
         encoder->cache = (byte)(low32 >> 24);
-    }
+    ??>
 
     encoder->cache_size++;
     encoder->low = (unsigned long long)((dword)encoder->low << 8);
-}
+??>
 
-static void encode_bit(lz_encoder_t *encoder, word *probability, byte bit) {
+static void encode_bit(lz_encoder_t *encoder, word *probability, byte bit) ??<
     dword bound;
 
-    if (encoder->error) {
+    if (encoder->error) ??<
         return;
-    }
+    ??>
 
     bound = (encoder->range >> 11) * (*probability);
-    if (bit == 0) {
+    if (bit == 0) ??<
         encoder->range = bound;
         *probability += (word)((2048 - *probability) >> 5);
-    } else {
+    ??> else ??<
         encoder->low += bound;
         encoder->range -= bound;
         *probability -= (word)(*probability >> 5);
-    }
+    ??>
 
-    if (encoder->range < 0x01000000UL) {
+    if (encoder->range < 0x01000000UL) ??<
         encoder->range <<= 8;
         shift_low(encoder);
-    }
-}
+    ??>
+??>
 
-static void encode_literal_symbol(lz_encoder_t *encoder, byte state, word rep0, const byte *history, word history_pos, byte value) {
+static void encode_literal_symbol(lz_encoder_t *encoder, byte state, word rep0, const byte *history, word history_pos, byte value) ??<
     word context = 1;
     byte symbol = value;
 
-    if (!state_is_literal(state) && history_pos > 0 && rep0 < history_pos) {
-        byte match_byte = history[history_pos - rep0 - 1];
-        do {
+    if (!state_is_literal(state) && history_pos > 0 && rep0 < history_pos) ??<
+        byte match_byte = history??(history_pos - rep0 - 1??);
+        do ??<
             byte match_bit = (byte)((match_byte >> 7) & 1);
             byte bit = (byte)((symbol >> 7) & 1);
             match_byte <<= 1;
             symbol <<= 1;
-            encode_bit(encoder, &prob_literal[((1 + match_bit) << 8) + context], bit);
-            context = (word)((context << 1) | bit);
-            if (match_bit != bit) {
+            encode_bit(encoder, &prob_literal??(((1 + match_bit) << 8) + context??), bit);
+            context = (word)((context << 1) ??! bit);
+            if (match_bit != bit) ??<
                 break;
-            }
-        } while (context < 0x100);
-    }
+            ??>
+        ??> while (context < 0x100);
+    ??>
 
-    while (context < 0x100) {
+    while (context < 0x100) ??<
         byte bit = (byte)((symbol >> 7) & 1);
         symbol <<= 1;
-        encode_bit(encoder, &prob_literal[context], bit);
-        context = (word)((context << 1) | bit);
-    }
-}
+        encode_bit(encoder, &prob_literal??(context??), bit);
+        context = (word)((context << 1) ??! bit);
+    ??>
+??>
 
-static byte compress_lzma_raw(const byte *input, word input_size, byte **out_data, word *out_size) {
+static byte compress_lzma_raw(const byte *input, word input_size, byte **out_data, word *out_size) ??<
     lz_encoder_t encoder;
     byte state;
     word rep0;
@@ -175,29 +175,29 @@ static byte compress_lzma_raw(const byte *input, word input_size, byte **out_dat
     word max_out;
     byte *buffer;
 
-    if (input == 0 || out_data == 0 || out_size == 0) {
+    if (input == 0 ??!??! out_data == 0 ??!??! out_size == 0) ??<
         return 1;
-    }
+    ??>
 
     max_out = (word)(13 + input_size + (input_size >> 1) + 64);
     buffer = (byte*)halloc(max_out);
-    if (buffer == 0) {
+    if (buffer == 0) ??<
         return 1;
-    }
+    ??>
 
-    buffer[0] = 0x00;
-    buffer[1] = 0x00;
-    buffer[2] = 0x00;
-    buffer[3] = 0x01;
-    buffer[4] = 0x00;
-    buffer[5] = (byte)(input_size & 0xFF);
-    buffer[6] = (byte)((input_size >> 8) & 0xFF);
-    buffer[7] = 0x00;
-    buffer[8] = 0x00;
-    buffer[9] = 0x00;
-    buffer[10] = 0x00;
-    buffer[11] = 0x00;
-    buffer[12] = 0x00;
+    buffer??(0??) = 0x00;
+    buffer??(1??) = 0x00;
+    buffer??(2??) = 0x00;
+    buffer??(3??) = 0x01;
+    buffer??(4??) = 0x00;
+    buffer??(5??) = (byte)(input_size & 0xFF);
+    buffer??(6??) = (byte)((input_size >> 8) & 0xFF);
+    buffer??(7??) = 0x00;
+    buffer??(8??) = 0x00;
+    buffer??(9??) = 0x00;
+    buffer??(10??) = 0x00;
+    buffer??(11??) = 0x00;
+    buffer??(12??) = 0x00;
 
     encoder.dest = buffer;
     encoder.dest_size = max_out;
@@ -213,186 +213,186 @@ static byte compress_lzma_raw(const byte *input, word input_size, byte **out_dat
     state = 0;
     rep0 = 0;
 
-    for (i = 0; i < input_size; i++) {
-        encode_bit(&encoder, &prob_is_match[state][0], 0);
-        encode_literal_symbol(&encoder, state, rep0, input, i, input[i]);
+    for (i = 0; i < input_size; i++) ??<
+        encode_bit(&encoder, &prob_is_match??(state??)??(0??), 0);
+        encode_literal_symbol(&encoder, state, rep0, input, i, input??(i??));
         update_literal_state(&state);
-        if (encoder.error) {
+        if (encoder.error) ??<
             break;
-        }
-    }
+        ??>
+    ??>
 
-    for (i = 0; i < 5 && !encoder.error; i++) {
+    for (i = 0; i < 5 && !encoder.error; i++) ??<
         shift_low(&encoder);
-    }
+    ??>
 
-    if (encoder.error) {
+    if (encoder.error) ??<
         hfree(buffer);
         return 1;
-    }
+    ??>
 
     *out_data = buffer;
     *out_size = encoder.dest_pos;
     return 0;
-}
+??>
 
-static void init_probabilities(word *array, word count) {
+static void init_probabilities(word *array, word count) ??<
     word i;
-    for (i = 0; i < count; i++) {
-        array[i] = LZ_PROB_INIT;
-    }
-}
+    for (i = 0; i < count; i++) ??<
+        array??(i??) = LZ_PROB_INIT;
+    ??>
+??>
 
-static byte read_source_byte(lz_decoder_t *decoder, byte *value) {
-    if (decoder->source_pos >= decoder->source_size) {
+static byte read_source_byte(lz_decoder_t *decoder, byte *value) ??<
+    if (decoder->source_pos >= decoder->source_size) ??<
         decoder->error = 1;
         *value = 0;
         return 1;
-    }
-    *value = decoder->source[decoder->source_pos++];
+    ??>
+    *value = decoder->source??(decoder->source_pos++??);
     return 0;
-}
+??>
 
-static void normalize_decoder(lz_decoder_t *decoder) {
+static void normalize_decoder(lz_decoder_t *decoder) ??<
     byte b;
-    while (decoder->range < 0x01000000UL) {
+    while (decoder->range < 0x01000000UL) ??<
         decoder->range <<= 8;
-        if (read_source_byte(decoder, &b)) {
+        if (read_source_byte(decoder, &b)) ??<
             return;
-        }
-        decoder->code = (decoder->code << 8) | b;
-    }
-}
+        ??>
+        decoder->code = (decoder->code << 8) ??! b;
+    ??>
+??>
 
-static byte decode_bit(lz_decoder_t *decoder, word *probability) {
+static byte decode_bit(lz_decoder_t *decoder, word *probability) ??<
     dword bound;
     byte bit;
 
     normalize_decoder(decoder);
-    if (decoder->error) {
+    if (decoder->error) ??<
         return 0;
-    }
+    ??>
 
     bound = (decoder->range >> 11) * (*probability);
-    if (decoder->code < bound) {
+    if (decoder->code < bound) ??<
         decoder->range = bound;
         *probability += (word)((2048 - *probability) >> 5);
         bit = 0;
-    } else {
+    ??> else ??<
         decoder->range -= bound;
         decoder->code -= bound;
         *probability -= (word)(*probability >> 5);
         bit = 1;
-    }
+    ??>
     return bit;
-}
+??>
 
-static word decode_bit_tree(lz_decoder_t *decoder, word *probabilities, byte bit_count) {
+static word decode_bit_tree(lz_decoder_t *decoder, word *probabilities, byte bit_count) ??<
     word symbol;
     byte i;
     symbol = 1;
-    for (i = 0; i < bit_count; i++) {
-        symbol = (symbol << 1) | decode_bit(decoder, &probabilities[symbol]);
-    }
+    for (i = 0; i < bit_count; i++) ??<
+        symbol = (symbol << 1) ??! decode_bit(decoder, &probabilities??(symbol??));
+    ??>
     return (word)(symbol - ((word)1 << bit_count));
-}
+??>
 
-static word decode_bit_tree_reverse(lz_decoder_t *decoder, word *probabilities, byte bit_count) {
+static word decode_bit_tree_reverse(lz_decoder_t *decoder, word *probabilities, byte bit_count) ??<
     word symbol;
     word value;
     byte i;
     symbol = 1;
     value = 0;
-    for (i = 0; i < bit_count; i++) {
-        byte bit = decode_bit(decoder, &probabilities[symbol]);
-        symbol = (symbol << 1) | bit;
-        value |= ((word)bit << i);
-    }
+    for (i = 0; i < bit_count; i++) ??<
+        byte bit = decode_bit(decoder, &probabilities??(symbol??));
+        symbol = (symbol << 1) ??! bit;
+        value ??!= ((word)bit << i);
+    ??>
     return value;
-}
+??>
 
-static dword decode_direct_bits(lz_decoder_t *decoder, byte bit_count) {
+static dword decode_direct_bits(lz_decoder_t *decoder, byte bit_count) ??<
     dword value;
     byte i;
     value = 0;
-    for (i = 0; i < bit_count; i++) {
+    for (i = 0; i < bit_count; i++) ??<
         decoder->range >>= 1;
-        if (decoder->code >= decoder->range) {
+        if (decoder->code >= decoder->range) ??<
             decoder->code -= decoder->range;
-            value = (value << 1) | 1;
-        } else {
+            value = (value << 1) ??! 1;
+        ??> else ??<
             value <<= 1;
-        }
+        ??>
         normalize_decoder(decoder);
-        if (decoder->error) {
+        if (decoder->error) ??<
             return 0;
-        }
-    }
+        ??>
+    ??>
     return value;
-}
+??>
 
-static word decode_length(lz_decoder_t *decoder, lz_length_model_t *length_model, byte pos_state) {
-    if (decode_bit(decoder, &length_model->choice_1) == 0) {
-        return decode_bit_tree(decoder, length_model->low[pos_state], LZ_LOW_LEN_BITS);
-    }
-    if (decode_bit(decoder, &length_model->choice_2) == 0) {
-        return LZ_LOW_LEN_SYMBOLS + decode_bit_tree(decoder, length_model->mid[pos_state], LZ_MID_LEN_BITS);
-    }
+static word decode_length(lz_decoder_t *decoder, lz_length_model_t *length_model, byte pos_state) ??<
+    if (decode_bit(decoder, &length_model->choice_1) == 0) ??<
+        return decode_bit_tree(decoder, length_model->low??(pos_state??), LZ_LOW_LEN_BITS);
+    ??>
+    if (decode_bit(decoder, &length_model->choice_2) == 0) ??<
+        return LZ_LOW_LEN_SYMBOLS + decode_bit_tree(decoder, length_model->mid??(pos_state??), LZ_MID_LEN_BITS);
+    ??>
     return LZ_LOW_LEN_SYMBOLS + LZ_MID_LEN_SYMBOLS + decode_bit_tree(decoder, length_model->high, LZ_HIGH_LEN_BITS);
-}
+??>
 
-static byte state_is_literal(byte state) {
+static byte state_is_literal(byte state) ??<
     return (state < 7) ? 1 : 0;
-}
+??>
 
-static void update_literal_state(byte *state) {
-    if (*state < 4) {
+static void update_literal_state(byte *state) ??<
+    if (*state < 4) ??<
         *state = 0;
-    } else if (*state < 10) {
+    ??> else if (*state < 10) ??<
         *state -= 3;
-    } else {
+    ??> else ??<
         *state -= 6;
-    }
-}
+    ??>
+??>
 
-static void update_match_state(byte *state) {
+static void update_match_state(byte *state) ??<
     *state = (*state < 7) ? 7 : 10;
-}
+??>
 
-static void update_rep_state(byte *state) {
+static void update_rep_state(byte *state) ??<
     *state = (*state < 7) ? 8 : 11;
-}
+??>
 
-static void update_short_rep_state(byte *state) {
+static void update_short_rep_state(byte *state) ??<
     *state = (*state < 7) ? 9 : 11;
-}
+??>
 
-static void reset_decoder_model(void) {
-    init_probabilities(&prob_is_match[0][0], LZ_STATES * LZ_POS_STATES);
+static void reset_decoder_model(void) ??<
+    init_probabilities(&prob_is_match??(0??)??(0??), LZ_STATES * LZ_POS_STATES);
     init_probabilities(prob_is_rep, LZ_STATES);
     init_probabilities(prob_rep_g0, LZ_STATES);
     init_probabilities(prob_rep_g1, LZ_STATES);
     init_probabilities(prob_rep_g2, LZ_STATES);
-    init_probabilities(&prob_rep0_long[0][0], LZ_STATES * LZ_POS_STATES);
-    init_probabilities(&prob_pos_slot[0][0], LZ_LEN_TO_POS_STATES * (1 << LZ_POS_SLOT_BITS));
+    init_probabilities(&prob_rep0_long??(0??)??(0??), LZ_STATES * LZ_POS_STATES);
+    init_probabilities(&prob_pos_slot??(0??)??(0??), LZ_LEN_TO_POS_STATES * (1 << LZ_POS_SLOT_BITS));
     init_probabilities(prob_pos_special, LZ_POS_SPECIAL_PROBS);
     init_probabilities(prob_pos_align, 1 << LZ_ALIGN_BITS);
     init_probabilities(prob_literal, 0x300);
 
     len_model.choice_1 = LZ_PROB_INIT;
     len_model.choice_2 = LZ_PROB_INIT;
-    init_probabilities(&len_model.low[0][0], LZ_POS_STATES * LZ_LOW_LEN_SYMBOLS);
-    init_probabilities(&len_model.mid[0][0], LZ_POS_STATES * LZ_MID_LEN_SYMBOLS);
+    init_probabilities(&len_model.low??(0??)??(0??), LZ_POS_STATES * LZ_LOW_LEN_SYMBOLS);
+    init_probabilities(&len_model.mid??(0??)??(0??), LZ_POS_STATES * LZ_MID_LEN_SYMBOLS);
     init_probabilities(len_model.high, LZ_HIGH_LEN_SYMBOLS);
 
     rep_len_model.choice_1 = LZ_PROB_INIT;
     rep_len_model.choice_2 = LZ_PROB_INIT;
-    init_probabilities(&rep_len_model.low[0][0], LZ_POS_STATES * LZ_LOW_LEN_SYMBOLS);
-    init_probabilities(&rep_len_model.mid[0][0], LZ_POS_STATES * LZ_MID_LEN_SYMBOLS);
+    init_probabilities(&rep_len_model.low??(0??)??(0??), LZ_POS_STATES * LZ_LOW_LEN_SYMBOLS);
+    init_probabilities(&rep_len_model.mid??(0??)??(0??), LZ_POS_STATES * LZ_MID_LEN_SYMBOLS);
     init_probabilities(rep_len_model.high, LZ_HIGH_LEN_SYMBOLS);
-}
+??>
 
-static byte decompress_lzma_raw(const byte *input, word input_size, byte *output, word output_size) {
+static byte decompress_lzma_raw(const byte *input, word input_size, byte *output, word output_size) ??<
     lz_decoder_t decoder;
     dword unpacked_size;
     byte state;
@@ -401,22 +401,22 @@ static byte decompress_lzma_raw(const byte *input, word input_size, byte *output
     byte previous_byte;
     byte i;
 
-    if (input == 0 || output == 0 || input_size < 13) {
+    if (input == 0 ??!??! output == 0 ??!??! input_size < 13) ??<
         return 1;
-    }
+    ??>
 
-    if (input[0] != 0) {
+    if (input??(0??) != 0) ??<
         return 1;
-    }
+    ??>
 
-    unpacked_size = (dword)input[5] |
-                    ((dword)input[6] << 8) |
-                    ((dword)input[7] << 16) |
-                    ((dword)input[8] << 24);
+    unpacked_size = (dword)input??(5??) ??!
+                    ((dword)input??(6??) << 8) ??!
+                    ((dword)input??(7??) << 16) ??!
+                    ((dword)input??(8??) << 24);
 
-    if (unpacked_size != 0xFFFFFFFFUL && unpacked_size != output_size) {
+    if (unpacked_size != 0xFFFFFFFFUL && unpacked_size != output_size) ??<
         return 1;
-    }
+    ??>
 
     decoder.source = input + 13;
     decoder.source_size = (word)(input_size - 13);
@@ -425,13 +425,13 @@ static byte decompress_lzma_raw(const byte *input, word input_size, byte *output
     decoder.code = 0;
     decoder.error = 0;
 
-    for (i = 0; i < 5; i++) {
+    for (i = 0; i < 5; i++) ??<
         byte b;
-        if (read_source_byte(&decoder, &b)) {
+        if (read_source_byte(&decoder, &b)) ??<
             return 1;
-        }
-        decoder.code = (decoder.code << 8) | b;
-    }
+        ??>
+        decoder.code = (decoder.code << 8) ??! b;
+    ??>
 
     reset_decoder_model();
 
@@ -440,92 +440,92 @@ static byte decompress_lzma_raw(const byte *input, word input_size, byte *output
     output_pos = 0;
     previous_byte = 0;
 
-    while (output_pos < output_size && !decoder.error) {
+    while (output_pos < output_size && !decoder.error) ??<
         byte pos_state;
         pos_state = 0;
 
-        if (decode_bit(&decoder, &prob_is_match[state][pos_state]) == 0) {
+        if (decode_bit(&decoder, &prob_is_match??(state??)??(pos_state??)) == 0) ??<
             word symbol;
             word *literal_probs;
 
             literal_probs = prob_literal;
             symbol = 1;
 
-            if (!state_is_literal(state)) {
+            if (!state_is_literal(state)) ??<
                 byte match_byte;
-                match_byte = (byte)output[output_pos - rep0 - 1];
-                do {
+                match_byte = (byte)output??(output_pos - rep0 - 1??);
+                do ??<
                     byte match_bit;
                     byte bit;
                     match_bit = (byte)((match_byte >> 7) & 1);
                     match_byte <<= 1;
-                    bit = decode_bit(&decoder, &literal_probs[((1 + match_bit) << 8) + symbol]);
-                    symbol = (symbol << 1) | bit;
-                    if (match_bit != bit) {
-                        while (symbol < 0x100) {
-                            symbol = (symbol << 1) | decode_bit(&decoder, &literal_probs[symbol]);
-                        }
+                    bit = decode_bit(&decoder, &literal_probs??(((1 + match_bit) << 8) + symbol??));
+                    symbol = (symbol << 1) ??! bit;
+                    if (match_bit != bit) ??<
+                        while (symbol < 0x100) ??<
+                            symbol = (symbol << 1) ??! decode_bit(&decoder, &literal_probs??(symbol??));
+                        ??>
                         break;
-                    }
-                } while (symbol < 0x100);
-            } else {
-                while (symbol < 0x100) {
-                    symbol = (symbol << 1) | decode_bit(&decoder, &literal_probs[symbol]);
-                }
-            }
+                    ??>
+                ??> while (symbol < 0x100);
+            ??> else ??<
+                while (symbol < 0x100) ??<
+                    symbol = (symbol << 1) ??! decode_bit(&decoder, &literal_probs??(symbol??));
+                ??>
+            ??>
 
             previous_byte = (byte)(symbol - 0x100);
-            output[output_pos++] = previous_byte;
+            output??(output_pos++??) = previous_byte;
             update_literal_state(&state);
             continue;
-        }
+        ??>
 
-        if (decode_bit(&decoder, &prob_is_rep[state])) {
+        if (decode_bit(&decoder, &prob_is_rep??(state??))) ??<
             word length;
             word distance;
 
-            if (decode_bit(&decoder, &prob_rep_g0[state]) == 0) {
-                if (decode_bit(&decoder, &prob_rep0_long[state][pos_state]) == 0) {
-                    if (output_pos == 0 || rep0 >= output_pos) {
+            if (decode_bit(&decoder, &prob_rep_g0??(state??)) == 0) ??<
+                if (decode_bit(&decoder, &prob_rep0_long??(state??)??(pos_state??)) == 0) ??<
+                    if (output_pos == 0 ??!??! rep0 >= output_pos) ??<
                         return 1;
-                    }
+                    ??>
                     update_short_rep_state(&state);
-                    previous_byte = output[output_pos - rep0 - 1];
-                    output[output_pos++] = previous_byte;
+                    previous_byte = output??(output_pos - rep0 - 1??);
+                    output??(output_pos++??) = previous_byte;
                     continue;
-                }
+                ??>
                 distance = rep0;
-            } else {
-                if (decode_bit(&decoder, &prob_rep_g1[state]) == 0) {
+            ??> else ??<
+                if (decode_bit(&decoder, &prob_rep_g1??(state??)) == 0) ??<
                     distance = rep1;
-                } else {
-                    if (decode_bit(&decoder, &prob_rep_g2[state]) == 0) {
+                ??> else ??<
+                    if (decode_bit(&decoder, &prob_rep_g2??(state??)) == 0) ??<
                         distance = rep2;
-                    } else {
+                    ??> else ??<
                         distance = rep3;
                         rep3 = rep2;
-                    }
+                    ??>
                     rep2 = rep1;
-                }
+                ??>
                 rep1 = rep0;
                 rep0 = distance;
-            }
+            ??>
 
             length = (word)(decode_length(&decoder, &rep_len_model, pos_state) + LZ_MATCH_MIN);
             update_rep_state(&state);
 
-            if (rep0 >= output_pos) {
+            if (rep0 >= output_pos) ??<
                 return 1;
-            }
+            ??>
 
-            while (length-- && output_pos < output_size) {
-                previous_byte = output[output_pos - rep0 - 1];
-                output[output_pos++] = previous_byte;
-            }
+            while (length-- && output_pos < output_size) ??<
+                previous_byte = output??(output_pos - rep0 - 1??);
+                output??(output_pos++??) = previous_byte;
+            ??>
             continue;
-        }
+        ??>
 
-        {
+        ??<
             word length;
             word pos_slot;
             word distance;
@@ -535,77 +535,77 @@ static byte decompress_lzma_raw(const byte *input, word input_size, byte *output
             update_match_state(&state);
 
             len_to_pos_state = (length < 6) ? (word)(length - 2) : (word)3;
-            pos_slot = decode_bit_tree(&decoder, prob_pos_slot[len_to_pos_state], LZ_POS_SLOT_BITS);
+            pos_slot = decode_bit_tree(&decoder, prob_pos_slot??(len_to_pos_state??), LZ_POS_SLOT_BITS);
 
-            if (pos_slot < 4) {
+            if (pos_slot < 4) ??<
                 distance = pos_slot;
-            } else {
+            ??> else ??<
                 word num_direct_bits;
                 num_direct_bits = (word)((pos_slot >> 1) - 1);
-                distance = (word)(2 | (pos_slot & 1));
+                distance = (word)(2 ??! (pos_slot & 1));
                 distance = (word)(distance << num_direct_bits);
 
-                if (pos_slot < LZ_END_POS_MODEL_INDEX) {
+                if (pos_slot < LZ_END_POS_MODEL_INDEX) ??<
                     word base;
                     word *special_probs;
                     base = (word)(distance - pos_slot - 1);
-                    if (base >= LZ_POS_SPECIAL_PROBS) {
+                    if (base >= LZ_POS_SPECIAL_PROBS) ??<
                         return 1;
-                    }
+                    ??>
                     special_probs = prob_pos_special + base;
                     distance = (word)(distance + decode_bit_tree_reverse(&decoder, special_probs, (byte)num_direct_bits));
-                } else {
+                ??> else ??<
                     dword direct_result;
                     direct_result = decode_direct_bits(&decoder, (byte)(num_direct_bits - LZ_ALIGN_BITS));
-                    if (direct_result > 0xFFFFUL) {
+                    if (direct_result > 0xFFFFUL) ??<
                         return 1;
-                    }
+                    ??>
                     distance = (word)(distance + ((word)direct_result << LZ_ALIGN_BITS));
                     distance = (word)(distance + decode_bit_tree_reverse(&decoder, prob_pos_align, LZ_ALIGN_BITS));
-                }
-            }
+                ??>
+            ??>
 
             rep3 = rep2;
             rep2 = rep1;
             rep1 = rep0;
             rep0 = distance;
 
-            if (rep0 >= output_pos) {
+            if (rep0 >= output_pos) ??<
                 return 1;
-            }
+            ??>
 
-            while (length-- && output_pos < output_size) {
-                previous_byte = output[output_pos - rep0 - 1];
-                output[output_pos++] = previous_byte;
-            }
-        }
-    }
+            while (length-- && output_pos < output_size) ??<
+                previous_byte = output??(output_pos - rep0 - 1??);
+                output??(output_pos++??) = previous_byte;
+            ??>
+        ??>
+    ??>
 
-    if (decoder.error || output_pos != output_size) {
+    if (decoder.error ??!??! output_pos != output_size) ??<
         return 1;
-    }
+    ??>
 
     return 0;
-}
+??>
 
-static byte rle_get_bit(const byte *buffer, word bit_index) {
+static byte rle_get_bit(const byte *buffer, word bit_index) ??<
     word byte_index = bit_index >> 3;
     byte bit_mask = (byte)(0x80 >> (bit_index & 7));
-    return (buffer[byte_index] & bit_mask) ? 1 : 0;
-}
+    return (buffer??(byte_index??) & bit_mask) ? 1 : 0;
+??>
 
-static void rle_set_bit(byte *buffer, word bit_index, byte bit_value) {
+static void rle_set_bit(byte *buffer, word bit_index, byte bit_value) ??<
     word byte_index = bit_index >> 3;
     byte bit_mask = (byte)(0x80 >> (bit_index & 7));
-    if (bit_value) {
-        buffer[byte_index] |= bit_mask;
-    } else {
-        buffer[byte_index] &= (byte)(~bit_mask);
-    }
-}
+    if (bit_value) ??<
+        buffer??(byte_index??) ??!= bit_mask;
+    ??> else ??<
+        buffer??(byte_index??) &= (byte)(??-bit_mask);
+    ??>
+??>
 
-static byte rle_encode(const byte *input, word input_size, byte **out_data, word *out_size) {
-    if (input == 0 || out_data == 0 || out_size == 0 || input_size != RENDER_BUFFER_SIZE) return 1;
+static byte rle_encode(const byte *input, word input_size, byte **out_data, word *out_size) ??<
+    if (input == 0 ??!??! out_data == 0 ??!??! out_size == 0 ??!??! input_size != RENDER_BUFFER_SIZE) return 1;
     word bit_count = RENDER_BUFFER_SIZE * 8;
     word encoded_size = 0;
     byte run_length, bit_val, cur;
@@ -613,139 +613,139 @@ static byte rle_encode(const byte *input, word input_size, byte **out_data, word
     // First pass: count encoded size
     bit_val = rle_get_bit(input, 0);
     run_length = 1;
-    for (i = 1; i < bit_count; i++) {
+    for (i = 1; i < bit_count; i++) ??<
         cur = rle_get_bit(input, i);
         if (cur == bit_val && run_length < 128) run_length++;
-        else { encoded_size++; bit_val = cur; run_length = 1; }
-    }
+        else ??< encoded_size++; bit_val = cur; run_length = 1; ??>
+    ??>
     encoded_size++;
     byte *buffer = (byte*)halloc(encoded_size);
     if (buffer == 0) return 2;
     *out_size = 0;
     bit_val = rle_get_bit(input, 0);
     run_length = 1;
-    for (i = 1; i < bit_count; i++) {
+    for (i = 1; i < bit_count; i++) ??<
         cur = rle_get_bit(input, i);
         if (cur == bit_val && run_length < 128) run_length++;
-        else {
-            buffer[(*out_size)++] = (byte)((bit_val << 7) | (run_length - 1));
+        else ??<
+            buffer??((*out_size)++??) = (byte)((bit_val << 7) ??! (run_length - 1));
             bit_val = cur; run_length = 1;
-        }
-    }
-    buffer[(*out_size)++] = (byte)((bit_val << 7) | (run_length - 1));
+        ??>
+    ??>
+    buffer??((*out_size)++??) = (byte)((bit_val << 7) ??! (run_length - 1));
     *out_data = buffer;
     return 0;
-}
+??>
 
-static byte rle_decode(const byte *input, word input_size, byte *output, word output_size) {
-    if (input == 0 || output == 0 || output_size != RENDER_BUFFER_SIZE) return 1;
+static byte rle_decode(const byte *input, word input_size, byte *output, word output_size) ??<
+    if (input == 0 ??!??! output == 0 ??!??! output_size != RENDER_BUFFER_SIZE) return 1;
     word expected_bits = RENDER_BUFFER_SIZE * 8;
     word clear_index;
-    for (clear_index = 0; clear_index < output_size; clear_index++) {
-        output[clear_index] = 0;
-    }
+    for (clear_index = 0; clear_index < output_size; clear_index++) ??<
+        output??(clear_index??) = 0;
+    ??>
     word bit_index = 0;
     word i;
-    for (i = 0; i < input_size; i++) {
-        byte packed = input[i];
+    for (i = 0; i < input_size; i++) ??<
+        byte packed = input??(i??);
         byte bit_val = (packed >> 7) & 0x01;
         byte run_length = (packed & 0x7F) + 1;
         if (bit_index + run_length > expected_bits) run_length = (byte)(expected_bits - bit_index);
         while (run_length--) rle_set_bit(output, bit_index++, bit_val);
         if (bit_index == expected_bits) break;
-    }
+    ??>
     return (bit_index == expected_bits) ? 0 : 2;
-}
+??>
 
-byte show_media(fs_node_t *parent, const char *path, media_compression_t method) {
+byte show_media(fs_node_t *parent, const char *path, media_compression_t method) ??<
     fs_node_t *file;
     byte *compressed_data;
 
     file = fs_lookup(parent, path);
-    if (file == 0) {
+    if (file == 0) ??<
         return 1;
-    }
+    ??>
 
     // Get raw file data pointer directly from filesystem pool to save heap
     compressed_data = (byte*)(FS_DATA_POOL + file->data_offset);
-    if (compressed_data == 0) {
+    if (compressed_data == 0) ??<
         return 2;
-    }
+    ??>
 
-    switch(method) {
+    switch(method) ??<
         case MEDIA_COMPRESS_LZMA:
-            if (decompress_lzma_raw(compressed_data, file->size, render_buffer, RENDER_BUFFER_SIZE)) {
+            if (decompress_lzma_raw(compressed_data, file->size, render_buffer, RENDER_BUFFER_SIZE)) ??<
                 return 3;
-            }
+            ??>
             break;
         case MEDIA_COMPRESS_RAW:
             tui_render_adr((word)compressed_data);
             return 0;
             break;
         case MEDIA_COMPRESS_RLE:
-        {
+        ??<
         	byte a = rle_decode(compressed_data, file->size, render_buffer, RENDER_BUFFER_SIZE);
-            if (a) {
+            if (a) ??<
                 return a;
-            }
+            ??>
             break;
-        }
+        ??>
         default:
             return 4; // Unsupported format
-    }
+    ??>
 
     tui_render_adr((word)render_buffer);
 
     // data is in FS_DATA_POOL, no heap free needed
     return 0;
-}
+??>
 
-const byte* compress_media(const byte* data, word size, media_compression_t method, word* out_size) {
+const byte* compress_media(const byte* data, word size, media_compression_t method, word* out_size) ??<
     byte *compressed;
     word compressed_size;
     word i;
 
-    if (data == 0 || out_size == 0) {
+    if (data == 0 ??!??! out_size == 0) ??<
         return 0;
-    }
+    ??>
 
-    if (size != RENDER_BUFFER_SIZE) {
+    if (size != RENDER_BUFFER_SIZE) ??<
         *out_size = 0;
         return 0;
-    }
+    ??>
 
     compressed = 0;
     compressed_size = 0;
 
-    switch (method) {
+    switch (method) ??<
         case MEDIA_COMPRESS_RAW:
             compressed = (byte*)halloc(size);
-            if (compressed == 0) {
+            if (compressed == 0) ??<
 				*out_size = 0;
 				return 0;
-			}
-            for (i = 0; i < size; i++) {
-				compressed[i] = data[i];
-			}
+			??>
+            for (i = 0; i < size; i++) ??<
+				compressed??(i??) = data??(i??);
+			??>
             compressed_size = size;
             break;
         case MEDIA_COMPRESS_RLE:
-            if (rle_encode(data, size, &compressed, &compressed_size)) {
+            if (rle_encode(data, size, &compressed, &compressed_size)) ??<
                 *out_size = 0;
                 return 0;
-            }
+            ??>
             break;
         case MEDIA_COMPRESS_LZMA:
-            if (compress_lzma_raw(data, size, &compressed, &compressed_size)) {
+            if (compress_lzma_raw(data, size, &compressed, &compressed_size)) ??<
                 *out_size = 0;
                 return 0;
-            }
+            ??>
             break;
         default:
             *out_size = 0;
             return 0;
-    }
+    ??>
 
     *out_size = compressed_size;
     return compressed;
-}
+??>

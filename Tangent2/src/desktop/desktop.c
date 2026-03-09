@@ -5,26 +5,26 @@
  *      Author: harma
  */
 
-#include "desktop.h"
-#include "../tui/glib.h"
+??=include "desktop.h"
+??=include "../tui/glib.h"
 
-#define ID_TASKBAR 1
-#define ID_WINDOW 2
-#define ID_WINDOW_TITLE 3
-#define ID_WINDOW_CLOSE_BTN 4
-#define ID_WINDOW_CONTENT 5
-#define ID_ICON1 6
-#define ID_ICON1_TEXT 7
-#define ID_ICON2 8
-#define ID_ICON2_TEXT 9
-#define ID_TIME 10
-#define ID_TASKBAR_LINE 11
-#define ID_TASKBAR_TIME_LINE 12
-#define ID_TASKBAR_TIME_LINE2 13
+??=define ID_TASKBAR 1
+??=define ID_WINDOW 2
+??=define ID_WINDOW_TITLE 3
+??=define ID_WINDOW_CLOSE_BTN 4
+??=define ID_WINDOW_CONTENT 5
+??=define ID_ICON1 6
+??=define ID_ICON1_TEXT 7
+??=define ID_ICON2 8
+??=define ID_ICON2_TEXT 9
+??=define ID_TIME 10
+??=define ID_TASKBAR_LINE 11
+??=define ID_TASKBAR_TIME_LINE 12
+??=define ID_TASKBAR_TIME_LINE2 13
 
-#define WORD(w) ((w) & 0xFF), (((w) >> 8) & 0xFF)
+??=define WORD(w) ((w) & 0xFF), (((w) >> 8) & 0xFF)
 
-static const byte desktop_ui_data[] = {
+static const byte desktop_ui_data??(??) = ??<
 	'<', TML_TYPE_ROOT,
 		'<', TML_TYPE_DIV,
 			FIELD_ID, WORD(ID_TASKBAR),
@@ -154,26 +154,26 @@ static const byte desktop_ui_data[] = {
 		'>',
 	'>',
 	0
-};
+??>;
 
 // Initialize desktop UI and return root element
-TmlElement *desktop_init(void) {
+TmlElement *desktop_init(void) ??<
 	const byte max_elems = 14;
 	TmlElement *elements = (TmlElement *)hcalloc(max_elems, sizeof(TmlElement));
 	return tml_parse(desktop_ui_data, elements, max_elems);
-}
+??>
 
 // Render desktop UI elements
-void desktop_render(TmlElement *root) {
+void desktop_render(TmlElement *root) ??<
 	tml_render(root);
-}
+??>
 
 // Get window element by ID
-TmlElement *desktop_get_window(TmlElement *root) {
+TmlElement *desktop_get_window(TmlElement *root) ??<
 	return tml_find_by_id(root, ID_WINDOW);
-}
+??>
 
 // Get time text element by ID
-TmlElement *desktop_get_time_text(TmlElement *root) {
+TmlElement *desktop_get_time_text(TmlElement *root) ??<
 	return tml_find_by_id(root, ID_TIME);
-}
+??>

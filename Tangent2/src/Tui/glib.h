@@ -8,13 +8,13 @@
  *  Cool UI library for "embedded" systems
  */
 
-#ifndef GLIB_H_
-#define GLIB_H_
+??=ifndef GLIB_H_
+??=define GLIB_H_
 
-#include "../libcw.h"
+??=include "../libcw.h"
 
 // Element types
-typedef enum {
+typedef enum ??<
 	TML_TYPE_ROOT,
 	TML_TYPE_TEXT,
 	TML_TYPE_BUTTON,
@@ -25,10 +25,10 @@ typedef enum {
 	TML_TYPE_LINE,
 	TML_TYPE_WINDOW,
 	TML_TYPE_COUNT
-} TmlElementType;
+??> TmlElementType;
 
 // Alignment options
-typedef enum {
+typedef enum ??<
 	TML_ALIGN_TOP_LEFT,
 	TML_ALIGN_CENTER_LEFT,
 	TML_ALIGN_BOTTOM_LEFT,
@@ -38,19 +38,19 @@ typedef enum {
 	TML_ALIGN_TOP_CENTER,
 	TML_ALIGN_BOTTOM_CENTER,
 	TML_ALIGN_MIDDLE_CENTER,
-} TmlAlignment;
+??> TmlAlignment;
 
 // Forward declaration
 struct TmlElement;
 
 // Element-specific data for TEXT elements
-typedef struct {
+typedef struct ??<
 	const char *text;
 	byte         font_size;
-} TmlTextData;
+??> TmlTextData;
 
 // Element-specific data for BUTTON elements
-typedef struct {
+typedef struct ??<
 	const char  *text;
 	byte         font_size;
 	byte         width;
@@ -58,40 +58,40 @@ typedef struct {
 	byte         border_thickness;
 	byte         border_style;
 	byte         text_align;
-} TmlButtonData;
+??> TmlButtonData;
 
 // Element-specific data for DIV elements
-typedef struct {
+typedef struct ??<
 	byte         width;
 	byte         height;
 	byte         border_thickness;
 	byte         border_style;
 	byte         child_align;      // Alignment for positioning children
-} TmlDivData;
+??> TmlDivData;
 
 // Element-specific data for LINE elements
-typedef struct {
+typedef struct ??<
 	byte         x1;              // End X offset from start
 	byte         y1;              // End Y offset from start
 	byte         thickness;
 	byte         style;
-} TmlLineData;
+??> TmlLineData;
 
 // Element-specific data for CHECKBOX elements
-typedef struct {
+typedef struct ??<
 	byte         size;
 	byte         border_thickness;
 	byte         border_style;
-} TmlCheckboxData;
+??> TmlCheckboxData;
 
 // Element-specific data for RADIO elements
-typedef struct {
+typedef struct ??<
 	byte         size;
 	byte         border_thickness;
-} TmlRadioData;
+??> TmlRadioData;
 
 // Element-specific data for INPUT elements
-typedef struct {
+typedef struct ??<
 	char        *text;            // Editable text buffer
 	byte         max_length;
 	byte         font_size;
@@ -99,26 +99,26 @@ typedef struct {
 	byte         height;
 	byte         border_thickness;
 	byte         border_style;
-} TmlInputData;
+??> TmlInputData;
 
 // Element-specific data for WINDOW elements (desktop stuff)
-typedef struct {
+typedef struct ??<
 	const char  *title;
 	byte         width;
 	byte         height;
-} TmlWindowData;
+??> TmlWindowData;
 
-typedef union {
+typedef union ??<
 	byte raw;
-	struct {
+	struct ??<
 		byte selectable:1;
 		byte selected:1;
 		byte focused:1;
-	} field;
-} TmlSelect;
+	??> field;
+??> TmlSelect;
 
 // Main element structure
-typedef struct TmlElement {
+typedef struct TmlElement ??<
 	// Tree structure pointers
 	struct TmlElement *parent;        // Parent element (NULL for root)
 	struct TmlElement *first_child;   // First child element (NULL if leaf)
@@ -137,7 +137,7 @@ typedef struct TmlElement {
 	TmlSelect      select;          // Selection state
 	
 	// Element-specific data
-	union {
+	union ??<
 		TmlTextData      text;
 		TmlButtonData    button;
 		TmlDivData       div;
@@ -146,16 +146,16 @@ typedef struct TmlElement {
 		TmlRadioData     radio;
 		TmlInputData     input;
 		TmlWindowData	 window;
-	} data;
-} TmlElement;
+	??> data;
+??> TmlElement;
 
-#define TML_MAX_DEPTH  16   // Maximum nesting depth
+??=define TML_MAX_DEPTH  16   // Maximum nesting depth
 
-typedef struct {
+typedef struct ??<
 	byte    x;
 	byte    y;
 	word    rotation;
-} TmlTransform;
+??> TmlTransform;
 
 // Rendering
 void tml_render(TmlElement *root);
@@ -188,11 +188,11 @@ void tml_set_z_index(TmlElement *elem, byte z_index);
 void tml_splash(const byte *image_data, word duration);
 
 // Structure markers
-#define TML_START      '<'
-#define TML_END        '>'
+??=define TML_START      '<'
+??=define TML_END        '>'
 
 // Field tags
-typedef enum {
+typedef enum ??<
 	FIELD_ID = 1,
 	FIELD_X,
 	FIELD_Y,
@@ -213,29 +213,29 @@ typedef enum {
 	FIELD_ANCHOR_X,
 	FIELD_ANCHOR_Y,
 	FIELD_Z_INDEX
-} TmlField;
+??> TmlField;
 
 // Parse data array into element tree, returns root element
 TmlElement *tml_parse(const byte *data, TmlElement *elements, byte max_elems);
 
 // Legacy stuff (probably will be removed later, after all, you shouldn't be manually making byte arrays)
-#define TML_ROOT      TML_TYPE_ROOT
-#define TML_TEXT      TML_TYPE_TEXT
-#define TML_BUTTON    TML_TYPE_BUTTON
-#define TML_DIV       TML_TYPE_DIV
-#define TML_INPUT     TML_TYPE_INPUT
-#define TML_CHECKBOX  TML_TYPE_CHECKBOX
-#define TML_RADIO     TML_TYPE_RADIO
-#define TML_LINE      TML_TYPE_LINE
+??=define TML_ROOT      TML_TYPE_ROOT
+??=define TML_TEXT      TML_TYPE_TEXT
+??=define TML_BUTTON    TML_TYPE_BUTTON
+??=define TML_DIV       TML_TYPE_DIV
+??=define TML_INPUT     TML_TYPE_INPUT
+??=define TML_CHECKBOX  TML_TYPE_CHECKBOX
+??=define TML_RADIO     TML_TYPE_RADIO
+??=define TML_LINE      TML_TYPE_LINE
 
-#define ALIGN_TOP_LEFT      TML_ALIGN_TOP_LEFT
-#define ALIGN_CENTER_LEFT   TML_ALIGN_CENTER_LEFT
-#define ALIGN_BOTTOM_LEFT   TML_ALIGN_BOTTOM_LEFT
-#define ALIGN_TOP_RIGHT     TML_ALIGN_TOP_RIGHT
-#define ALIGN_CENTER_RIGHT  TML_ALIGN_CENTER_RIGHT
-#define ALIGN_BOTTOM_RIGHT  TML_ALIGN_BOTTOM_RIGHT
-#define ALIGN_TOP_CENTER    TML_ALIGN_TOP_CENTER
-#define ALIGN_BOTTOM_CENTER TML_ALIGN_BOTTOM_CENTER
-#define ALIGN_MIDDLE_CENTER TML_ALIGN_MIDDLE_CENTER
+??=define ALIGN_TOP_LEFT      TML_ALIGN_TOP_LEFT
+??=define ALIGN_CENTER_LEFT   TML_ALIGN_CENTER_LEFT
+??=define ALIGN_BOTTOM_LEFT   TML_ALIGN_BOTTOM_LEFT
+??=define ALIGN_TOP_RIGHT     TML_ALIGN_TOP_RIGHT
+??=define ALIGN_CENTER_RIGHT  TML_ALIGN_CENTER_RIGHT
+??=define ALIGN_BOTTOM_RIGHT  TML_ALIGN_BOTTOM_RIGHT
+??=define ALIGN_TOP_CENTER    TML_ALIGN_TOP_CENTER
+??=define ALIGN_BOTTOM_CENTER TML_ALIGN_BOTTOM_CENTER
+??=define ALIGN_MIDDLE_CENTER TML_ALIGN_MIDDLE_CENTER
 
-#endif /* GLIB_H_ */
+??=endif /* GLIB_H_ */

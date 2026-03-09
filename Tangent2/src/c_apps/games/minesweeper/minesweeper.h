@@ -6,11 +6,11 @@
  *      Author: harma
  */
 
-#ifndef MINESWEEPER_H_
-#define MINESWEEPER_H_
+??=ifndef MINESWEEPER_H_
+??=define MINESWEEPER_H_
 
-#include "../../../libcw.h"
+??=include "../../../libcw.h"
 
 void start_minesweeper(void);
 
-#endif /* MINESWEEPER_H_ */
+??=endif /* MINESWEEPER_H_ */

@@ -6,11 +6,11 @@
  *      Author: harma
  */
 
-#ifndef BALL_H_
-#define BALL_H_
+??=ifndef BALL_H_
+??=define BALL_H_
 
-#include "../../../libcw.h"
+??=include "../../../libcw.h"
 
 void start_ball(void);
 
-#endif /* BALL_H_ */
+??=endif /* BALL_H_ */

@@ -5,14 +5,14 @@
  *      Author: harma
  */
 
-#ifndef BSOD_H_
-#define BSOD_H_
+??=ifndef BSOD_H_
+??=define BSOD_H_
 
-#include "../libcw.h"
+??=include "../libcw.h"
 
 // Forward declaration
 typedef enum error_t error_t;
 
 void bsod_show(error_t error_code, byte *regs_snapshot);
 
-#endif /* BSOD_H_ */
+??=endif /* BSOD_H_ */
