@@ -35,7 +35,7 @@ Tangent2 is a complete ground-up rewrite of the original Tangent OS experiment. 
 ## Features
 
 
-![](https://geps.dev/progress/75) 
+![](https://geps.dev/progress/80) 
 
 Complete
 

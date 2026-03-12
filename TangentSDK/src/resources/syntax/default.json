@@ -27,12 +27,11 @@
                     "color": "#569CD6",
                     "bold": false,
                     "keywords": [
-                        "mov", "add", "sub", "mul", "div", "cmp", "and", "or", "xor", "not", "shl", "shr",
-                        "b", "bl", "beq", "bne", "blt", "bgt", "ble", "bge", "bles",
-                        "push", "pop", "call", "ret", "nop", "halt",
-                        "ldr", "str", "ldm", "stm", "swp",
-                        "adc", "sbc", "neg", "abs",
-                        "tst", "teq", "bic", "mvn"
+                        "mov", "add", "sub", "mul", "div", "mod", "cmp", "inc", "dec",
+                        "and", "or", "xor", "not", "sll", "srl", "sra", 
+                        "b", "bl", "beq", "bne", "blt", "bgt", "ble", "bge",
+                        "push", "pop", "rt",
+                        "l", "st", "neg"
                     ]
                 },
                 "register": {
@@ -41,9 +40,7 @@
                     "bold": false,
                     "patterns": [
                         "\\b(r(1[0-5]|[0-9]))\\b",
-                        "\\b(er(14|12|10|[02468]))\\b",
-                        "\\b(xr(12|[048]))\\b",
-                        "\\b(qr[08])\\b"
+                        "\\b(er(14|12|10|[02468]))\\b"
                     ]
                 },
                 "address": {
@@ -55,19 +52,16 @@
             },
             "completions": {
                 "keywords": [
-                    "mov", "add", "sub", "mul", "div", "cmp", "and", "or", "xor", "not", "shl", "shr",
-                    "b", "bl", "beq", "bne", "blt", "bgt", "ble", "bge", "bles",
-                    "push", "pop", "call", "ret", "nop", "halt",
-                    "ldr", "str", "ldm", "stm", "swp",
-                    "adc", "sbc", "neg", "abs",
-                    "tst", "teq", "bic", "mvn"
+                    "mov", "add", "sub", "mul", "div", "mod", "cmp", "inc", "dec",
+                    "and", "or", "xor", "not", "sll", "srl", "sra", 
+                    "b", "bl", "beq", "bne", "blt", "bgt", "ble", "bge",
+                    "push", "pop", "rt",
+                    "l", "st", "neg"
                 ],
                 "registers": [
                     "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7",
                     "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15",
-                    "er0", "er2", "er4", "er6", "er8", "er10", "er12", "er14",
-                    "xr0", "xr4", "xr8", "xr12",
-                    "qr0", "qr8"
+                    "er0", "er2", "er4", "er6", "er8", "er10", "er12", "er14"
                 ]
             }
         },
@@ -80,10 +74,7 @@
                     "color": "#569CD6",
                     "bold": false,
                     "keywords": [
-                        "root", "text", "button", "input", "label", "panel", "container",
-                        "image", "list", "grid", "scroll", "checkbox", "radio", "slider",
-                        "dropdown", "menu", "menuitem", "toolbar", "statusbar",
-                        "window", "dialog", "popup", "tooltip", "tab", "tabpanel"
+                        "root", "text", "button", "div", "input", "checkbox", "radio", "line", "window"
                     ]
                 },
                 "field": {
@@ -91,11 +82,9 @@
                     "color": "#9CDCFE",
                     "bold": false,
                     "keywords": [
-                        "x", "y", "width", "height", "colour", "color", "background", "foreground",
-                        "font", "fontsize", "fontweight", "padding", "margin", "border",
-                        "visible", "enabled", "text", "value", "id", "name", "class", "style",
-                        "onclick", "onchange", "onhover", "onfocus", "onblur",
-                        "align", "valign", "wrap", "overflow", "opacity", "zindex"
+                        "id", "x", "y", "width", "height", "colour", "thickness", "style",
+                        "font", "text", "align", "checked", "selected", "size",
+                        "end_x", "end_y", "rotation", "anchor_x", "anchor_y", "z_index"
                     ]
                 },
                 "labelRef": {
@@ -122,17 +111,12 @@
             },
             "completions": {
                 "keywords": [
-                    "root", "text", "button", "input", "label", "panel", "container",
-                    "image", "list", "grid", "scroll", "checkbox", "radio", "slider",
-                    "dropdown", "menu", "menuitem", "toolbar", "statusbar",
-                    "window", "dialog", "popup", "tooltip", "tab", "tabpanel"
+                    "root", "text", "button", "div", "input", "checkbox", "radio", "line", "window"
                 ],
                 "fields": [
-                    "x", "y", "width", "height", "colour", "color", "background", "foreground",
-                    "font", "fontsize", "fontweight", "padding", "margin", "border",
-                    "visible", "enabled", "text", "value", "id", "name", "class", "style",
-                    "onclick", "onchange", "onhover", "onfocus", "onblur",
-                    "align", "valign", "wrap", "overflow", "opacity", "zindex"
+                    "id", "x", "y", "width", "height", "colour", "thickness", "style",
+                    "font", "text", "align", "checked", "selected", "size",
+                    "end_x", "end_y", "rotation", "anchor_x", "anchor_y", "z_index"
                 ]
             }
         }
